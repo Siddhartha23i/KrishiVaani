@@ -357,6 +357,7 @@ KrishiVaani uses Pydantic-Settings to load configuration from environment variab
 | Variable Name | Required | Default Value | Description |
 | :--- | :---: | :--- | :--- |
 | `TELEGRAM_BOT_TOKEN` | **Yes** | *None* | Bot authentication token provided by [@BotFather](https://t.me/BotFather). |
+| `USER_ID_HASH_SALT` | **Yes for Telegram memory** | *None* | Secret salt used to HMAC-hash Telegram user ids before storage. |
 | `GROQ_API_KEY` | **Yes** | *None* | API key for Groq Cloud LLM inference. |
 | `GNANI_API_KEY` | **Yes** | *None* | Unified API key for Gnani Prisma STT and Timbre TTS platforms. |
 | `WEATHERAPI_API_KEY` | **Yes** | *None* | API key for WeatherAPI.com forecast services. |
@@ -376,6 +377,31 @@ KrishiVaani uses Pydantic-Settings to load configuration from environment variab
 | `IMD_API_KEY` | No | *None* | Optional API key for direct IMD district feeds. |
 | `IMD_JWT_TOKEN` | No | *None* | Optional JWT token for authenticated IMD alert services. |
 | `DEBUG` | No | `False` | Enables detailed debugging logs. |
+
+---
+
+## Telegram conversation memory
+
+Telegram memory is stored in the existing SQLite database on the Railway volume. The
+`ConversationMemoryStore` creates one indexed `chat_turns` table and stores only an
+HMAC-SHA256 hash of the Telegram user id; raw Telegram ids, phone numbers, names, and
+audio are not stored by this feature. Set `USER_ID_HASH_SALT` in Railway to a long,
+random secret value. The application fails clearly when memory is used without it.
+
+Before each Telegram LLM request, the bot supplies the last four successful turns
+(trimmed to about 400 characters) and the remembered farmer context through the
+existing `FarmerContextSchema` prompt slot. This context is not evidence, and
+time-sensitive facts are rechecked against current evidence. Abstentions, rejected
+responses, and technical fallbacks are not saved. Saves happen after the reply in a
+background task, so a database failure cannot block delivery.
+
+The `/start` message explains memory and `/forget` deletes the user's stored turns
+and profile snapshot. Existing weather consent and temporary location rules remain
+unchanged; a remembered district is only reused as context and never grants weather
+provider consent.
+
+**Railway variable to add:** `USER_ID_HASH_SALT` (generate a unique random secret
+for this deployment and keep it out of source control).
 
 ---
 

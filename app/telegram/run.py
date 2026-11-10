@@ -31,6 +31,7 @@ def build_telegram_application(token: str, handler: TelegramHandler | None = Non
 
     # Register handlers
     application.add_handler(CommandHandler("start", bot_handler.handle_start))
+    application.add_handler(CommandHandler("forget", bot_handler.handle_forget))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_handler.handle_text))
     application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, bot_handler.handle_voice))
     application.add_error_handler(bot_handler.handle_error)
@@ -65,4 +66,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

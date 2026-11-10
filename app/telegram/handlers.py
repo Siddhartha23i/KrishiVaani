@@ -32,6 +32,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from app.conversation.service import ConversationOrchestrator
+from app.telegram.memory import ConversationMemoryStore
 from app.conversation.intent import is_pure_greeting
 from app.conversation.schemas import ConversationRequest, LocationInput, GuestWeatherConsentEvent
 from app.voice.service import VoicePipelineService
@@ -68,6 +69,7 @@ START_MESSAGE = (
     "నమస్తే అండి! నేను మీ కృషీవాణిని.\n\n"
     "పంటలు, వానలు, ప్రభుత్వ పథకాల గురించి ఏ సందేహం ఉన్నా వాయిస్ మెసేజ్ లేదా టెక్స్ట్ ద్వారా అడగండి.\n\n"
     "చిన్న గమనిక: ఇది ప్రాథమిక సమాచారం మాత్రమే అండి. పంటకు తుది నిర్ణయం తీసుకునే ముందు మీ స్థానిక AO గారిని అడగండి."
+    "\n\nమీ ముందు అడిగిన ప్రశ్నలను మెరుగైన సహాయం కోసం గుర్తుంచుకుంటాను. /forget పంపితే అవి తొలగిపోతాయి."
 )
 
 GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
@@ -147,11 +149,52 @@ class TelegramHandler:
         orchestrator: Optional[ConversationOrchestrator] = None,
         voice_service: Optional[VoicePipelineService] = None,
         session_repo: Optional[TelegramSessionRepository] = None,
+        memory_store: Optional[ConversationMemoryStore] = None,
     ):
         self.orchestrator = orchestrator or ConversationOrchestrator()
         self.voice_service = voice_service or VoicePipelineService()
         self.session_repo = session_repo or TelegramSessionRepository()
+        self.memory_store = memory_store or ConversationMemoryStore(db_path=getattr(self.session_repo, "db_path", None))
+        if getattr(self.orchestrator, "memory_store", None) is None:
+            self.orchestrator.memory_store = self.memory_store
+        if getattr(self.voice_service, "orchestrator", None) is not None:
+            if getattr(self.voice_service.orchestrator, "memory_store", None) is None:
+                self.voice_service.orchestrator.memory_store = self.memory_store
         self.deduplicator = UpdateDeduplicator()
+
+    def _save_turn_background(self, user_id: str, language: str, question: str, response) -> None:
+        if getattr(response, "safety_status", None) != "PASSED":
+            return
+        async def save() -> None:
+            try:
+                await asyncio.to_thread(
+                    self.memory_store.save_turn,
+                    user_id,
+                    language,
+                    question,
+                    response.response_text,
+                    response.intent,
+                    response.safety_status,
+                )
+            except Exception as save_error:
+                logger.error("Conversation memory save failed: %s", save_error, exc_info=True)
+
+        try:
+            asyncio.create_task(save())
+        except Exception as save_error:
+            logger.error("Could not schedule conversation memory save: %s", save_error)
+
+    async def handle_forget(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        message = update.effective_message
+        if not message:
+            return
+        user_id = str(update.effective_user.id if update.effective_user else "guest")
+        try:
+            await asyncio.to_thread(self.memory_store.forget, user_id)
+            await message.reply_text("మీ ముందు ప్రశ్నలు, సమాధానాల జ్ఞాపకాన్ని తొలగించాను అండి.")
+        except Exception as forget_error:
+            logger.error("Conversation memory deletion failed: %s", forget_error, exc_info=True)
+            await message.reply_text("క్షమించండి అండి, జ్ఞాపకాన్ని తొలగించలేకపోయాను. కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.")
 
     async def handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command."""
@@ -274,6 +317,7 @@ class TelegramHandler:
                     conv_res = await asyncio.to_thread(self.orchestrator.process_message, conv_req)
                     reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
                     await message.reply_text(reply_text)
+                    self._save_turn_background(user_id, "Telugu", text, conv_res)
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
                         self.session_repo.set_pending_query(user_id, query_to_run, awaiting_consent=False)
                     else:
@@ -379,6 +423,7 @@ class TelegramHandler:
 
             reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
             await message.reply_text(reply_text)
+            self._save_turn_background(user_id, "Telugu", text, conv_res)
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             logger.info(
                 "Telegram event: update_id=%s, type=text, duration_ms=%.2f, status=success",
@@ -706,6 +751,7 @@ class TelegramHandler:
                         self.session_repo.clear_temp_location(user_id)
 
                     await self._reply_voice_telugu(message, reply_text, timings_out=timings)
+                    self._save_turn_background(user_id, "Telugu", query_to_run, conv_res)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
                     timings["total_ms"] = elapsed_ms
                     self._log_voice_telemetry(update.update_id, "voice_consent_resumed_weather", timings)
@@ -856,6 +902,8 @@ class TelegramHandler:
                     resp_text = TELEGRAM_ABSTENTION_FALLBACK
                 await self._reply_voice_telugu(message, resp_text, timings_out=timings)
                 sent_voice = True
+
+            self._save_turn_background(user_id, "Telugu", transcript, voice_res)
 
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             timings["total_ms"] = elapsed_ms

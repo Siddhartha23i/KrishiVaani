@@ -22,6 +22,7 @@ class FarmerContextSchema(BaseModel):
     soil_type: Optional[str] = None
     water_source: Optional[str] = None
     preferred_language: str = "Telugu"
+    conversation_memory: Optional[str] = None
 
 
 class ApprovedEvidenceItem(BaseModel):

@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # Base directory and project paths
     BASE_DIR: Path = BASE_DIR
     DATABASE_PATH: Path = BASE_DIR / "data" / "krishivaani.db"
+    USER_ID_HASH_SALT: Optional[str] = None
 
     # Gnani AI Speech Credentials (Prisma STT & Timbre TTS)
     GNANI_API_KEY: Optional[str] = None

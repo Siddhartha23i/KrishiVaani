@@ -69,6 +69,7 @@ from app.conversation.intent import (
     INTENT_GENERAL_CONVERSATION,
     is_pure_greeting,
 )
+from app.telegram.memory import ConversationMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,7 @@ class ConversationOrchestrator:
         weather_service: Optional[WeatherService] = None,
         knowledge_adapter: Optional[ApprovedKnowledgeAdapter] = None,
         llm_service: Optional[LLMReasoningService] = None,
+        memory_store: Optional[ConversationMemoryStore] = None,
         db_path: Optional[Path] = None,
     ):
         self.db_path = db_path or settings.DATABASE_PATH
@@ -113,6 +115,7 @@ class ConversationOrchestrator:
         self.weather_service = weather_service or WeatherService(farmer_service=self.farmer_service, db_path=self.db_path)
         self.knowledge_adapter = knowledge_adapter or ApprovedKnowledgeAdapter(db_path=self.db_path)
         self.llm_service = llm_service or LLMReasoningService()
+        self.memory_store = memory_store
 
     def process_message(self, request: ConversationRequest) -> ConversationResponse:
         """
@@ -146,6 +149,14 @@ class ConversationOrchestrator:
         # 2. Farmer Context & Location Resolution
         t0 = time.perf_counter()
         farmer_model, resolved_context, has_weather_consent = self._resolve_farmer_context(request)
+        if self.memory_store and is_telegram and request.farmer_id:
+            try:
+                memory_context = self.memory_store.load_context(
+                    request.farmer_id.removeprefix("tg_"), language=prompt_lang
+                )
+                resolved_context = self._merge_memory_context(resolved_context, memory_context)
+            except Exception as memory_error:
+                logger.error("Conversation memory load failed; continuing without memory: %s", memory_error)
         farmer_lookup_ms = round((time.perf_counter() - t0) * 1000, 2)
         latencies["farmer_lookup_ms"] = farmer_lookup_ms
         latencies["location_resolution_ms"] = farmer_lookup_ms
@@ -346,6 +357,17 @@ class ConversationOrchestrator:
             safety_reason=safety_reason,
             latency_breakdown_ms=latencies,
         )
+
+    @staticmethod
+    def _merge_memory_context(
+        current: FarmerContextSchema, remembered: FarmerContextSchema
+    ) -> FarmerContextSchema:
+        values = current.model_dump()
+        remembered_values = remembered.model_dump()
+        for key, value in remembered_values.items():
+            if value and not values.get(key):
+                values[key] = value
+        return FarmerContextSchema(**values)
 
     def _resolve_farmer_context(
         self, request: ConversationRequest

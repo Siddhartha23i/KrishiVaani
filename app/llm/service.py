@@ -237,6 +237,8 @@ class LLMReasoningService:
                 f"- Soil Type: {ctx.soil_type or 'Not specified'}\n"
                 f"- Water Source: {ctx.water_source or 'Not specified'}"
             )
+            if ctx.conversation_memory:
+                user_sections.append(f"FARMER CONVERSATION CONTEXT:\n{ctx.conversation_memory}")
 
         # Weather facts
         if request.weather_facts:
