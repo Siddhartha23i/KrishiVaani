@@ -74,7 +74,7 @@ START_MESSAGE = (
     "వాటిని తొలగించడానికి /forget పంపండి."
 )
 START_MESSAGES = {
-    "en-IN": "Welcome to KrishiVaani, your farming assistant. Send a voice message with your question in your own language (English is fine too), and I will answer you. This is general information, so confirm important crop decisions with your local Agricultural Officer. I remember your earlier questions to help you. Send /forget to delete them.",
+    "en-IN": "Welcome to KrishiVaani, your farming assistant. Send a voice message with your question in your own language (English is fine too), and I will answer you.",
     "hi-IN": "कृषिवाणी में आपका स्वागत है, यह आपका कृषि सहायक है। अपनी भाषा में सवाल वाला वॉइस संदेश भेजें, अंग्रेज़ी भी चलेगी और मैं जवाब दूँगा। यह सामान्य जानकारी है, इसलिए फसल के महत्वपूर्ण फैसले अपने स्थानीय कृषि अधिकारी से पक्का करें। आपकी मदद के लिए मैं आपके पहले के सवाल याद रखता हूँ। उन्हें मिटाने के लिए /forget भेजें।",
     "ta-IN": "கிருஷிவாணிக்கு வரவேற்கிறோம், இது உங்கள் விவசாய உதவியாளர். உங்கள் மொழியில் கேள்வியுடன் குரல் செய்தி அனுப்புங்கள்; ஆங்கிலமும் பரவாயில்லை, நான் பதில் அளிப்பேன். இது பொதுவான தகவல் என்பதால் முக்கியமான பயிர் முடிவுகளை உள்ளூர் வேளாண்மை அதிகாரியிடம் உறுதிப்படுத்துங்கள். உதவிக்காக உங்கள் முந்தைய கேள்விகளை நினைவில் வைத்திருப்பேன். அவற்றை நீக்க /forget அனுப்புங்கள்.",
     "kn-IN": "ಕೃಷಿವಾಣಿಗೆ ಸ್ವಾಗತ, ಇದು ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ. ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಪ್ರಶ್ನೆಯಿರುವ ಧ್ವನಿ ಸಂದೇಶ ಕಳುಹಿಸಿ; ಇಂಗ್ಲಿಷ್ ಕೂಡ ಸರಿ, ನಾನು ಉತ್ತರಿಸುತ್ತೇನೆ. ಇದು ಸಾಮಾನ್ಯ ಮಾಹಿತಿ ಆದ್ದರಿಂದ ಮುಖ್ಯ ಬೆಳೆ ನಿರ್ಧಾರಗಳನ್ನು ಸ್ಥಳೀಯ ಕೃಷಿ ಅಧಿಕಾರಿಯೊಂದಿಗೆ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ. ಸಹಾಯಕ್ಕಾಗಿ ನಿಮ್ಮ ಹಿಂದಿನ ಪ್ರಶ್ನೆಗಳನ್ನು ನೆನಪಿನಲ್ಲಿ ಇಡುತ್ತೇನೆ. ಅವನ್ನು ಅಳಿಸಲು /forget ಕಳುಹಿಸಿ.",
@@ -85,35 +85,23 @@ START_MESSAGES = {
     "gu-IN": "કૃષિવાણીમાં આપનું સ્વાગત છે, આ તમારો ખેતી સહાયક છે. તમારી ભાષામાં પ્રશ્ન સાથે વૉઇસ સંદેશ મોકલો; અંગ્રેજી પણ ચાલશે અને હું જવાબ આપીશ. આ સામાન્ય માહિતી છે, તેથી પાકના મહત્વના નિર્ણયોની પુષ્ટિ તમારા સ્થાનિક કૃષિ અધિકારી સાથે કરો. તમારી મદદ માટે હું તમારા અગાઉના પ્રશ્નો યાદ રાખું છું. તેમને કાઢવા /forget મોકલો.",
 }
 
-GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+GREETING_MESSAGE = "నమస్తే! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
 
 DURATION_LIMIT_MESSAGE = (
-    "క్షమించండి అండి, మీ వాయిస్ మెసేజ్ 30 సెకన్ల కంటే ఎక్కువ ఉంది. "
+    "క్షమించండి, మీ వాయిస్ మెసేజ్ 30 సెకన్ల కంటే ఎక్కువ ఉంది. "
     "దయచేసి 30 సెకన్ల లోపు చిన్న మెసేజ్ పంపండి."
 )
 
 FALLBACK_ERROR_MESSAGE = (
-    "క్షమించండి అండి, మీ మెసేజ్ అందుకోవడంలో చిన్న సాంకేతిక సమస్య వచ్చింది. "
+    "క్షమించండి, మీ మెసేజ్ అందుకోవడంలో చిన్న సాంకేతిక సమస్య వచ్చింది. "
     "దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."
 )
 
 TELEGRAM_ABSTENTION_FALLBACK = (
-    "దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు అండి. "
+    "దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు. "
     "మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి."
 )
 
-LANGUAGE_NAMES = {
-    "te-IN": "తెలుగు",
-    "hi-IN": "हिन्दी",
-    "en-IN": "English",
-    "kn-IN": "ಕನ್ನಡ",
-    "ta-IN": "தமிழ்",
-    "mr-IN": "मराठी",
-    "ml-IN": "മലയാളം",
-    "pa-IN": "ਪੰਜਾਬੀ",
-    "bn-IN": "বাংলা",
-    "gu-IN": "ગુજરાતી",
-}
 LOCALIZED_FALLBACKS = {
     "hi-IN": {
         "error": "क्षमा करें, संदेश संसाधित करने में तकनीकी समस्या आई। कुछ सेकंड बाद फिर पूछें।",
@@ -170,7 +158,7 @@ CONSENT_BUTTONS = {
 GREETING_PATTERNS = {
     "hi", "hello", "hey", "namaste", "namaskar", "namaskaram",
     "నమస్కారం", "నమస్కారం!", "నమస్తే", "నమస్తే!", "హలో", "హాయ్", "నమస్కారము",
-    "నమస్తే అండి", "నమస్తే అండి!", "నమస్కారం అండి", "నమస్కారం అండి!",
+    "నమస్తే ", "నమస్తే !", "నమస్కారం ", "నమస్కారం !",
     "శుభోదయం", "శుభ సాయంత్రం", "బాగున్నారా", "ఎలా ఉన్నారు",
 }
 
@@ -341,45 +329,10 @@ class TelegramHandler:
         user_id = str(update.effective_user.id if update.effective_user else "guest")
         try:
             await asyncio.to_thread(self.memory_store.forget, user_id)
-            await message.reply_text("మీ ముందు ప్రశ్నలు, సమాధానాల జ్ఞాపకాన్ని తొలగించాను అండి.")
+            await message.reply_text("మీ ముందు ప్రశ్నలు, సమాధానాల జ్ఞాపకాన్ని తొలగించాను.")
         except Exception as forget_error:
             logger.error("Conversation memory deletion failed: %s", forget_error, exc_info=True)
-            await message.reply_text("క్షమించండి అండి, జ్ఞాపకాన్ని తొలగించలేకపోయాను. కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.")
-
-    async def handle_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not update.effective_message:
-            return
-        keyboard = [
-            [InlineKeyboardButton(label, callback_data=f"language:{code}")]
-            for code, label in LANGUAGE_NAMES.items()
-        ]
-        await update.effective_message.reply_text(
-            "మీకు కావాల్సిన భాషను ఎంచుకోండి / अपनी भाषा चुनें / Choose your language:",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
-
-    async def handle_language_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        query = update.callback_query
-        if not query or not query.data or not query.from_user:
-            return
-        await query.answer()
-        code = query.data.removeprefix("language:")
-        if code not in LANGUAGE_NAMES:
-            return
-        await asyncio.to_thread(self.memory_store.set_language, str(query.from_user.id), code)
-        await query.edit_message_text({
-            "te-IN": "భాష తెలుగుగా మార్చాను అండి.",
-            "hi-IN": "भाषा हिन्दी कर दी गई है।",
-            "en-IN": "Language set to English.",
-            "kn-IN": "ಭಾಷೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಬದಲಿಸಲಾಗಿದೆ.",
-            "ta-IN": "மொழி தமிழாக மாற்றப்பட்டது.",
-            "mr-IN": "भाषा मराठी केली आहे.",
-            "ml-IN": "ഭാഷ മലയാളമാക്കി.",
-            "pa-IN": "ਭਾਸ਼ਾ ਪੰਜਾਬੀ ਕਰ ਦਿੱਤੀ ਹੈ।",
-            "bn-IN": "ভাষা বাংলা করা হয়েছে।",
-            "gu-IN": "ભાષા ગુજરાતીમાં બદલી છે.",
-        }[code])
-        await query.message.reply_text(START_MESSAGES[code])
+            await message.reply_text("క్షమించండి , జ్ఞాపకాన్ని తొలగించలేకపోయాను. కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.")
 
     async def handle_consent_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Route an inline consent choice through the same persisted handler path as typed text."""
@@ -418,22 +371,10 @@ class TelegramHandler:
             return
 
         t0 = time.perf_counter()
-        user_id = update.effective_user.id if update.effective_user else "unknown"
         logger.info("Handling /start Telegram event (update_id: %s)", update.update_id)
 
         try:
-            language = await asyncio.to_thread(self._stored_language, str(user_id))
-            if language:
-                await update.effective_message.reply_text(START_MESSAGES.get(language, START_MESSAGES["en-IN"]))
-            else:
-                keyboard = [
-                    [InlineKeyboardButton(label, callback_data=f"language:{code}")]
-                    for code, label in LANGUAGE_NAMES.items()
-                ]
-                await update.effective_message.reply_text(
-                    START_MESSAGES["en-IN"],
-                    reply_markup=InlineKeyboardMarkup(keyboard),
-                )
+            await update.effective_message.reply_text(START_MESSAGES["en-IN"])
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             logger.info(
                 "Telegram event: update_id=%s, type=/start, duration_ms=%.2f, status=success",
@@ -637,7 +578,7 @@ class TelegramHandler:
             resp_clean = (conv_res.response_text or "").strip().strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965").lower()
             if resp_clean and resp_clean == q_clean:
                 logger.warning("Telegram handler detected conv_res echoing text. Overriding with clarification.")
-                conv_res.response_text = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
+                conv_res.response_text = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
                 conv_res.safety_reason = "LOCATION_PARAMETERS_REQUIRED"
                 conv_res.is_abstention = True
 
@@ -900,7 +841,7 @@ class TelegramHandler:
                 self.session_repo.clear_location(user_id)
                 self.session_repo.clear_pending_query(user_id)
                 del_msg = (
-                    "మీ ప్రాంతం వివరాలు తీసేశాను అండి. "
+                    "మీ ప్రాంతం వివరాలు తీసేశాను. "
                     "తర్వాత మళ్ళీ వాతావరణం తెలుసుకోవాలంటే మీ ఊరి పేరు చెప్పొచ్చు."
                 )
                 await self._reply_voice_telugu(message, del_msg, timings_out=timings)
@@ -921,7 +862,7 @@ class TelegramHandler:
                 self.session_repo.clear_location(user_id)
                 self.session_repo.clear_pending_query(user_id)
                 reject_msg = (
-                    "సరే అండి, మీ మాట ప్రకారం వాతావరణ సమాచారం కోసం లొకేషన్ తీసుకోవడం లేదు. "
+                    "సరే , మీ మాట ప్రకారం వాతావరణ సమాచారం కోసం లొకేషన్ తీసుకోవడం లేదు. "
                     "మీరు పంటలు, సాగు గురించి ఏమైనా సందేహాలుంటే అడగవచ్చు."
                 )
                 await self._reply_voice_telugu(message, reject_msg, timings_out=timings)
@@ -1106,7 +1047,7 @@ class TelegramHandler:
             resp_clean = (voice_res.response_text or "").strip().strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965").lower()
             if resp_clean and resp_clean == q_clean:
                 logger.warning("Telegram handler detected voice_res echoing transcript (update_id: %s). Overriding with clarification.", update.update_id)
-                voice_res.response_text = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
+                voice_res.response_text = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
                 voice_res.safety_reason = "LOCATION_PARAMETERS_REQUIRED"
                 voice_res.is_abstention = True
                 voice_res.audio_base64 = None  # Force fresh synthesis with the clarification text
