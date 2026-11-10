@@ -36,3 +36,22 @@ def test_leading_telugu_andi_is_removed_without_losing_text():
     result = normalize_response_style("అండి, ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి.")
     assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి."
 
+
+def test_andi_is_removed_from_non_telugu_responses():
+    result = normalize_response_style(
+        "El Nino affects rainfall in India అండి. Please check local updates.",
+        "English",
+    )
+    assert "అండి" not in result
+    assert result == "El Nino affects rainfall in India. Please check local updates."
+
+
+def test_generic_follow_up_closings_are_removed():
+    assert "क्या आप" not in normalize_response_style(
+        "ड्रिप सिंचाई पानी बचाती है। क्या आप अपने खेत में इस व्यवस्था के बारे में और जानना चाहते हैं?",
+        "Hindi",
+    )
+    assert "சொல்லட்டுமா" not in normalize_response_style(
+        "பருவமழை கடல் காற்றால் உருவாகிறது. இது எப்படி நடக்கிறது என்று உங்களுக்கு இன்னும் விரிவாக சொல்லட்டுமா?",
+        "Tamil",
+    )

@@ -1385,11 +1385,11 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
         self.assertIn("సమ్మతి అవసరం", wa_consent_resp.response_text)
 
     def test_natural_conversational_endings_and_short_reply_rule(self):
-        """Verify closing invitation guidance and rule against tacking endings onto short weather replies."""
+        """Verify generic closing invitations are disabled."""
         from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION
 
-        self.assertIn("ఇంకా ఏమైనా సందేహాలుంటే అడగండి. మీకు సహాయం చేస్తాను.", TELEGRAM_SYSTEM_INSTRUCTION)
-        self.assertIn("Do NOT tack a closing invitation onto very short replies like a quick rainfall answer", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertNotIn("ఇంకా ఏమైనా సందేహాలుంటే అడగండి", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertIn("generic closing lines", TELEGRAM_SYSTEM_INSTRUCTION)
 
     def test_no_repetitive_greetings_in_regular_replies(self):
         """Verify regular guidance/clarification responses avoid repeating 'నమస్తే'."""

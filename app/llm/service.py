@@ -33,11 +33,31 @@ from app.llm.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-def normalize_response_style(text: str) -> str:
+def normalize_response_style(text: str, language: str = "Telugu") -> str:
     """Apply the short spoken-response style without cutting inside a sentence."""
     if not text:
         return text
-    normalized = re.sub(r"(?m)(^|(?<=[.!?।])\s+)అండి\s*,?\s*", r"\1", text.strip())
+    normalized = text.strip()
+    if not language.casefold().startswith(("te", "telugu")):
+        normalized = re.sub(r"\s*అండి\s*,?", "", normalized)
+        normalized = re.sub(r"[ \t]{2,}", " ", normalized)
+    else:
+        normalized = re.sub(r"(?m)(^|(?<=[.!?।])\s+)అండి\s*,?\s*", r"\1", normalized)
+    generic_closings = (
+        r"ఇంకా ఏమైనా సందేహాలుంటే అడగండి\.?",
+        r"దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి\.?",
+        r"Ask if you have another question\.?",
+        r"If you have any other questions,? ask\.?",
+        r"और कोई सवाल हो तो पूछिए\.?",
+        r"क्या आप अपने खेत में इस व्यवस्था के बारे में और जानना चाहते हैं\??",
+        r"இது எப்படி நடக்கிறது என்று உங்களுக்கு இன்னும் விரிவாக சொல்லட்டுமா\??",
+    )
+    normalized = re.sub(
+        r"(?:^|(?<=[.!?।])\s+)(?:" + "|".join(generic_closings) + r")\s*",
+        "",
+        normalized,
+        flags=re.IGNORECASE,
+    ).strip()
     sentences = re.split(r"(?<=[.!?।])\s+", normalized)
     if len(sentences) > 4:
         normalized = " ".join(sentences[:4]).strip()
@@ -65,7 +85,7 @@ CORE ADVISORY RULES:
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
 5. RESTRICTIONS: Preserve all geographical, crop, variety, and validity-period restrictions stated in the evidence.
-6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, and no repetition. Never begin a sentence with "అండి"; use it at most once at the end of a sentence when natural. Avoid markdown formatting, tables, or asterisks. If responding in Telugu, use standard conversational Telugu.
+6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, and no repetition. Use "అండి" only when the target language is Telugu; never use it in English, Hindi, Tamil, Kannada, Malayalam, Marathi, Punjabi, Bengali, or Gujarati. In Telugu, never begin a sentence with "అండి"; use it at most once at the end of a sentence when natural. Avoid markdown formatting, tables, or asterisks. If responding in Telugu, use standard conversational Telugu.
 
 OUTPUT FORMAT:
 Return valid JSON only matching this schema:
@@ -92,8 +112,8 @@ CORE ADVISORY RULES:
 6. SPOKEN VOICE OUTPUT & NATURAL CONVERSATIONAL TELUGU (Telegram Channel):
    - Use evidence only when it is directly relevant to the farmer's question; ignore unrelated weather or safety evidence.
    - If evidence only partly covers the question, give the supported part first, then clearly say what is missing.
-   - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, or repetition.
-   - Never begin a reply or sentence with "అండి". Use "అండి" at most once at the end of a sentence when natural.
+   - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, or repetition. Do not append a generic invitation to ask another question.
+   - Use "అండి" only for Telugu responses. Never include it in any non-Telugu response.
    - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, asterisks, and NEVER use parentheses () anywhere in your Telugu response.
    - For Telugu (te-IN or Telugu):
      * Use natural everyday conversational Telugu (Telangana conversational style, friendly, positive, and respectful with 'అండి').
@@ -105,7 +125,6 @@ CORE ADVISORY RULES:
      * Tone: Avoid Sanskritised, literary (Granthika), or bureaucratic vocabulary (e.g. NEVER use 'సమ్మతి', 'భౌగోళిక స్థానం', 'దృక్పథం', 'ప్రణాళిక', 'అనుమతి', 'వనరు', 'పరిశీలన'). Avoid exaggerated slang.
      * Code-mixing & Pronunciation: Avoid excessive English mixing. Use familiar everyday agricultural terms and write abbreviations/units cleanly in Telugu so speech synthesis pronounces them smoothly: Urea (యూరియా), DAP (డీఏపీ), Potash (పొటాష్), Fertilizer (ఎరువు), Pesticide (పురుగు మందు), Spraying (మందు కొట్టడం / స్ప్రే చేయడం), Tractor (ట్రాక్టర్), Borewell (బోరు), Motor (మోటారు), Drip (డ్రిప్), PIN code (పిన్ కోడ్), Location (లొకేషన్), Soil test (మట్టి పరీక్ష), KVK (కేవీకే / కృషి విజ్ఞాన కేంద్రం), Agriculture Officer (AO సార్ / ఏఓ గారు / వ్యవసాయ అధికారి), Acre (ఎకరం), Gunta (గుంట). Write 'శాతం' instead of '%', 'మిల్లీమీటర్లు' instead of 'mm', and 'డిగ్రీల సెల్సియస్' instead of '°C'.
      * Helpful First, One Question at a Time: Give useful, verified facts FIRST before asking any follow-up question. When missing field details, ASK ONLY ONE PRIMARY QUESTION AT A TIME (e.g., 'మీరు ఏ పంట వేశారు?', 'ఎన్ని ఎకరాలు ఉంది?', 'బోరు నీళ్లా, కాలువ నీళ్లా?') and briefly say why it helps.
-     * Natural Conversation Endings: For multi-sentence guidance, crop/pest/scheme advisories, or detailed answers, end warmly with a varied helpful invitation when appropriate (such as "ఇంకా ఏమైనా సందేహాలుంటే అడగండి. మీకు సహాయం చేస్తాను." or "దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి."). Do NOT tack a closing invitation onto very short replies like a quick rainfall answer or simple confirmation question.
      * Sentence length & Accuracy: Keep sentences short and clear (default 2-3 concise spoken sentences unless safety requires more). Always preserve exact validated numbers, dates, units, and percentages.
      * Weather responses: Use natural words such as 'వాన', 'ఊరు', 'రేపు', 'వాతావరణ రిపోర్ట్'. Never invent a rainfall value or claim absolute certainty. State forecast uncertainty accurately using the exact numbers provided (e.g., 'రేపు మీ ఊరిలో వాన పడే అవకాశం చాలా తక్కువగా ఉంది', 'వాతావరణ రిపోర్ట్ అంచనా మాత్రమే, మారొచ్చు').
      * Ambiguity: If a word like 'మందు' is ambiguous, clarify politely whether the farmer means fertilizer (ఎరువు) or pesticide (పురుగు మందు).
@@ -187,7 +206,11 @@ class LLMReasoningService:
             validated_response.safety_status = "REJECTED"
         val_ns = time.perf_counter_ns() - t_val_start
         validated_response.validation_latency_ms = round(val_ns / 1_000_000.0, 3)
-        validated_response.response = normalize_response_style(validated_response.response)
+        validated_response.response = normalize_response_style(
+            validated_response.response, validated_response.language or request.language
+        )
+        if validated_response.safety_status == "REJECTED":
+            validated_response.response = self._localized_safety_fallback(request.language)
 
         return validated_response
 
@@ -223,8 +246,35 @@ class LLMReasoningService:
         validated_response.validation_latency_ms = round(
             (time.perf_counter_ns() - t_val_start) / 1_000_000.0, 3
         )
-        validated_response.response = normalize_response_style(validated_response.response)
+        validated_response.response = normalize_response_style(
+            validated_response.response, validated_response.language or request.language
+        )
+        if validated_response.safety_status == "REJECTED":
+            validated_response.response = self._localized_safety_fallback(request.language)
         return validated_response
+
+    @staticmethod
+    def _localized_safety_fallback(language: str) -> str:
+        normalized = (language or "").casefold()
+        if normalized.startswith(("hi", "hindi")):
+            return "इस सवाल के लिए मेरे पास अभी सत्यापित जानकारी नहीं है। कृपया अपने स्थानीय कृषि अधिकारी या निकटतम KVK से सलाह लें।"
+        if normalized.startswith(("mr", "marathi")):
+            return "या प्रश्नासाठी माझ्याकडे सध्या पडताळलेली माहिती नाही. कृपया स्थानिक कृषी अधिकारी किंवा जवळच्या KVK शी संपर्क करा."
+        if normalized.startswith(("ta", "tamil")):
+            return "இந்தக் கேள்விக்கு என்னிடம் தற்போது சரிபார்க்கப்பட்ட தகவல் இல்லை. உள்ளூர் வேளாண்மை அதிகாரி அல்லது அருகிலுள்ள KVK-யை அணுகுங்கள்."
+        if normalized.startswith(("kn", "kannada")):
+            return "ಈ ಪ್ರಶ್ನೆಗೆ ನನ್ನ ಬಳಿ ಈಗ ಪರಿಶೀಲಿತ ಮಾಹಿತಿ ಇಲ್ಲ. ಸ್ಥಳೀಯ ಕೃಷಿ ಅಧಿಕಾರಿ ಅಥವಾ ಹತ್ತಿರದ KVK ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
+        if normalized.startswith(("ml", "malayalam")):
+            return "ഈ ചോദ്യത്തിന് ഇപ്പോൾ പരിശോധിച്ച വിവരം എന്റെ പക്കൽ ഇല്ല. പ്രാദേശിക കൃഷി ഉദ്യോഗസ്ഥനെയോ അടുത്തുള്ള KVK-യെയോ ബന്ധപ്പെടൂ."
+        if normalized.startswith(("pa", "punjabi")):
+            return "ਇਸ ਸਵਾਲ ਲਈ ਮੇਰੇ ਕੋਲ ਇਸ ਵੇਲੇ ਪ੍ਰਮਾਣਿਤ ਜਾਣਕਾਰੀ ਨਹੀਂ ਹੈ। ਆਪਣੇ ਸਥਾਨਕ ਖੇਤੀਬਾੜੀ ਅਧਿਕਾਰੀ ਜਾਂ ਨੇੜਲੇ KVK ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+        if normalized.startswith(("bn", "bengali")):
+            return "এই প্রশ্নের জন্য আমার কাছে এখন যাচাই করা তথ্য নেই। স্থানীয় কৃষি আধিকারিক বা নিকটস্থ KVK-এর সঙ্গে যোগাযোগ করুন।"
+        if normalized.startswith(("gu", "gujarati")):
+            return "આ પ્રશ્ન માટે મારી પાસે હાલમાં ચકાસેલી માહિતી નથી. સ્થાનિક કૃષિ અધિકારી અથવા નજીકના KVKનો સંપર્ક કરો."
+        if normalized.startswith(("te", "telugu")):
+            return "ఈ ప్రశ్నకు ప్రస్తుతం నా దగ్గర నిర్ధారించిన సమాచారం లేదు. మీ స్థానిక వ్యవసాయ అధికారిని లేదా దగ్గర్లోని కేవీకేను సంప్రదించండి."
+        return "I do not have verified information for this question yet. Please consult your local Agricultural Officer or nearest KVK."
 
     def _build_prompt_messages(self, request: LLMReasoningRequest) -> List[Dict[str, str]]:
         """Construct the prompt messages ensuring evidence is clearly delineated."""

@@ -68,7 +68,8 @@ FERTILIZER_KEYWORDS_EN = [
 # Crop recommendation keywords
 CROP_RECOMMENDATION_KEYWORDS_TE = [
     "ఏ పంట", "పంట వేయాలి", "పంట సాగు", "ఏ విత్తనం", "పంట సిఫార్సు",
-    "విత్తనాలు వేసుకోవచ్చా", "ఏది మంచిది", "ఏ పంట లాభం",
+    "విత్తనాలు వేసుకోవచ్చా", "ఏది మంచిది", "ఏ పంట లాభం", "పంటకు ఏ జాగ్రత్తలు",
+    "పంటకు ఎలాంటి జాగ్రత్తలు", "పంటకు జాగ్రత్తలు",
 ]
 
 CROP_RECOMMENDATION_KEYWORDS_HI = [
@@ -280,23 +281,24 @@ def is_lightning_safety_query(question: str) -> bool:
         return False
 
     q_lower = question.lower()
-
-    # English: match explicit lightning/thunder safety terms
-    for kw in LIGHTNING_SAFETY_KEYWORDS_EN:
-        if re.search(rf"\b{re.escape(kw)}\b", q_lower):
-            return True
-
-    # Telugu: match any lightning/thunder safety keyword
-    for kw in LIGHTNING_SAFETY_KEYWORDS_TE:
-        if kw in q_lower:
-            return True
-
-    # Hindi: match any lightning/thunder safety keyword
-    for kw in LIGHTNING_SAFETY_KEYWORDS_HI:
-        if kw in q_lower:
-            return True
-
-    return False
+    lightning_terms = (
+        "lightning", "thunder", "thunderstorm", "పిడుగు", "పిడుగులు",
+        "మెరుపు", "మెరుపులు", "ఉరుములు", "వజ్రపాత", "बिजली", "వజ्रपात",
+    )
+    action_terms = (
+        "precaution", "precautions", "safety", "what to do", "protect",
+        "shelter", "జాగ్రత్త", "జాగ్రత్తలు", "ఏం చేయాలి", "ఏమి చేయాలి",
+        "రక్షణ", "సురక్షిత", "सावधानी", "बचाव", "क्या करें", "सुरक्षा",
+    )
+    has_lightning = any(
+        (term in q_lower) if not term.isascii() else bool(re.search(rf"\b{re.escape(term)}\b", q_lower))
+        for term in lightning_terms
+    )
+    has_action = any(
+        (term in q_lower) if not term.isascii() else bool(re.search(rf"\b{re.escape(term)}\b", q_lower))
+        for term in action_terms
+    )
+    return has_lightning and has_action
 
 
 def classify_intent(question: str) -> str:
@@ -361,6 +363,8 @@ def classify_intent(question: str) -> str:
         if kw in q_lower:
             return INTENT_CROP_RECOMMENDATION
     if "ਪਰਾਲੀ" in q_lower or "stubble" in q_lower:
+        return INTENT_CROP_RECOMMENDATION
+    if re.search(r"పంటకు.*జాగ్రత్త", q_lower):
         return INTENT_CROP_RECOMMENDATION
 
     # Tier 1 explanatory questions are safe without approved evidence.

@@ -426,6 +426,28 @@ class ConversationOrchestrator:
                 resp.latency_breakdown_ms = latencies
                 return resp
 
+        if (
+            category == "crop_management"
+            and not approved_items
+            and llm_response.safety_status == "ABSTAINED"
+            and not llm_response.safety_violations
+        ):
+            no_evidence = self._localized_no_evidence_response(
+                lang_code, resolved_context.district if resolved_context else None
+            )
+            return ConversationResponse(
+                intent=detected_intent,
+                language=lang_code,
+                response_text=no_evidence,
+                is_abstention=True,
+                evidence_citations=[],
+                weather_metadata=weather_meta,
+                safety_status="ABSTAINED",
+                safety_validation_status="ABSTAINED",
+                safety_reason="NO_MATCHING_EVIDENCE",
+                latency_breakdown_ms=latencies,
+            )
+
         return ConversationResponse(
             intent=detected_intent or llm_response.intent,
             language=lang_code,
@@ -457,17 +479,32 @@ class ConversationOrchestrator:
     @staticmethod
     def _localized_thanks(lang_code: str) -> str:
         return {
-            "te-IN": "ధన్యవాదాలు. మీకు ఇంకేదైనా సందేహం ఉంటే అడగండి.",
-            "hi-IN": "धन्यवाद। कोई और सवाल हो तो पूछिए।",
-            "en-IN": "You are welcome. Ask if you have another question.",
-            "ta-IN": "நன்றி. வேறு கேள்வி இருந்தால் கேளுங்கள்.",
-            "kn-IN": "ಧನ್ಯವಾದಗಳು. ಇನ್ನೇನಾದರೂ ಪ್ರಶ್ನೆ ಇದ್ದರೆ ಕೇಳಿ.",
-            "ml-IN": "നന്ദി. മറ്റൊരു ചോദ്യം ഉണ്ടെങ്കിൽ ചോദിക്കൂ.",
-            "mr-IN": "धन्यवाद. आणखी प्रश्न असल्यास विचारा.",
-            "pa-IN": "ਧੰਨਵਾਦ। ਹੋਰ ਕੋਈ ਸਵਾਲ ਹੋਵੇ ਤਾਂ ਪੁੱਛੋ।",
-            "bn-IN": "ধন্যবাদ। আর কোনো প্রশ্ন থাকলে জিজ্ঞাসা করুন।",
-            "gu-IN": "આભાર. બીજો કોઈ પ્રશ્ન હોય તો પૂછો.",
-        }.get(lang_code, "You are welcome. Ask if you have another question.")
+            "te-IN": "ధన్యవాదాలు.",
+            "hi-IN": "धन्यवाद।",
+            "en-IN": "You are welcome.",
+            "ta-IN": "நன்றி.",
+            "kn-IN": "ಧನ್ಯವಾದಗಳು.",
+            "ml-IN": "നന്ദി.",
+            "mr-IN": "धन्यवाद.",
+            "pa-IN": "ਧੰਨਵਾਦ।",
+            "bn-IN": "ধন্যবাদ।",
+            "gu-IN": "આભાર.",
+        }.get(lang_code, "You are welcome.")
+
+    @staticmethod
+    def _localized_no_evidence_response(lang_code: str, district: Optional[str]) -> str:
+        place = f" for {district}" if district else ""
+        if lang_code == "te-IN":
+            return "ఈ ప్రాంతంలో ఈ పంటకు సరిపడే నిర్ధారించిన ఆధారాలు ప్రస్తుతం లేవు."
+        if lang_code == "hi-IN":
+            return f"{district or 'इस क्षेत्र'} में इस फसल के लिए अभी कोई सत्यापित रिकॉर्ड उपलब्ध नहीं है।"
+        if lang_code == "en-IN":
+            return f"No approved evidence is currently available for this crop{place}."
+        if lang_code == "pa-IN":
+            return f"{district or 'ਇਸ ਖੇਤਰ'} ਵਿੱਚ ਇਸ ਫਸਲ ਲਈ ਇਸ ਵੇਲੇ ਕੋਈ ਪ੍ਰਮਾਣਿਤ ਰਿਕਾਰਡ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।"
+        if lang_code == "mr-IN":
+            return f"{district or 'या भागात'} या पिकासाठी सध्या कोणताही पडताळलेला रेकॉर्ड उपलब्ध नाही."
+        return "No approved evidence is currently available for this crop in this area."
 
     @staticmethod
     def _localized_weather_prompt(kind: str, lang_code: str) -> str:
