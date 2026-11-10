@@ -20,6 +20,7 @@ INTENT_FERTILIZER_GUIDANCE = "fertilizer_guidance"
 INTENT_GOVERNMENT_SCHEME = "government_scheme"
 INTENT_AGRICULTURAL_ADVICE = "agricultural_advice"
 INTENT_GENERAL_CONVERSATION = "general_conversation"
+INTENT_GENERAL_EXPLANATION = "general_explanation"
 
 # Weather keyword patterns across Telugu, Hindi, English
 WEATHER_KEYWORDS_TE = [
@@ -72,12 +73,13 @@ CROP_RECOMMENDATION_KEYWORDS_TE = [
 
 CROP_RECOMMENDATION_KEYWORDS_HI = [
     "कौन सी फसल", "फसल बोएं", "फसल की बुवाई", "कौन सा बीज", "फसल सिफारिश",
-    "कौन सी फसल उपयुक्त", "कौन सी फसल अच्छी",
+    "कौन सी फसल उपयुक्त", "कौन सी फसल अच्छी", "बुवाई कब", "बोआई कब", "गेहूं की बुवाई",
 ]
 
 CROP_RECOMMENDATION_KEYWORDS_EN = [
     "which crop", "what crop", "recommend a crop", "crop recommendation",
     "should i plant", "should i grow", "best crop to sow", "suitable crop",
+    "when can i sow", "when should i sow", "sowing", "planting date",
 ]
 
 # Pest and Disease keywords (dosage removed to prevent fertilizer dosage collision)
@@ -133,6 +135,36 @@ LIGHTNING_SAFETY_KEYWORDS_EN = [
     "safety tips", "what to do", "protect", "shelter", "strike",
 ]
 
+GENERAL_EXPLANATION_PATTERNS = [
+    # English
+    r"\bwhat is\b", r"\bwhat are\b", r"\bhow does\b", r"\bhow do\b",
+    r"\bexplain\b", r"\bwhat does .* mean\b", r"\bhow .* work\b",
+    # Telugu
+    "ఏమిటి", "అంటే ఏమిటి", "ఎలా ఏర్పడ", "ఎలా పనిచేస్తుంది", "గురించి చెప్పండి",
+    "వివరించండి", "ఏమని అర్థం",
+    # Hindi / Marathi
+    "क्या है", "क्या होता है", "कैसे बनता", "कैसे काम करता", "समझाइए", "का अर्थ",
+    # Tamil
+    "என்ன", "எப்படி", "எப்படி உருவாகிறது", "எப்படி செயல்படுகிறது", "விளக்குங்கள்",
+    # Kannada
+    "ಏನು", "ಎಂದರೇನು", "ಹೇಗೆ", "ಹೇಗೆ ರೂಪುಗೊಳ್ಳುತ್ತದೆ", "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ", "ವಿವರಿಸಿ",
+    # Malayalam
+    "എന്താണ്", "എങ്ങനെ", "എങ്ങനെ രൂപപ്പെടുന്നു", "എങ്ങനെ പ്രവർത്തിക്കുന്നു", "വിശദീകരിക്കുക",
+    # Marathi
+    "काय आहे", "कसे", "कशी", "कसे कार्य करते", "समजावून सांगा",
+    # Punjabi
+    "ਕੀ ਹੈ", "ਕਿਵੇਂ", "ਕਿਵੇਂ ਬਣਦਾ", "ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ", "ਸਮਝਾਓ",
+    # Bengali
+    "কি", "কীভাবে", "কীভাবে তৈরি হয়", "কীভাবে কাজ করে", "ব্যাখ্যা করুন",
+    # Gujarati
+    "શું છે", "કેવી રીતે", "કેવી રીતે બને", "કેવી રીતે કામ કરે", "સમજાવો",
+]
+
+THANKS_PATTERNS = {
+    "thank you", "thanks", "thankyou", "ధన్యవాదాలు", "ధన్యవాదం",
+    "धन्यवाद", "நன்றி", "ಧನ್ಯವಾದ", "നന്ദി", "ਧੰਨਵਾਦ", "ধন্যবাদ", "આભાર",
+}
+
 # General greeting keywords
 GREETING_KEYWORDS_TE = [
     "నమస్కారం", "నమస్తే", "హలో", "హాయ్", "ధన్యవాదాలు", "ఎవరు మీరు", "సహాయం",
@@ -159,9 +191,28 @@ def is_pure_greeting(question: str) -> bool:
         cleaned = cleaned[:-5].rstrip()
     return cleaned in {
         "నమస్కారం", "నమస్తే", "హలో", "హాయ్", "నమస్కారము",
-        "नमस्ते", "प्रणाम", "हेलो", "हाय",
+        "नमस्ते", "प्रणाम", "हेलो", "हाय", "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਜੀ",
         "hi", "hello", "hey", "namaste", "namaskar", "namaskaram",
+        "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "ਨਮਸਕਾਰ", "নমস্কার", "নમસ્તે", "வணக்கம்",
+        "ನಮಸ್ಕಾರ", "നമസ്കാരം",
     }
+
+
+def is_pure_thanks(question: str) -> bool:
+    if not question:
+        return False
+    cleaned = question.strip().lower().strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965")
+    return cleaned in THANKS_PATTERNS
+
+
+def is_general_explanation(question: str) -> bool:
+    if not question or not question.strip():
+        return False
+    lowered = question.casefold().strip()
+    return any(
+        (re.search(pattern, lowered) if pattern.startswith(r"\b") else pattern.casefold() in lowered)
+        for pattern in GENERAL_EXPLANATION_PATTERNS
+    )
 
 
 def is_weather_query(question: str) -> bool:
@@ -257,6 +308,9 @@ def classify_intent(question: str) -> str:
 
     q_lower = question.lower().strip()
 
+    if is_pure_thanks(question):
+        return INTENT_GENERAL_CONVERSATION
+
     # 1. Scheme Inquiry
     for kw in SCHEME_KEYWORDS_EN:
         if kw in q_lower:
@@ -306,6 +360,12 @@ def classify_intent(question: str) -> str:
     for kw in CROP_RECOMMENDATION_KEYWORDS_TE + CROP_RECOMMENDATION_KEYWORDS_HI:
         if kw in q_lower:
             return INTENT_CROP_RECOMMENDATION
+    if "ਪਰਾਲੀ" in q_lower or "stubble" in q_lower:
+        return INTENT_CROP_RECOMMENDATION
+
+    # Tier 1 explanatory questions are safe without approved evidence.
+    if is_general_explanation(question):
+        return INTENT_GENERAL_EXPLANATION
 
     # 5. General Greeting / Identity
     for kw in GREETING_KEYWORDS_EN:
@@ -314,6 +374,8 @@ def classify_intent(question: str) -> str:
     for kw in GREETING_KEYWORDS_TE + GREETING_KEYWORDS_HI:
         if kw in q_lower:
             return INTENT_GENERAL_CONVERSATION
+    if any(greeting in q_lower for greeting in ("ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "ਨਮਸਕਾਰ", "নমস্কার", "નમસ્તે", "வணக்கம்", "ನಮಸ್ಕಾರ", "നമസ്കാരം")):
+        return INTENT_GENERAL_CONVERSATION
 
     # Default to general agricultural advice
     return INTENT_AGRICULTURAL_ADVICE

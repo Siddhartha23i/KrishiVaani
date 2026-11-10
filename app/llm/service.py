@@ -33,6 +33,17 @@ from app.llm.exceptions import (
 logger = logging.getLogger(__name__)
 
 
+def normalize_response_style(text: str) -> str:
+    """Apply the short spoken-response style without cutting inside a sentence."""
+    if not text:
+        return text
+    normalized = re.sub(r"(?m)(^|(?<=[.!?।])\s+)అండి\s*,?\s*", r"\1", text.strip())
+    sentences = re.split(r"(?<=[.!?।])\s+", normalized)
+    if len(sentences) > 4:
+        normalized = " ".join(sentences[:4]).strip()
+    return normalized
+
+
 class LLMProvider(Protocol):
     model_id: str
 
@@ -49,12 +60,12 @@ BASE_SYSTEM_INSTRUCTION = """You are కృషివాణి, an AI agricultura
 Your primary mission is farmer safety, financial security, and strict evidence-grounded truth.
 
 CORE ADVISORY RULES:
-1. EVIDENCE GROUNDING: You must answer agricultural factual questions ONLY using the explicitly supplied approved evidence. Never invent, extrapolate, or generalize recommendations beyond what the evidence states.
+1. TIERED POLICY: For Tier 1 general explanatory questions, you may answer from general model knowledge and must not mention missing bulletins. For Tier 2 live weather, use only fetched weather facts. For Tier 3 consequential claims, use only explicitly supplied approved evidence; never invent crop, variety, sowing, chemical, dose, scheme eligibility/amount, price, yield, or profit claims.
 2. MISSING PARAMETERS: If a farmer asks for crop, sowing, or management advice without necessary field parameters (such as specific mandal/village, season, soil condition, or water availability), DO NOT recommend a crop. Identify what is missing and ask concise clarifying questions.
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
 5. RESTRICTIONS: Preserve all geographical, crop, variety, and validity-period restrictions stated in the evidence.
-6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, or asterisks. If responding in Telugu, use standard conversational Telugu.
+6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, and no repetition. Never begin a sentence with "అండి"; use it at most once at the end of a sentence when natural. Avoid markdown formatting, tables, or asterisks. If responding in Telugu, use standard conversational Telugu.
 
 OUTPUT FORMAT:
 Return valid JSON only matching this schema:
@@ -73,7 +84,7 @@ TELEGRAM_SYSTEM_INSTRUCTION = """You are కృషివాణి, an AI agricul
 Your primary mission is farmer safety, financial security, and strict evidence-grounded truth.
 
 CORE ADVISORY RULES:
-1. EVIDENCE GROUNDING: You must answer agricultural factual questions ONLY using the explicitly supplied approved evidence. Never invent, extrapolate, or generalize recommendations beyond what the evidence states.
+1. TIERED POLICY: For Tier 1 general explanatory questions, you may answer from general model knowledge and must not mention missing bulletins. For Tier 2 live weather, use only fetched weather facts. For Tier 3 consequential claims, use only explicitly supplied approved evidence; never invent crop, variety, sowing, chemical, dose, scheme eligibility/amount, price, yield, or profit claims.
 2. MISSING PARAMETERS: If a farmer asks for crop, sowing, or management advice without necessary field parameters (such as specific mandal/village, season, soil condition, or water availability), DO NOT recommend a crop. Identify what is missing and ask concise clarifying questions.
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
@@ -81,7 +92,8 @@ CORE ADVISORY RULES:
 6. SPOKEN VOICE OUTPUT & NATURAL CONVERSATIONAL TELUGU (Telegram Channel):
    - Use evidence only when it is directly relevant to the farmer's question; ignore unrelated weather or safety evidence.
    - If evidence only partly covers the question, give the supported part first, then clearly say what is missing.
-   - Answer in at most 3 short complete sentences. Never stop mid-sentence.
+   - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, or repetition.
+   - Never begin a reply or sentence with "అండి". Use "అండి" at most once at the end of a sentence when natural.
    - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, asterisks, and NEVER use parentheses () anywhere in your Telugu response.
    - For Telugu (te-IN or Telugu):
      * Use natural everyday conversational Telugu (Telangana conversational style, friendly, positive, and respectful with 'అండి').
@@ -175,6 +187,7 @@ class LLMReasoningService:
             validated_response.safety_status = "REJECTED"
         val_ns = time.perf_counter_ns() - t_val_start
         validated_response.validation_latency_ms = round(val_ns / 1_000_000.0, 3)
+        validated_response.response = normalize_response_style(validated_response.response)
 
         return validated_response
 
@@ -210,6 +223,7 @@ class LLMReasoningService:
         validated_response.validation_latency_ms = round(
             (time.perf_counter_ns() - t_val_start) / 1_000_000.0, 3
         )
+        validated_response.response = normalize_response_style(validated_response.response)
         return validated_response
 
     def _build_prompt_messages(self, request: LLMReasoningRequest) -> List[Dict[str, str]]:

@@ -135,6 +135,9 @@ class Settings(BaseSettings):
     SARVAM_MAX_TOKENS: int = 900
     SARVAM_LENGTH_RETRY_MULTIPLIER: float = 1.5
 
+    # Only voices confirmed in the checked-in configuration are enabled.
+    TTS_VOICE_MAP: dict[str, str] = {"te-IN": "Kaveri"}
+
     # PJTAU Agromet Advisories (Phase 6.3 Integration)
     PJTAU_ARCHIVE_URL: str = "https://pjtau.edu.in/agromet-advisories/"
     PJTAU_DATA_DIR: Path = BASE_DIR / "data" / "pjtau"

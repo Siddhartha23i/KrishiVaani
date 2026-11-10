@@ -67,7 +67,9 @@ from app.conversation.intent import (
     INTENT_GOVERNMENT_SCHEME,
     INTENT_AGRICULTURAL_ADVICE,
     INTENT_GENERAL_CONVERSATION,
+    INTENT_GENERAL_EXPLANATION,
     is_pure_greeting,
+    is_pure_thanks,
 )
 from app.telegram.memory import ConversationMemoryStore
 
@@ -77,7 +79,7 @@ logger = logging.getLogger(__name__)
 def normalize_language(lang_input: Optional[str]) -> Tuple[str, str]:
     """
     Normalize language input into (standard_code, prompt_language_name).
-    Returns: ('te-IN', 'Telugu'), ('hi-IN', 'Hindi'), or ('en-IN', 'English').
+    Returns a normalized Indian language code and prompt language.
     """
     if not lang_input:
         return "te-IN", "Telugu"
@@ -94,6 +96,14 @@ def normalize_language(lang_input: Optional[str]) -> Tuple[str, str]:
         return "ta-IN", "Tamil"
     elif clean.startswith("mr") or "marathi" in clean:
         return "mr-IN", "Marathi"
+    elif clean.startswith("ml") or "malayalam" in clean:
+        return "ml-IN", "Malayalam"
+    elif clean.startswith("pa") or "punjabi" in clean:
+        return "pa-IN", "Punjabi"
+    elif clean.startswith("bn") or "bengali" in clean:
+        return "bn-IN", "Bengali"
+    elif clean.startswith("gu") or "gujarati" in clean:
+        return "gu-IN", "Gujarati"
 
     # Default to Telugu for Telangana farmers
     return "te-IN", "Telugu"
@@ -152,12 +162,27 @@ class ConversationOrchestrator:
         channel = "telegram" if is_telegram else (getattr(request, "channel", None) or "default")
 
         if is_pure_greeting(request.question):
-            greeting = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+            greeting = self._localized_greeting(lang_code)
             latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
             return ConversationResponse(
                 intent=INTENT_GENERAL_CONVERSATION,
                 language=lang_code,
                 response_text=greeting,
+                is_abstention=False,
+                evidence_citations=[],
+                weather_metadata=None,
+                safety_status="PASSED",
+                safety_validation_status="PASSED",
+                safety_reason=None,
+                latency_breakdown_ms=latencies,
+            )
+
+        if is_pure_thanks(request.question):
+            latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
+            return ConversationResponse(
+                intent=INTENT_GENERAL_CONVERSATION,
+                language=lang_code,
+                response_text=self._localized_thanks(lang_code),
                 is_abstention=False,
                 evidence_citations=[],
                 weather_metadata=None,
@@ -191,6 +216,7 @@ class ConversationOrchestrator:
         # 3. Intent Classification
         t0 = time.perf_counter()
         detected_intent = classify_intent(request.question)
+        is_general_explanation_q = detected_intent == INTENT_GENERAL_EXPLANATION
         is_warning_q = is_weather_warning_query(request.question)
         # Phase 8.9: Lightning/thunderstorm safety questions must NOT be routed through
         # the weather forecast pipeline. They ask for precaution advice (which is served
@@ -199,12 +225,13 @@ class ConversationOrchestrator:
         is_lightning_safety = is_lightning_safety_query(request.question)
         needs_weather = (
             not is_lightning_safety
+            and not is_general_explanation_q
             and (is_weather_query(request.question) or (detected_intent == INTENT_WEATHER_INQUIRY) or is_warning_q)
         )
         latencies["intent_classification_ms"] = round((time.perf_counter() - t0) * 1000, 2)
 
         # 3.1 Dedicated IMD District Weather Warning Flow (Phase 7.8)
-        if is_warning_q:
+        if is_warning_q and not is_general_explanation_q:
             district = resolved_context.district if resolved_context else None
             if not district:
                 # District not confirmed - strictly ask farmer to confirm district
@@ -300,22 +327,38 @@ class ConversationOrchestrator:
             and resolved_context.state.strip().lower() != "telangana"
         )
 
-        if is_out_of_state and not needs_weather:
+        if is_out_of_state and not needs_weather and not is_general_explanation_q:
             return self._create_out_of_state_response(
                 lang_code, prompt_lang, detected_intent, request.question
             )
 
         # 5. Approved Knowledge Retrieval (Phase 7.3)
         t0 = time.perf_counter()
-        retrieval_filter = KnowledgeRetrievalFilter(
-            farmer_district=resolved_context.district if resolved_context else None,
-            farmer_mandal=resolved_context.mandal if resolved_context else None,
-            farmer_village=resolved_context.village if resolved_context else None,
-            crop_name=resolved_context.crop_name if resolved_context else None,
-            as_of_date=request.as_of_date,
+        evidence_result = EvidenceRetrievalResult(
+            items=[],
+            total_eligible=0,
+            abstention_reason=None,
+            as_of_date=request.as_of_date or date.today().isoformat(),
         )
-        evidence_result: EvidenceRetrievalResult = self.knowledge_adapter.retrieve_approved_evidence(retrieval_filter)
-        approved_items = [] if is_out_of_state else evidence_result.items
+        evidence_allowed_intents = {
+            INTENT_CROP_RECOMMENDATION: "crop_management",
+            INTENT_PEST_DISEASE_INQUIRY: "pest_management",
+            INTENT_FERTILIZER_GUIDANCE: "nutrient_management",
+            INTENT_GOVERNMENT_SCHEME: "government_schemes",
+        }
+        category = evidence_allowed_intents.get(detected_intent)
+        if category and not is_out_of_state:
+            retrieval_filter = KnowledgeRetrievalFilter(
+                farmer_state=resolved_context.state if resolved_context and resolved_context.state else "Telangana",
+                farmer_district=resolved_context.district if resolved_context else None,
+                farmer_mandal=resolved_context.mandal if resolved_context else None,
+                farmer_village=resolved_context.village if resolved_context else None,
+                crop_name=resolved_context.crop_name if resolved_context else None,
+                category=category,
+                as_of_date=request.as_of_date,
+            )
+            evidence_result = self.knowledge_adapter.retrieve_approved_evidence(retrieval_filter)
+        approved_items = evidence_result.items
         latencies["knowledge_retrieval_ms"] = round((time.perf_counter() - t0) * 1000, 2)
 
         # 6. Groq LLM Reasoning Service Execution (Phase 7.2)
@@ -396,6 +439,74 @@ class ConversationOrchestrator:
             latency_breakdown_ms=latencies,
         )
 
+    @staticmethod
+    def _localized_greeting(lang_code: str) -> str:
+        return {
+            "te-IN": "నమస్తే! నేను కృషివాణిని. పంటలు లేదా వాతావరణం గురించి అడగండి.",
+            "hi-IN": "नमस्ते! मैं कृषिवाणी हूँ। फसल या मौसम के बारे में पूछिए।",
+            "en-IN": "Hello! I am KrishiVaani. Ask me about crops or weather.",
+            "ta-IN": "வணக்கம்! நான் கிருஷிவாணி. பயிர்கள் அல்லது வானிலை பற்றி கேளுங்கள்.",
+            "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿವಾಣಿ. ಬೆಳೆಗಳು ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ.",
+            "ml-IN": "നമസ്കാരം! ഞാൻ കൃഷിവാണിയാണ്. വിളകളെയോ കാലാവസ്ഥയെയോ കുറിച്ച് ചോദിക്കൂ.",
+            "mr-IN": "नमस्कार! मी कृषिवाणी आहे. पिके किंवा हवामानाबद्दल विचारा.",
+            "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਵਾਣੀ ਹਾਂ। ਫਸਲਾਂ ਜਾਂ ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ।",
+            "bn-IN": "নমস্কার! আমি কৃষিবাণী। ফসল বা আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন।",
+            "gu-IN": "નમસ્તે! હું કૃષિવાણી છું. પાક અથવા હવામાન વિશે પૂછો.",
+        }.get(lang_code, "Hello! I am KrishiVaani. Ask me about crops or weather.")
+
+    @staticmethod
+    def _localized_thanks(lang_code: str) -> str:
+        return {
+            "te-IN": "ధన్యవాదాలు. మీకు ఇంకేదైనా సందేహం ఉంటే అడగండి.",
+            "hi-IN": "धन्यवाद। कोई और सवाल हो तो पूछिए।",
+            "en-IN": "You are welcome. Ask if you have another question.",
+            "ta-IN": "நன்றி. வேறு கேள்வி இருந்தால் கேளுங்கள்.",
+            "kn-IN": "ಧನ್ಯವಾದಗಳು. ಇನ್ನೇನಾದರೂ ಪ್ರಶ್ನೆ ಇದ್ದರೆ ಕೇಳಿ.",
+            "ml-IN": "നന്ദി. മറ്റൊരു ചോദ്യം ഉണ്ടെങ്കിൽ ചോദിക്കൂ.",
+            "mr-IN": "धन्यवाद. आणखी प्रश्न असल्यास विचारा.",
+            "pa-IN": "ਧੰਨਵਾਦ। ਹੋਰ ਕੋਈ ਸਵਾਲ ਹੋਵੇ ਤਾਂ ਪੁੱਛੋ।",
+            "bn-IN": "ধন্যবাদ। আর কোনো প্রশ্ন থাকলে জিজ্ঞাসা করুন।",
+            "gu-IN": "આભાર. બીજો કોઈ પ્રશ્ન હોય તો પૂછો.",
+        }.get(lang_code, "You are welcome. Ask if you have another question.")
+
+    @staticmethod
+    def _localized_weather_prompt(kind: str, lang_code: str) -> str:
+        messages = {
+            "consent": {
+                "ta-IN": "வானிலை தகவலுக்கு உங்கள் இருப்பிடத்தை வானிலை சேவையுடன் பகிர ஒப்புதல் தேவை. ஒப்புதல் அளிக்கவும்.",
+                "kn-IN": "ಹವಾಮಾನ ಮಾಹಿತಿಗಾಗಿ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹವಾಮಾನ ಸೇವೆಯೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಲು ಒಪ್ಪಿಗೆ ಅಗತ್ಯ. ದಯವಿಟ್ಟು ಒಪ್ಪಿಗೆ ನೀಡಿ.",
+                "ml-IN": "കാലാവസ്ഥാ വിവരങ്ങൾക്ക് നിങ്ങളുടെ സ്ഥലം പങ്കിടാനുള്ള സമ്മതം ആവശ്യമാണ്. ദയവായി സമ്മതം നൽകൂ.",
+                "mr-IN": "हवामान माहितीसाठी तुमचे ठिकाण हवामान सेवेसोबत शेअर करण्याची संमती द्या.",
+                "pa-IN": "ਮੌਸਮ ਦੀ ਜਾਣਕਾਰੀ ਲਈ ਆਪਣਾ ਟਿਕਾਣਾ ਸਾਂਝਾ ਕਰਨ ਦੀ ਸਹਿਮਤੀ ਦਿਓ।",
+                "bn-IN": "আবহাওয়ার তথ্যের জন্য আপনার অবস্থান শেয়ার করার সম্মতি দিন।",
+                "gu-IN": "હવામાન માહિતી માટે તમારું સ્થાન શેર કરવાની સંમતિ આપો.",
+            },
+            "location": {
+                "ta-IN": "உள்ளூர் வானிலை அறிய உங்கள் மாவட்டம் அல்லது வட்டத்தின் பெயரைச் சொல்லுங்கள்.",
+                "kn-IN": "ಸ್ಥಳೀಯ ಹವಾಮಾನಕ್ಕಾಗಿ ನಿಮ್ಮ ಜಿಲ್ಲೆ ಅಥವಾ ಮಂಡಲದ ಹೆಸರನ್ನು ತಿಳಿಸಿ.",
+                "ml-IN": "പ്രാദേശിക കാലാവസ്ഥയ്ക്കായി നിങ്ങളുടെ ജില്ലയോ മണ്ഡലമോ പറയൂ.",
+                "mr-IN": "स्थानिक हवामानासाठी तुमचा जिल्हा किंवा तालुका सांगा.",
+                "pa-IN": "ਸਥਾਨਕ ਮੌਸਮ ਲਈ ਆਪਣਾ ਜ਼ਿਲ੍ਹਾ ਜਾਂ ਮੰਡਲ ਦੱਸੋ।",
+                "bn-IN": "স্থানীয় আবহাওয়ার জন্য আপনার জেলা বা মণ্ডলের নাম বলুন।",
+                "gu-IN": "સ્થાનિક હવામાન માટે તમારો જિલ્લો અથવા મંડળ જણાવો.",
+            },
+            "error": {
+                "ta-IN": "தொழில்நுட்ப சிக்கலால் வானிலை தகவல் இப்போது கிடைக்கவில்லை. சிறிது நேரம் கழித்து முயற்சிக்கவும்.",
+                "kn-IN": "ತಾಂತ್ರಿಕ ತೊಂದರೆಯಿಂದ ಹವಾಮಾನ ಮಾಹಿತಿ ಈಗ ಲಭ್ಯವಿಲ್ಲ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
+                "ml-IN": "സാങ്കേതിക പ്രശ്നം കാരണം കാലാവസ്ഥാ വിവരം ഇപ്പോൾ ലഭ്യമല്ല. കുറച്ച് കഴിഞ്ഞ് ശ്രമിക്കൂ.",
+                "mr-IN": "तांत्रिक अडचणीमुळे हवामान माहिती सध्या उपलब्ध नाही. थोड्या वेळाने पुन्हा प्रयत्न करा.",
+                "pa-IN": "ਤਕਨੀਕੀ ਸਮੱਸਿਆ ਕਾਰਨ ਮੌਸਮ ਦੀ ਜਾਣਕਾਰੀ ਹੁਣ ਉਪਲਬਧ ਨਹੀਂ। ਕੁਝ ਦੇਰ ਬਾਅਦ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+                "bn-IN": "প্রযুক্তিগত সমস্যার কারণে আবহাওয়ার তথ্য এখন পাওয়া যাচ্ছে না। কিছুক্ষণ পরে চেষ্টা করুন।",
+                "gu-IN": "તકનીકી સમસ્યાને કારણે હવામાન માહિતી હાલમાં ઉપલબ્ધ નથી. થોડી વાર પછી પ્રયાસ કરો.",
+            },
+        }
+        defaults = {
+            "consent": "To access weather information, your explicit consent to share your location with third-party weather providers is required. Please provide consent to enable weather updates.",
+            "location": "Please specify your district or mandal in Telangana to check localized weather conditions.",
+            "error": "Weather information is temporarily unavailable due to a service error. Please try again shortly.",
+        }
+        return messages.get(kind, {}).get(lang_code, defaults.get(kind, "Please provide your district or mandal for local weather information."))
+
     def _create_out_of_state_response(
         self, lang_code: str, prompt_lang: str, intent: str, question: str
     ) -> ConversationResponse:
@@ -419,6 +530,35 @@ class ConversationOrchestrator:
                 "You can also check the IMD district agromet advisory in the Mausam or Meghdoot app."
                 if specific
                 else "As general information, follow your state agriculture department's guidance and check current weather before making farm decisions."
+            ),
+            "ta-IN": (
+                "உங்கள் மாநிலத்திற்கான இந்த பயிர், பூச்சி அல்லது திட்டத்தின் சரிபார்க்கப்பட்ட ஆலோசனை என்னிடம் இல்லை. "
+                "கிசான் கால் சென்டர் 1800-180-1551, மாநில வேளாண்மைத் துறை அல்லது அருகிலுள்ள KVK-யை தொடர்புகொள்ளுங்கள்."
+                if specific else "பொதுவான தகவலாக, உங்கள் மாநில வேளாண்மைத் துறை ஆலோசனையைப் பின்பற்றி தற்போதைய வானிலையைப் பார்த்து முடிவு செய்யுங்கள்."
+            ),
+            "kn-IN": (
+                "ನಿಮ್ಮ ರಾಜ್ಯದ ಈ ಬೆಳೆ, ಕೀಟ ಅಥವಾ ಯೋಜನೆಗೆ ಪರಿಶೀಲಿತ ಸಲಹೆ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ಕಿಸಾನ್ ಕಾಲ್ ಸೆಂಟರ್ 1800-180-1551, ರಾಜ್ಯ ಕೃಷಿ ಇಲಾಖೆ ಅಥವಾ ಹತ್ತಿರದ KVK ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
+                if specific else "ಸಾಮಾನ್ಯ ಮಾಹಿತಿಯಾಗಿ, ನಿಮ್ಮ ರಾಜ್ಯ ಕೃಷಿ ಇಲಾಖೆಯ ಸಲಹೆ ಮತ್ತು ಪ್ರಸ್ತುತ ಹವಾಮಾನವನ್ನು ನೋಡಿ ನಿರ್ಧರಿಸಿ."
+            ),
+            "ml-IN": (
+                "നിങ്ങളുടെ സംസ്ഥാനത്തെ ഈ വിള, കീടം അല്ലെങ്കിൽ പദ്ധതിക്ക് പരിശോധിച്ച ഉപദേശം എന്റെ പക്കൽ ഇല്ല. കിസാൻ കോൾ സെന്റർ 1800-180-1551, കൃഷി വകുപ്പ് അല്ലെങ്കിൽ അടുത്തുള്ള KVK-യെ ബന്ധപ്പെടൂ."
+                if specific else "പൊതുവായ വിവരമായി, സംസ്ഥാന കൃഷി വകുപ്പിന്റെ നിർദ്ദേശവും നിലവിലെ കാലാവസ്ഥയും നോക്കി തീരുമാനിക്കൂ."
+            ),
+            "mr-IN": (
+                "तुमच्या राज्यातील या पिकासाठी, किडीसाठी किंवा योजनेसाठी पडताळलेला सल्ला माझ्याकडे नाही. किसान कॉल सेंटर 1800-180-1551, राज्य कृषी विभाग किंवा जवळच्या KVK शी संपर्क करा."
+                if specific else "सामान्य माहितीसाठी, राज्य कृषी विभागाचा सल्ला आणि सध्याचे हवामान पाहून निर्णय घ्या."
+            ),
+            "pa-IN": (
+                "ਤੁਹਾਡੇ ਰਾਜ ਦੀ ਇਸ ਫਸਲ, ਕੀੜੇ ਜਾਂ ਯੋਜਨਾ ਲਈ ਪ੍ਰਮਾਣਿਤ ਸਲਾਹ ਮੇਰੇ ਡੇਟਾ ਵਿੱਚ ਨਹੀਂ ਹੈ। ਕਿਸਾਨ ਕਾਲ ਸੈਂਟਰ 1800-180-1551, ਰਾਜ ਖੇਤੀਬਾੜੀ ਵਿਭਾਗ ਜਾਂ ਨੇੜਲੇ KVK ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+                if specific else "ਆਮ ਜਾਣਕਾਰੀ ਵਜੋਂ, ਆਪਣੇ ਰਾਜ ਦੇ ਖੇਤੀਬਾੜੀ ਵਿਭਾਗ ਦੀ ਸਲਾਹ ਅਤੇ ਮੌਜੂਦਾ ਮੌਸਮ ਦੇਖ ਕੇ ਫੈਸਲਾ ਕਰੋ।"
+            ),
+            "bn-IN": (
+                "আপনার রাজ্যের এই ফসল, কীট বা প্রকল্পের যাচাই করা পরামর্শ আমার কাছে নেই। কিষান কল সেন্টার 1800-180-1551, রাজ্য কৃষি দপ্তর বা নিকটস্থ KVK-র সঙ্গে যোগাযোগ করুন।"
+                if specific else "সাধারণ তথ্য হিসেবে, রাজ্য কৃষি দপ্তরের পরামর্শ এবং বর্তমান আবহাওয়া দেখে সিদ্ধান্ত নিন।"
+            ),
+            "gu-IN": (
+                "તમારા રાજ્યના આ પાક, જીવાત અથવા યોજનાની ચકાસેલી સલાહ મારી પાસે નથી. કિસાન કૉલ સેન્ટર 1800-180-1551, રાજ્ય કૃષિ વિભાગ અથવા નજીકના KVKનો સંપર્ક કરો."
+                if specific else "સામાન્ય માહિતી તરીકે, રાજ્ય કૃષિ વિભાગની સલાહ અને વર્તમાન હવામાન જોઈને નિર્ણય લો."
             ),
         }
         text = messages.get(lang_code)
@@ -887,10 +1027,7 @@ class ConversationOrchestrator:
                 "कृपया मौसम सेवाओं के लिए सहमति प्रदान करें।"
             )
         else:
-            msg = (
-                "To access weather information, your explicit consent to share your location with "
-                "third-party weather providers is required under data privacy policy. Please provide consent to enable weather updates."
-            )
+            msg = self._localized_weather_prompt("consent", lang_code)
 
         return ConversationResponse(
             intent=detected_intent,
@@ -923,7 +1060,7 @@ class ConversationOrchestrator:
         elif lang_code.startswith("hi"):
             msg = "आपने अलग-अलग स्थानों के नाम बताए हैं। कृपया स्पष्ट करें कि आपको किस गांव या मंडल के मौसम की जानकारी चाहिए।"
         else:
-            msg = "You mentioned multiple different locations. Please clarify which village or mandal in Telangana you need weather details for."
+            msg = self._localized_weather_prompt("location", lang_code)
 
         return ConversationResponse(
             intent=INTENT_WEATHER_INQUIRY,
@@ -953,7 +1090,7 @@ class ConversationOrchestrator:
         elif lang_code.startswith("hi"):
             msg = "मौसम की जानकारी के लिए कृपया अपने जिले या मंडल का नाम बताएं।"
         else:
-            msg = "Please specify your district or mandal in Telangana to check localized weather conditions."
+            msg = self._localized_weather_prompt("location", lang_code)
 
         return ConversationResponse(
             intent=detected_intent,
@@ -983,7 +1120,7 @@ class ConversationOrchestrator:
         elif lang_code.startswith("hi"):
             msg = "तकनीकी समस्या के कारण वर्तमान में मौसम की जानकारी उपलब्ध नहीं है। कृपया कुछ समय बाद पुनः प्रयास करें।"
         else:
-            msg = "Weather information is temporarily unavailable due to a service error. Please try again shortly."
+            msg = self._localized_weather_prompt("error", lang_code)
 
         return ConversationResponse(
             intent=INTENT_WEATHER_INQUIRY,
@@ -1013,7 +1150,7 @@ class ConversationOrchestrator:
         elif lang_code.startswith("hi"):
             msg = "आधिकारिक IMD मौसम चेतावनियों की जांच के लिए कृपया तेलंगाना में अपने जिले की पुष्टि करें।"
         else:
-            msg = "Please confirm your district in Telangana to check official IMD district weather warnings."
+            msg = self._localized_weather_prompt("location", lang_code)
 
         return ConversationResponse(
             intent=INTENT_WEATHER_INQUIRY,

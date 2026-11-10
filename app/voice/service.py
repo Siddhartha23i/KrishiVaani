@@ -52,12 +52,26 @@ EMPTY_TRANSCRIPT_MESSAGES = {
     "te-IN": "మీ సందేశం స్పష్టంగా వినిపించలేదు. దయచేసి మీ వ్యవసాయ సందేహాన్ని లేదా అడిగే విషయాన్ని మళ్ళీ స్పష్టంగా మాట్లాడండి.",
     "hi-IN": "आपकी आवाज़ स्पष्ट नहीं सुनाई दी। कृपया अपना कृषि प्रश्न फिर से स्पष्ट बोलें।",
     "en-IN": "Your voice message was not clearly audible. Please speak your agricultural question again clearly.",
+    "ta-IN": "உங்கள் குரல் செய்தி தெளிவாக கேட்கவில்லை. உங்கள் விவசாயக் கேள்வியை மீண்டும் தெளிவாகப் பேசுங்கள்.",
+    "kn-IN": "ನಿಮ್ಮ ಧ್ವನಿ ಸಂದೇಶ ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ನಿಮ್ಮ ಕೃಷಿ ಪ್ರಶ್ನೆಯನ್ನು ಮತ್ತೆ ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿ.",
+    "ml-IN": "നിങ്ങളുടെ ശബ്ദസന്ദേശം വ്യക്തമായി കേൾക്കാനായില്ല. നിങ്ങളുടെ കൃഷി ചോദ്യം വീണ്ടും വ്യക്തമായി പറയൂ.",
+    "mr-IN": "तुमचा आवाज संदेश स्पष्ट ऐकू आला नाही. तुमचा कृषी प्रश्न पुन्हा स्पष्टपणे बोला.",
+    "pa-IN": "ਤੁਹਾਡਾ ਵੌਇਸ ਸੁਨੇਹਾ ਸਾਫ਼ ਨਹੀਂ ਸੁਣਿਆ। ਆਪਣਾ ਖੇਤੀਬਾੜੀ ਸਵਾਲ ਫਿਰ ਸਾਫ਼ ਬੋਲੋ।",
+    "bn-IN": "আপনার ভয়েস বার্তা স্পষ্ট শোনা যায়নি। আপনার কৃষি প্রশ্নটি আবার পরিষ্কার করে বলুন।",
+    "gu-IN": "તમારો વૉઇસ સંદેશ સ્પષ્ટ સંભળાયો નહીં. તમારો કૃષિ પ્રશ્ન ફરી સ્પષ્ટ બોલો.",
 }
 
 STT_ERROR_MESSAGES = {
     "te-IN": "క్షమించండి, మీ వాయిస్ సందేశాన్ని ప్రాసెస్ చేయడంలో సాంకేతిక సమస్య ఏర్పడింది. దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి.",
     "hi-IN": "क्षमा करें, आपके ध्वनि संदेश को संसाधित करने में तकनीकी समस्या हुई। कृपया कुछ समय बाद पुनः प्रयास करें।",
     "en-IN": "Sorry, there was a technical issue processing your voice message. Please try again after some time.",
+    "ta-IN": "மன்னிக்கவும், குரல் செய்தியை செயலாக்குவதில் சிக்கல் ஏற்பட்டது. சிறிது நேரம் கழித்து முயற்சிக்கவும்.",
+    "kn-IN": "ಕ್ಷಮಿಸಿ, ಧ್ವನಿ ಸಂದೇಶವನ್ನು ಸಂಸ್ಕರಿಸುವಲ್ಲಿ ತೊಂದರೆ ಉಂಟಾಗಿದೆ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
+    "ml-IN": "ക്ഷമിക്കണം, ശബ്ദസന്ദേശം പ്രോസസ്സ് ചെയ്യുന്നതിൽ പ്രശ്നമുണ്ടായി. കുറച്ച് കഴിഞ്ഞ് ശ്രമിക്കൂ.",
+    "mr-IN": "माफ करा, आवाज संदेशावर प्रक्रिया करताना अडचण आली. थोड्या वेळाने पुन्हा प्रयत्न करा.",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਵੌਇਸ ਸੁਨੇਹੇ ਦੀ ਪ੍ਰਕਿਰਿਆ ਵਿੱਚ ਸਮੱਸਿਆ ਆਈ। ਕੁਝ ਦੇਰ ਬਾਅਦ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "bn-IN": "দুঃখিত, ভয়েস বার্তা প্রক্রিয়া করতে সমস্যা হয়েছে। কিছুক্ষণ পরে চেষ্টা করুন।",
+    "gu-IN": "માફ કરશો, વૉઇસ સંદેશ પ્રક્રિયા કરવામાં સમસ્યા આવી. થોડી વાર પછી પ્રયાસ કરો.",
 }
 
 
@@ -200,7 +214,7 @@ class VoicePipelineService:
                 language_code=target_lang,
                 model="prisma-v3.0",
                 format="transcribe",
-                topic="Telangana farming and agriculture",
+                topic="Indian agriculture",
             )
             latencies["stt_ms"] = round((time.perf_counter() - t0) * 1000, 2)
         except Exception as e:
@@ -447,11 +461,10 @@ class VoicePipelineService:
         if not self.tts_client:
             raise TTSServiceError("Gnani TTS client is not configured.")
 
-        # Timbre v2.5 Kaveri voice
-        voice = "Kaveri"
         target_lang, _ = normalize_language(language)
-        if target_lang != "te-IN":
-            raise TTSServiceError(f"TTS is not configured for language {target_lang}.")
+        voice = settings.TTS_VOICE_MAP.get(target_lang)
+        if not voice:
+            raise TTSServiceError(f"TTS voice is not confirmed for language {target_lang}; text response required.")
         spoken_text = (
             prepare_telugu_text_for_voice(text)
             if (target_lang == "te-IN" and channel == "telegram")

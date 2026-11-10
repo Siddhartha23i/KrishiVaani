@@ -430,8 +430,8 @@ class TestVoicePipelineService(unittest.TestCase):
 
         self.assertEqual(result.detected_language, "hi-IN")
         self.assertEqual(result.response_text, "कपास की फसल के लिए अनुशंसित उर्वरक प्रति एकड़ 40 किलोग्राम यूरिया है।")
-        mock_tts.synthesize.assert_called_once()
-        self.assertEqual(mock_tts.synthesize.call_args[1]["language"], "hi-IN")
+        mock_tts.synthesize.assert_not_called()
+        self.assertTrue(result.is_fallback_text_only)
 
     def test_multilingual_english_support(self):
         mock_stt = MagicMock()
@@ -466,8 +466,8 @@ class TestVoicePipelineService(unittest.TestCase):
 
         self.assertEqual(result.detected_language, "en-IN")
         self.assertEqual(result.response_text, "The recommended fertilizer dose for cotton is 40 kg urea per acre.")
-        mock_tts.synthesize.assert_called_once()
-        self.assertEqual(mock_tts.synthesize.call_args[1]["language"], "en-IN")
+        mock_tts.synthesize.assert_not_called()
+        self.assertTrue(result.is_fallback_text_only)
 
     def test_voice_integration_with_imd_warning(self):
         mock_stt = MagicMock()
@@ -682,4 +682,3 @@ class TestLiveVoiceSmoke(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

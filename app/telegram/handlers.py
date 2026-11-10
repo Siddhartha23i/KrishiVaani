@@ -71,6 +71,17 @@ START_MESSAGE = (
     "చిన్న గమనిక: ఇది ప్రాథమిక సమాచారం మాత్రమే అండి. పంటకు తుది నిర్ణయం తీసుకునే ముందు మీ స్థానిక AO గారిని అడగండి."
     "\n\nమీ ముందు అడిగిన ప్రశ్నలను మెరుగైన సహాయం కోసం గుర్తుంచుకుంటాను. /forget పంపితే అవి తొలగిపోతాయి."
 )
+START_MESSAGES = {
+    "hi-IN": "नमस्ते! मैं कृषिवाणी हूँ। फसल और मौसम के सवाल पूछिए। मैं आपकी पिछली बातचीत याद रखता हूँ; /forget से उसे मिटा सकते हैं।",
+    "en-IN": "Hello! I am KrishiVaani. Ask about crops or weather. I remember earlier questions to help; use /forget to delete them.",
+    "ta-IN": "வணக்கம்! நான் கிருஷிவாணி. பயிர்கள் மற்றும் வானிலை பற்றி கேளுங்கள். /forget மூலம் முந்தைய கேள்விகளை நீக்கலாம்.",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿವಾಣಿ. ಬೆಳೆಗಳು ಮತ್ತು ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ. /forget ಮೂಲಕ ಹಿಂದಿನ ಪ್ರಶ್ನೆಗಳನ್ನು ಅಳಿಸಬಹುದು.",
+    "ml-IN": "നമസ്കാരം! ഞാൻ കൃഷിവാണിയാണ്. വിളകളെയും കാലാവസ്ഥയെയും കുറിച്ച് ചോദിക്കൂ. /forget ഉപയോഗിച്ച് പഴയ ചോദ്യങ്ങൾ നീക്കാം.",
+    "mr-IN": "नमस्कार! मी कृषिवाणी आहे. पिके आणि हवामानाबद्दल विचारा. /forget ने मागील प्रश्न हटवू शकता.",
+    "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਵਾਣੀ ਹਾਂ। ਫਸਲਾਂ ਅਤੇ ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ। /forget ਨਾਲ ਪੁਰਾਣੇ ਸਵਾਲ ਮਿਟਾ ਸਕਦੇ ਹੋ।",
+    "bn-IN": "নমস্কার! আমি কৃষিবাণী। ফসল ও আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন। /forget দিয়ে আগের প্রশ্ন মুছতে পারেন।",
+    "gu-IN": "નમસ્તે! હું કૃષિવાણી છું. પાક અને હવામાન વિશે પૂછો. /forgetથી જૂના પ્રશ્નો કાઢી શકો છો.",
+}
 
 GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
 
@@ -96,6 +107,10 @@ LANGUAGE_NAMES = {
     "kn-IN": "ಕನ್ನಡ",
     "ta-IN": "தமிழ்",
     "mr-IN": "मराठी",
+    "ml-IN": "മലയാളം",
+    "pa-IN": "ਪੰਜਾਬੀ",
+    "bn-IN": "বাংলা",
+    "gu-IN": "ગુજરાતી",
 }
 LOCALIZED_FALLBACKS = {
     "hi-IN": {
@@ -106,6 +121,17 @@ LOCALIZED_FALLBACKS = {
         "error": "Sorry, a technical problem occurred. Please wait a few seconds and try again.",
         "duration": "Your voice message is longer than 30 seconds. Please send a shorter message.",
     },
+    "te-IN": {
+        "error": "క్షమించండి, సాంకేతిక సమస్య వచ్చింది. కొన్ని సెకన్లు ఆగి మళ్లీ అడగండి.",
+        "duration": "మీ వాయిస్ సందేశం 30 సెకన్ల కంటే ఎక్కువగా ఉంది. చిన్న సందేశం పంపండి.",
+    },
+    "ta-IN": {"error": "மன்னிக்கவும், தொழில்நுட்ப சிக்கல் ஏற்பட்டது. சில விநாடிகள் கழித்து மீண்டும் கேளுங்கள்.", "duration": "உங்கள் குரல் செய்தி 30 விநாடிகளுக்கு மேல் உள்ளது. சிறிய செய்தியை அனுப்புங்கள்."},
+    "kn-IN": {"error": "ಕ್ಷಮಿಸಿ, ತಾಂತ್ರಿಕ ತೊಂದರೆ ಉಂಟಾಗಿದೆ. ಕೆಲವು ಸೆಕೆಂಡುಗಳ ನಂತರ ಮತ್ತೆ ಕೇಳಿ.", "duration": "ನಿಮ್ಮ ಧ್ವನಿ ಸಂದೇಶ 30 ಸೆಕೆಂಡುಗಳಿಗಿಂತ ಉದ್ದವಾಗಿದೆ. ಚಿಕ್ಕ ಸಂದೇಶ ಕಳುಹಿಸಿ."},
+    "mr-IN": {"error": "माफ करा, तांत्रिक अडचण आली. काही सेकंद थांबून पुन्हा विचारा.", "duration": "तुमचा आवाज संदेश ३० सेकंदांपेक्षा मोठा आहे. छोटा संदेश पाठवा."},
+    "ml-IN": {"error": "ക്ഷമിക്കണം, സാങ്കേതിക പ്രശ്നമുണ്ടായി. കുറച്ച് സെക്കൻഡ് കഴിഞ്ഞ് വീണ്ടും ചോദിക്കൂ.", "duration": "നിങ്ങളുടെ ശബ്ദസന്ദേശം 30 സെക്കൻഡിൽ കൂടുതലാണ്. ചെറിയ സന്ദേശം അയയ്ക്കൂ."},
+    "pa-IN": {"error": "ਮਾਫ਼ ਕਰਨਾ, ਤਕਨੀਕੀ ਸਮੱਸਿਆ ਆਈ। ਕੁਝ ਸਕਿੰਟ ਰੁਕ ਕੇ ਫਿਰ ਪੁੱਛੋ।", "duration": "ਤੁਹਾਡਾ ਵੌਇਸ ਸੁਨੇਹਾ 30 ਸਕਿੰਟ ਤੋਂ ਲੰਮਾ ਹੈ। ਛੋਟਾ ਸੁਨੇਹਾ ਭੇਜੋ।"},
+    "bn-IN": {"error": "দুঃখিত, প্রযুক্তিগত সমস্যা হয়েছে। কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।", "duration": "আপনার ভয়েস বার্তা ৩০ সেকেন্ডের বেশি। ছোট বার্তা পাঠান।"},
+    "gu-IN": {"error": "માફ કરશો, તકનીકી સમસ્યા આવી. થોડી સેકન્ડ પછી ફરી પૂછો.", "duration": "તમારો વૉઇસ સંદેશ 30 સેકન્ડથી લાંબો છે. ટૂંકો સંદેશ મોકલો."},
 }
 
 GREETING_PATTERNS = {
@@ -191,6 +217,14 @@ class TelegramHandler:
             return "ta-IN"
         if any("\u0c00" <= char <= "\u0c7f" for char in text):
             return "te-IN"
+        if any("\u0d00" <= char <= "\u0d7f" for char in text):
+            return "ml-IN"
+        if any("\u0a80" <= char <= "\u0aff" for char in text):
+            return "gu-IN"
+        if any("\u0980" <= char <= "\u09ff" for char in text):
+            return "bn-IN"
+        if any("\u0a00" <= char <= "\u0a7f" for char in text):
+            return "pa-IN"
         return "te-IN"
 
     def _stored_language(self, user_id: str) -> Optional[str]:
@@ -201,6 +235,21 @@ class TelegramHandler:
     @staticmethod
     def _localized_fallback(language: str, kind: str, default: str) -> str:
         return LOCALIZED_FALLBACKS.get(language, {}).get(kind, default)
+
+    @staticmethod
+    def _localized_greeting(language: str) -> str:
+        return {
+            "te-IN": "నమస్తే! నేను కృషివాణిని. పంటలు లేదా వాతావరణం గురించి అడగండి.",
+            "hi-IN": "नमस्ते! मैं कृषिवाणी हूँ। फसल या मौसम के बारे में पूछिए।",
+            "en-IN": "Hello! I am KrishiVaani. Ask me about crops or weather.",
+            "ta-IN": "வணக்கம்! நான் கிருஷிவாணி. பயிர்கள் அல்லது வானிலை பற்றி கேளுங்கள்.",
+            "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿವಾಣಿ. ಬೆಳೆಗಳು ಅಥವಾ ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ.",
+            "ml-IN": "നമസ്കാരം! ഞാൻ കൃഷിവാണിയാണ്. വിളകളെയോ കാലാവസ്ഥയെയോ കുറിച്ച് ചോദിക്കൂ.",
+            "mr-IN": "नमस्कार! मी कृषिवाणी आहे. पिके किंवा हवामानाबद्दल विचारा.",
+            "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਵਾਣੀ ਹਾਂ। ਫਸਲਾਂ ਜਾਂ ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ।",
+            "bn-IN": "নমস্কার! আমি কৃষিবাণী। ফসল বা আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন।",
+            "gu-IN": "નમસ્તે! હું કૃષિવાણી છું. પાક અથવા હવામાન વિશે પૂછો.",
+        }.get(language, GREETING_MESSAGE)
 
     def _save_turn_background(self, user_id: str, language: str, question: str, response) -> None:
         if getattr(response, "safety_status", None) != "PASSED":
@@ -264,6 +313,10 @@ class TelegramHandler:
             "kn-IN": "ಭಾಷೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಬದಲಿಸಲಾಗಿದೆ.",
             "ta-IN": "மொழி தமிழாக மாற்றப்பட்டது.",
             "mr-IN": "भाषा मराठी केली आहे.",
+            "ml-IN": "ഭാഷ മലയാളമാക്കി.",
+            "pa-IN": "ਭਾਸ਼ਾ ਪੰਜਾਬੀ ਕਰ ਦਿੱਤੀ ਹੈ।",
+            "bn-IN": "ভাষা বাংলা করা হয়েছে।",
+            "gu-IN": "ભાષા ગુજરાતીમાં બદલી છે.",
         }[code])
 
     async def handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -277,10 +330,11 @@ class TelegramHandler:
 
         t0 = time.perf_counter()
         user_id = update.effective_user.id if update.effective_user else "unknown"
-        logger.info("Handling /start from Telegram user: %s (update_id: %s)", user_id, update.update_id)
+        logger.info("Handling /start Telegram event (update_id: %s)", update.update_id)
 
         try:
-            await update.effective_message.reply_text(START_MESSAGE)
+            language = await asyncio.to_thread(self._stored_language, str(user_id)) or "te-IN"
+            await update.effective_message.reply_text(START_MESSAGES.get(language, START_MESSAGE))
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             logger.info(
                 "Telegram event: update_id=%s, type=/start, duration_ms=%.2f, status=success",
@@ -288,7 +342,7 @@ class TelegramHandler:
                 elapsed_ms,
             )
         except Exception as e:
-            logger.error("Failed to send /start response to user %s: %s", user_id, e, exc_info=True)
+            logger.error("Failed to send /start response: %s", type(e).__name__, exc_info=True)
 
     async def handle_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle incoming text message."""
@@ -306,7 +360,7 @@ class TelegramHandler:
         text = message.text.strip()
         preferred_language = await asyncio.to_thread(self._stored_language, user_id)
         preferred_language = preferred_language or self._language_hint(text)
-        logger.info("Handling Telegram text from user %s (update_id: %s)", user_id, update.update_id)
+        logger.info("Handling Telegram text event (update_id: %s)", update.update_id)
 
         try:
             # Load active session
@@ -314,7 +368,7 @@ class TelegramHandler:
 
             # 1. Check for explicit user location data deletion request
             if is_location_deletion_request(text):
-                logger.info("User %s requested location data deletion.", user_id)
+                logger.info("Telegram user requested location data deletion.")
                 self.session_repo.clear_location(user_id)
                 self.session_repo.clear_pending_query(user_id)
                 deletion_ack = "మీ లొకేషన్ వివరాలు విజయవంతంగా తొలగించబడ్డాయి."
@@ -329,7 +383,7 @@ class TelegramHandler:
 
             # 2. Check for explicit rejection / withdrawal of consent
             if is_consent_reject(text):
-                logger.info("User %s explicitly rejected or withdrew weather sharing consent.", user_id)
+                logger.info("Telegram user explicitly rejected or withdrew weather sharing consent.")
                 self.session_repo.set_consent(user_id, consent_given=False)
                 self.session_repo.clear_location(user_id)  # Purge stored location on consent withdrawal
                 self.session_repo.clear_pending_query(user_id)
@@ -348,13 +402,13 @@ class TelegramHandler:
 
             # 3. Check for affirmative consent grant (gated by awaiting_consent for short words)
             if is_consent_grant(text, awaiting_consent=session.awaiting_consent):
-                logger.info("User %s granted explicit weather sharing consent (awaiting=%s).", user_id, session.awaiting_consent)
+                logger.info("Telegram user granted explicit weather sharing consent (awaiting=%s).", session.awaiting_consent)
                 session = self.session_repo.set_consent(user_id, consent_given=True)
                 pending_query = session.pending_weather_query
                 self.session_repo.clear_pending_query(user_id)
 
                 if pending_query:
-                    logger.info("Resuming pending weather query for user %s", user_id)
+                    logger.info("Resuming pending weather query.")
                     pv, pm, pd, pp = extract_location_from_text(pending_query)
                     if any([pv, pm, pd, pp]):
                         self.session_repo.update_location(user_id, village=pv, mandal=pm, district=pd, pin_code=pp)
@@ -387,7 +441,7 @@ class TelegramHandler:
                         channel="telegram",
                     )
                     conv_res = await asyncio.to_thread(self.orchestrator.process_message, conv_req)
-                    reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
+                    reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
                     await message.reply_text(reply_text)
                     self._save_turn_background(user_id, preferred_language, text, conv_res)
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
@@ -418,8 +472,8 @@ class TelegramHandler:
 
             # 4. Greeting shortcut: return non-empty greeting immediately without calling LLM
             if is_greeting(text):
-                logger.info("Detected greeting from user %s, returning direct greeting.", user_id)
-                await message.reply_text(GREETING_MESSAGE)
+                logger.info("Detected Telegram greeting; returning direct greeting.")
+                await message.reply_text(self._localized_greeting(preferred_language))
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
                 logger.info(
                     "Telegram event: update_id=%s, type=text_greeting, duration_ms=%.2f, status=success",
@@ -431,7 +485,7 @@ class TelegramHandler:
             # 5. Location entity extraction from incoming text (only for non-consent, non-deletion, non-greeting messages)
             v, m, d, p = extract_location_from_text(text)
             if any([v, m, d, p]):
-                logger.info("Extracted location entities from Telegram text for user %s", user_id)
+                logger.info("Extracted location entities from Telegram text.")
                 self.session_repo.update_location(user_id, village=v, mandal=m, district=d, pin_code=p)
                 session = self.session_repo.get_session(user_id)
 
@@ -439,7 +493,7 @@ class TelegramHandler:
                 from app.conversation.intent import is_weather_query
                 if session.pending_weather_query and not is_weather_query(text):
                     pending_q = session.pending_weather_query
-                    logger.info("Resuming pending weather query '%s' with newly provided location for user %s", pending_q, user_id)
+                    logger.info("Resuming pending weather query with newly provided location.")
                     self.session_repo.clear_pending_query(user_id)
                     text = pending_q
 
@@ -484,16 +538,16 @@ class TelegramHandler:
 
             # 7. Check if orchestrator requested weather consent or location
             if getattr(conv_res, "safety_reason", None) == "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED":
-                logger.info("Weather consent required for user %s. Storing pending query.", user_id)
+                logger.info("Weather consent required. Storing pending query.")
                 self.session_repo.set_pending_query(user_id, text, awaiting_consent=True)
             elif getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
-                logger.info("Location required for user %s. Storing pending query.", user_id)
+                logger.info("Location required. Storing pending query.")
                 self.session_repo.set_pending_query(user_id, text, awaiting_consent=False)
             else:
                 # Weather or agricultural processing completed: clear temporary in-memory location context (Phase 8.5)
                 self.session_repo.clear_temp_location(user_id)
 
-            reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
+            reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
             await message.reply_text(reply_text)
             self._save_turn_background(user_id, "Telugu", text, conv_res)
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -504,7 +558,7 @@ class TelegramHandler:
             )
 
         except Exception as e:
-            logger.error("Error handling Telegram text message for user %s: %s", user_id, e, exc_info=True)
+            logger.error("Error handling Telegram text message: %s", type(e).__name__, exc_info=True)
             try:
                 await message.reply_text(self._localized_fallback(preferred_language, "error", FALLBACK_ERROR_MESSAGE))
             except Exception:
@@ -820,7 +874,7 @@ class TelegramHandler:
                     ]:
                         timings[k_dst] = round(timings.get(k_dst, 0.0) + (conv_lat.get(k_src) or 0.0), 2)
 
-                    reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
+                    reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
 
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
                         self.session_repo.set_pending_query(user_id, query_to_run, awaiting_consent=False)
@@ -857,7 +911,7 @@ class TelegramHandler:
             # 6D. Greeting shortcut for voice
             if is_greeting(transcript):
                 logger.info("Detected greeting in voice, returning direct voice greeting (update_id: %s).", update.update_id)
-                await self._reply_voice_telugu(message, GREETING_MESSAGE, timings_out=timings)
+                await self._reply_voice_telugu(message, self._localized_greeting(preferred_language), timings_out=timings)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
                 timings["total_ms"] = elapsed_ms
                 self._log_voice_telemetry(update.update_id, "voice_greeting", timings)
@@ -915,7 +969,7 @@ class TelegramHandler:
                     ]:
                         timings[k_dst] = round(timings.get(k_dst, 0.0) + (conv_lat.get(k_src) or 0.0), 2)
 
-                    reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
+                    reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
 
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
                         self.session_repo.set_pending_query(user_id, pending_q, awaiting_consent=False)

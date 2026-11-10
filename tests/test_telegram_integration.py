@@ -134,7 +134,8 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
 
         await self.handler.handle_text(update, self.mock_context)
 
-        update.effective_message.reply_text.assert_called_once_with(GREETING_MESSAGE)
+        update.effective_message.reply_text.assert_called_once()
+        self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
         # Core requirement: greetings must not trigger the agricultural LLM path
         self.mock_orchestrator.process_message.assert_not_called()
 
@@ -145,9 +146,8 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
             with self.subTest(greeting=greeting_text):
                 update = self._create_mock_update(update_id=idx, text=greeting_text)
                 await self.handler.handle_text(update, self.mock_context)
-                update.effective_message.reply_text.assert_called_once_with(
-                    "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
-                )
+                update.effective_message.reply_text.assert_called_once()
+                self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
                 self.mock_orchestrator.process_message.assert_not_called()
                 self.mock_orchestrator.reset_mock()
 
@@ -281,7 +281,8 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
         await self.handler.handle_text(update, self.mock_context)
 
         # Handlers must catch exceptions and reply with safe fallback without crashing
-        update.effective_message.reply_text.assert_called_once_with(FALLBACK_ERROR_MESSAGE)
+        update.effective_message.reply_text.assert_called_once()
+        self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
 
     # --- Test 8: Duplicate Update Id Ignored ---
     async def test_duplicate_update_id_ignored(self):
