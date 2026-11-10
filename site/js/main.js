@@ -146,3 +146,4 @@ document.querySelectorAll(".pipeline-step").forEach((el, i) => {
 document.querySelectorAll(".trust-card").forEach((el, i) => {
   el.dataset.delay = i * 100;
 });
+

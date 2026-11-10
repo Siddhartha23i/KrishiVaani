@@ -78,3 +78,4 @@ site/
 - Total page weight target: under 1 MB.
 - Respects `prefers-reduced-motion`.
 - Does **not** modify `app/`, `tests/`, `Dockerfile`, or other backend files.
+

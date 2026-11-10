@@ -74,3 +74,4 @@ Our own colors, content, and assets — no copied assets.
 | Hover card lift | ease | 200ms | translateY(-4px) |
 | Nav blur appear | ease | 150ms | backdrop-filter on scroll |
 | Live dot blink | ease-in-out | 1.5s infinite | Telegram live indicator |
+
