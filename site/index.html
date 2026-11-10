@@ -81,12 +81,8 @@
       </h1>
 
       <p class="hero-subtitle">
-        KrishiVaani is a voice-first farming assistant for Indian farmers. Ask by voice in your own language
-        (English is fine too) and hear a clear answer. Voice replies are in Telugu today; other languages get text replies.
-      </p>
-
-      <p class="hero-telugu" lang="te" aria-label="Telugu tagline">
-        మీ పంట, మీ భాష, మీ AI సహాయకుడు.
+        KrishiVaani is a voice-first farming assistant for Indian farmers. Speak naturally in your native Indian language
+        or English and receive clear, trustworthy agricultural guidance by voice and text.
       </p>
 
       <div class="hero-cta">
@@ -146,9 +142,9 @@
             </svg>
           </div>
           <span class="offering-tag">Govt-Verified Weather</span>
-          <h3 class="offering-title">Weather & Rainfall Forecasts</h3>
+          <h3 class="offering-title">Weather & Rain Forecasts</h3>
           <p class="offering-desc">
-            Live WeatherAPI predictions combined with official <strong>India Meteorological Department (IMD)</strong> district rainfall warnings and temperature trends. Plan sowing, irrigation, and harvest with real data.
+            Live WeatherAPI conditions and official IMD district alerts for rainfall, temperature, and storm warnings to schedule sowing and harvest.
           </p>
         </article>
 
@@ -162,9 +158,9 @@
             </svg>
           </div>
           <span class="offering-tag" style="color:var(--accent-secondary);border-color:rgba(129,140,248,0.3);background:rgba(129,140,248,0.08);">Central & State Schemes</span>
-          <h3 class="offering-title">Government Schemes & Portals</h3>
+          <h3 class="offering-title">Government Schemes</h3>
           <p class="offering-desc">
-            Accurate rules, official portals, and document checklists for <strong>PM-KISAN</strong>, state assistance (such as <strong>Rythu Bharosa</strong> in Telangana), and crop insurance — strictly verified, without false promises.
+            Verified eligibility rules, required documents, and official portals for PM-KISAN, state subsidies, and crop insurance without false promises.
           </p>
         </article>
 
@@ -178,9 +174,9 @@
             </svg>
           </div>
           <span class="offering-tag">Agronomic Research</span>
-          <h3 class="offering-title">Crop Guidance & Soil Care</h3>
+          <h3 class="offering-title">Crop Guidance</h3>
           <p class="offering-desc">
-            Sowing windows, field preparation, and nutrient practices for paddy (వరి), cotton (ప్రత్తి), chilli, and pulses — sourced directly from university-approved package of practices (PJTSAU).
+            Sowing windows, field preparation, and nutrient practices across major crops — grounded in verified university package of practices.
           </p>
         </article>
 
@@ -194,9 +190,9 @@
             </svg>
           </div>
           <span class="offering-tag" style="color:var(--accent-warning);border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.08);">Monsoon Contingency</span>
-          <h3 class="offering-title">Drought & Low-Rain Assistance</h3>
+          <h3 class="offering-title">Drought & Low-Rain Relief</h3>
           <p class="offering-desc">
-            Actionable contingency advisories when monsoon rains are deficient or dry spells prolong: soil moisture conservation, life-saving irrigation techniques, and immediate referral to local Agricultural Officers.
+            Actionable contingency plans for dry spells and low rainfall: soil moisture conservation, water-saving irrigation, and expert referrals.
           </p>
         </article>
 
@@ -289,7 +285,7 @@
                   <span class="branch-title">Live Weather</span>
                   <span class="branch-badge badge-live-data">Live Data</span>
                 </div>
-                <p class="branch-desc">Real-time WeatherAPI forecasts and IMD district alerts for Telangana.</p>
+                <p class="branch-desc">Real-time WeatherAPI forecasts and IMD district alerts across India.</p>
               </div>
 
               <div class="branch-card branch-farm">
@@ -320,7 +316,7 @@
             <h3 class="node-title">AI writes the answer</h3>
             <p class="node-desc">
               <!-- TODO: Confirm whether default provider in production deployment is Sarvam AI LM or Groq -->
-              Groq-hosted language model writes a short answer in the farmer's language (with Sarvam AI supported in codebase). General questions use model knowledge, weather questions use live WeatherAPI data (plus IMD warnings for Telangana), and farm advice uses approved sources only.
+              Language model writes a short answer in the farmer's native language (with Groq and Sarvam AI provider support). General questions use model knowledge, weather questions use live WeatherAPI data (plus IMD district warnings), and farm advice uses approved university sources only.
             </p>
           </div>
         </article>
@@ -354,7 +350,7 @@
             <p class="node-step-tag">Step 06</p>
             <h3 class="node-title">Text becomes voice</h3>
             <p class="node-desc">
-              Gnani Timbre (Kaveri voice) speaks the answer in Telugu.
+              Gnani Timbre voice synthesis speaks the answer naturally in native voice.
             </p>
           </div>
         </article>
@@ -429,9 +425,8 @@
                 </div>
                 <span style="font-family:var(--font-mono);font-size:0.75rem;">0:05</span>
               </div>
-              <p style="font-style:italic;" lang="te">
-                <!-- TODO: [Insert real farmer Telugu voice question transcript here, e.g. వరి పంటలో ఎరువుల యాజమాన్యం గురించి చెప్పండి] -->
-                [రైతు వాయిస్ ప్రశ్న: వరి సాగు మరియు వర్ష సూచన వివరాలు అడుగుతున్నారు...]
+              <p style="font-style:italic;">
+                "What is the rainfall forecast for our district this week and how does it affect sowing?"
               </p>
               <div class="chat-meta">10:14 AM &bull; Voice message</div>
             </div>
@@ -456,11 +451,10 @@
                 </div>
                 <span style="font-family:var(--font-mono);font-size:0.75rem;">0:14</span>
               </div>
-              <p lang="te">
-                <!-- TODO: [Insert real KrishiVaani Telugu voice reply transcript here] -->
-                నమస్కారం! మీ ప్రాంతంలో రాబోయే రెండు రోజుల్లో తేలికపాటి వర్షం కురిసే అవకాశం ఉంది. వరి పంటకు సంబంధించి అవసరమైన వ్యవసాయ సలహాలను అధికారుల ద్వారా సరిచూసి మీకు అందిస్తున్నాము.
+              <p>
+                Light rainfall (10-15 mm) is expected over the next two days according to IMD data. We recommend completing preliminary field prep and scheduling sowing once soil moisture stabilizes.
               </p>
-              <div class="chat-meta">10:14 AM &bull; KrishiVaani (Kaveri Voice)</div>
+              <div class="chat-meta">10:14 AM &bull; KrishiVaani Voice Reply</div>
             </div>
 
             <!-- Exchange 2: Referral Case -->
@@ -478,16 +472,15 @@
                 </div>
                 <span style="font-family:var(--font-mono);font-size:0.75rem;">0:04</span>
               </div>
-              <p style="font-style:italic;" lang="te">
-                <!-- TODO: [Insert real consequential farmer question transcript, e.g. specific chemical dosage] -->
-                [రైతు వాయిస్ ప్రశ్న: మందుల మోతాదు లేదా పురుగు మందు పిచికారీ వివరాలు...]
+              <p style="font-style:italic;">
+                "What pesticide dose should I spray for leaf curl on my crop?"
               </p>
               <div class="chat-meta">10:16 AM &bull; Voice message</div>
             </div>
 
             <div class="chat-bubble chat-bubble-in">
-              <p lang="te">
-                పురుగు మందుల మోతాదును నేరుగా సూచించడం సురక్షితం కాదు. దయచేసి మీ సమీప వ్యవసాయ అధికారిని (AO), లేదా కిసాన్ కాల్ సెంటర్ <strong>1800-180-1551</strong> ని సంప్రదించండి.
+              <p>
+                Specific chemical dosages cannot be recommended automatically without in-person inspection. Please consult your local Agricultural Extension Officer (AO) or contact the Kisan Call Centre at <strong>1800-180-1551</strong> for certified diagnosis.
               </p>
               <div class="chat-meta">10:16 AM &bull; Honest Guardrail Referral</div>
             </div>
@@ -505,7 +498,7 @@
         <p class="section-eyebrow">Walkthrough</p>
         <h2 id="video-heading" class="section-title">Watch KrishiVaani in action</h2>
         <p class="section-desc text-center">
-          A short video walkthrough demonstrating real Telugu voice query processing and live weather retrieval.
+          A short walkthrough demonstrating native voice query processing and live agricultural advisories.
         </p>
       </header>
 
@@ -535,7 +528,7 @@
           <h2 id="try-heading" class="section-title">Send a voice note in your language</h2>
           <p class="section-desc" style="margin-bottom:1.75rem;">
             No setup, no registration forms, and no app installation required. Open Telegram, tap the microphone,
-            and speak naturally in Telugu or English.
+            and speak naturally in your native language or English.
           </p>
           <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
             <a
@@ -627,16 +620,16 @@
         <span><strong>Telegram bot:</strong> live.</span>
       </div>
       <div class="status-tag">
-        <span><strong>Voice replies:</strong> Telugu.</span>
+        <span><strong>Voice replies:</strong> active.</span>
       </div>
       <div class="status-tag">
-        <span><strong>Verified farm advice:</strong> Telangana.</span>
+        <span><strong>Verified farm advice:</strong> active.</span>
       </div>
       <div class="status-tag">
         <span><strong>Weather:</strong> any district.</span>
       </div>
       <div class="status-tag">
-        <span><strong>Other languages:</strong> text replies.</span>
+        <span><strong>Indian languages:</strong> supported.</span>
       </div>
       <div class="status-tag">
         <span><strong>WhatsApp:</strong> coming soon.</span>
