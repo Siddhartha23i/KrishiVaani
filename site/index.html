@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+
+  <title>KrishiVaani — AI Voice Assistant for Indian Farmers</title>
+  <meta name="description" content="KrishiVaani is a Telugu-first AI voice assistant that helps farmers access real-time weather forecasts and verified agricultural guidance through natural voice conversations on Telegram." />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="KrishiVaani — AI Voice Assistant for Indian Farmers" />
+  <meta property="og:description" content="Speak in your language, get instant farm guidance. Telugu-first voice AI on Telegram." />
+  <meta property="og:url"         content="https://siddhartha23i.github.io/KrishiVaani/" />
+  <meta property="og:image"       content="https://siddhartha23i.github.io/KrishiVaani/assets/og-image.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="KrishiVaani — AI Voice for Farmers" />
+  <meta name="twitter:description" content="Telugu-first AI voice assistant for Indian farmers. Weather forecasts and farm guidance on Telegram." />
+
+  <!-- Fonts — Inter via Google Fonts with font-display:swap -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Background effects -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb-1" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb-2" aria-hidden="true"></div>
+  <div class="glow-orb glow-orb-3" aria-hidden="true"></div>
+
+  <!-- ── Navigation ─────────────────────────────────────────── -->
+  <nav id="main-nav" class="nav" aria-label="Main navigation">
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo" aria-label="KrishiVaani home">
+        <span class="nav-logo-dot" aria-hidden="true"></span>
+        KrishiVaani
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#trust">Why trust it</a></li>
+        <li>
+          <a
+            href="#"
+            class="btn btn-primary"
+            data-telegram-link
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Try KrishiVaani on Telegram"
+          >Try it</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Hero ───────────────────────────────────────────────── -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="container hero-inner">
+
+      <span class="hero-eyebrow" aria-label="Gnani AI Great Indian AI Internship Challenge">
+        <span class="live-dot" aria-hidden="true"></span>
+        Gnani AI · Great Indian AI Challenge
+      </span>
+
+      <h1 id="hero-heading" class="hero-title">
+        Your farm.<br />
+        Your language.<br />
+        <span class="accent">Your AI advisor.</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        KrishiVaani is a <strong>Telugu-first voice assistant</strong> that answers farmers'
+        questions about weather, crops, and agriculture — naturally, in their own language,
+        over a simple voice note on Telegram.
+      </p>
+
+      <p class="hero-telugu" lang="te" aria-label="Telugu tagline: Your questions, in your language">
+        మీ పంట, మీ భాష, మీ AI సహాయకుడు.
+      </p>
+
+      <div class="hero-cta">
+        <a
+          href="#"
+          class="btn btn-primary btn-pulse"
+          data-telegram-link
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open KrishiVaani on Telegram (live)"
+        >
+          <span class="live-dot" aria-hidden="true"></span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+          </svg>
+          Try on Telegram — Live
+        </a>
+
+        <button
+          class="btn btn-disabled"
+          disabled
+          aria-disabled="true"
+          aria-label="WhatsApp — coming soon"
+          title="WhatsApp support is coming soon"
+        >
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.07.527 4.02 1.455 5.717L.057 23.59l5.983-1.572A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.206-1.49l-.373-.222-3.372.886.9-3.274-.243-.389A9.818 9.818 0 0112 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.421-4.398 9.818-9.818 9.818z"/>
+          </svg>
+          WhatsApp
+          <span class="coming-soon-badge" aria-label="Coming soon">Soon</span>
+        </button>
+      </div>
+
+      <div class="hero-scroll-hint" aria-hidden="true">
+        <span>See how it works</span>
+        <svg class="scroll-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M10 4v12M5 11l5 5 5-5"/>
+        </svg>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── How it works ───────────────────────────────────────── -->
+  <section id="how-it-works" class="section pipeline-section" aria-labelledby="pipeline-heading">
+    <div class="container">
+      <header class="section-header">
+        <p class="section-eyebrow">The pipeline</p>
+        <h2 id="pipeline-heading" class="section-title">From voice to verified answer<br />in seconds</h2>
+        <p class="section-desc">
+          Every voice note travels through a 7-stage pipeline that understands Telugu, reasons
+          over live data, and verifies every answer before the farmer hears it.
+        </p>
+      </header>
+
+      <ol class="pipeline-list" aria-label="7-step voice pipeline">
+
+        <li class="pipeline-step" aria-label="Step 1: Farmer speaks">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/farmer.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 01</p>
+            <h3 class="step-title">Farmer speaks naturally</h3>
+            <p class="step-desc">
+              The farmer sends a Telugu voice note on Telegram — no typing, no app to install,
+              no special commands. Just speak.
+            </p>
+            <span class="step-tech">Telegram Bot API</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 2: Speech to text">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/stt.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 02</p>
+            <h3 class="step-title">Voice becomes text</h3>
+            <p class="step-desc">
+              The OGG audio is converted and sent to <strong>Gnani Prisma v3.0</strong>,
+              an Indian-language speech-to-text engine that accurately transcribes Telugu
+              with regional dialects.
+            </p>
+            <span class="step-tech">Gnani Prisma v3.0 — STT</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 3: Intent classification">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/router.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 03</p>
+            <h3 class="step-title">Question is understood and routed</h3>
+            <p class="step-desc">
+              The transcript is classified into one of three tiers — general agricultural knowledge,
+              live weather forecast, or personalised farm advice — so the right data sources
+              are queried.
+            </p>
+            <span class="step-tech">Intent classifier · Location resolver</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 4: AI reasoning">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/brain.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 04</p>
+            <h3 class="step-title">AI reasons over live data</h3>
+            <p class="step-desc">
+              Relevant weather data (WeatherAPI + IMD warnings), crop knowledge, and
+              conversation context are assembled into a prompt. An LLM — currently
+              <strong>Groq-hosted openai/gpt-oss-120b</strong> — writes a natural Telugu answer.
+            </p>
+            <span class="step-tech">Groq · WeatherAPI · IMD</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 5: Safety guardrails">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/shield.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 05</p>
+            <h3 class="step-title">Every answer is checked</h3>
+            <p class="step-desc">
+              Deterministic safety checks verify the response before it is delivered.
+              Consequential agrochemical or pesticide advice must be backed by an approved
+              source or routes the farmer to an Agricultural Officer, KVK, or
+              Kisan Call Centre&nbsp;<strong>1800-180-1551</strong>.
+            </p>
+            <span class="step-tech">Safety guardrails · Evidence checks</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 6: Text to speech">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/tts.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 06</p>
+            <h3 class="step-title">Answer becomes natural voice</h3>
+            <p class="step-desc">
+              The verified Telugu text is sent to <strong>Gnani Timbre v2.5 — Kaveri voice</strong>,
+              producing a warm, natural-sounding Telugu voice reply optimised for rural listening
+              environments.
+            </p>
+            <span class="step-tech">Gnani Timbre v2.5 — Kaveri TTS</span>
+          </div>
+        </li>
+
+        <li class="pipeline-step" aria-label="Step 7: Farmer hears the answer">
+          <div class="step-icon-wrap" aria-hidden="true">
+            <img src="assets/icons/voice-reply.svg" alt="" width="26" height="26" />
+          </div>
+          <div class="step-body">
+            <p class="step-number">Step 07</p>
+            <h3 class="step-title">Farmer hears the answer</h3>
+            <p class="step-desc">
+              A voice message is delivered directly to the farmer's Telegram chat.
+              No reading required — the entire interaction is voice-to-voice.
+            </p>
+            <span class="step-tech">Telegram voice message</span>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Live status strip ───────────────────────────────────── -->
+  <div class="status-strip" role="complementary" aria-label="Current system status">
+    <div class="container status-inner">
+      <div class="status-item">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-label">Telegram bot:</span>
+        <span>Live on Railway</span>
+      </div>
+      <div class="status-item">
+        <span class="status-dot amber" aria-hidden="true"></span>
+        <span class="status-label">WhatsApp:</span>
+        <span>Coming soon</span>
+      </div>
+      <div class="status-item">
+        <span class="status-dot purple" aria-hidden="true"></span>
+        <span class="status-label">Language:</span>
+        <span>Telugu (primary) · Expanding</span>
+      </div>
+      <div class="status-item">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-label">Voice pipeline:</span>
+        <span>Gnani Prisma v3.0 + Timbre v2.5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Why trust it ───────────────────────────────────────── -->
+  <section id="trust" class="section" aria-labelledby="trust-heading">
+    <div class="container">
+      <header class="section-header">
+        <p class="section-eyebrow">Built responsibly</p>
+        <h2 id="trust-heading" class="section-title">Advice farmers can trust</h2>
+        <p class="section-desc">
+          KrishiVaani is not a general-purpose chatbot. It is designed specifically
+          for Indian farmers, with hard safety rules baked into the pipeline.
+        </p>
+      </header>
+
+      <ul class="trust-grid" role="list">
+
+        <li class="trust-card">
+          <img class="trust-card-icon" src="assets/icons/shield.svg" alt="" width="44" height="44" />
+          <h3 class="trust-card-title">Grounded, not hallucinated</h3>
+          <p class="trust-card-desc">
+            Every weather forecast is sourced from live WeatherAPI data and IMD district
+            warnings — not AI memory. Answers that cannot be grounded in verified data
+            are withheld, not guessed.
+          </p>
+        </li>
+
+        <li class="trust-card">
+          <img class="trust-card-icon" src="assets/icons/verified.svg" alt="" width="44" height="44" />
+          <h3 class="trust-card-title">Safe referral for high-stakes advice</h3>
+          <p class="trust-card-desc">
+            Pesticide doses, emergency crop disease identification, and legal or financial
+            decisions are routed to qualified Agricultural Officers, KVK scientists,
+            or Kisan Call Centre <strong>1800-180-1551</strong> — never answered without evidence.
+          </p>
+        </li>
+
+        <li class="trust-card">
+          <img class="trust-card-icon" src="assets/icons/global.svg" alt="" width="44" height="44" />
+          <h3 class="trust-card-title">Telugu-first, farmer-centric design</h3>
+          <p class="trust-card-desc">
+            KrishiVaani speaks like an experienced agricultural helper, not a government
+            form or automated questionnaire. Responses use natural, conversational Telugu
+            — keeping farmer dignity at the centre.
+          </p>
+        </li>
+
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <p class="footer-logo">KrishiVaani</p>
+      <p class="footer-tagline">AI voice assistant for Indian farmers</p>
+
+      <nav class="footer-links" aria-label="Footer links">
+        <a
+          href="#"
+          data-telegram-link
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open KrishiVaani on Telegram"
+        >Try on Telegram</a>
+        <a
+          href="#"
+          data-github-link
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View source code on GitHub"
+        >GitHub</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#trust">Why trust it</a>
+      </nav>
+
+      <div class="footer-hashtags" aria-label="Project hashtags">
+        <span class="hashtag">#KrishiVaani</span>
+        <span class="hashtag">#GnaniAI</span>
+        <span class="hashtag">#GreatIndianAIChallenge</span>
+        <span class="hashtag">#VoiceForFarmers</span>
+        <span class="hashtag">#TeluguAI</span>
+      </div>
+
+      <p class="footer-credit">
+        Built for the
+        <a
+          href="https://gnani.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Gnani AI</a>
+        Great Indian AI Internship Challenge &nbsp;&middot;&nbsp;
+        Deployed on <a href="https://railway.app" target="_blank" rel="noopener noreferrer">Railway</a>
+        &nbsp;&middot;&nbsp;
+        Voice by <a href="https://gnani.ai" target="_blank" rel="noopener noreferrer">Gnani Prisma &amp; Timbre</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>
