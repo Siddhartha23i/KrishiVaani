@@ -39,9 +39,6 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Ensure persistent data directory mount point exists
 RUN mkdir -p /app/data
 
-# Volume mount point for Railway persistent storage (/app/data)
-VOLUME ["/app/data"]
-
 # Entrypoint initializes volume data from seed if missing, then executes command
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
