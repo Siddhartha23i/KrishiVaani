@@ -25,9 +25,10 @@ class LLMConfig(BaseModel):
     model_id: str = Field(default="openai/gpt-oss-120b", description="Approved reasoning model ID")
     api_key: Optional[str] = Field(default=None, description="Groq Cloud API key")
     temperature: float = Field(default=0.1, description="Low temperature for deterministic factual reasoning")
-    max_tokens: int = Field(default=1500, description="Tokens allocated for reasoning chain and structured output")
+    max_tokens: int = Field(default=1200, description="Maximum response tokens")
+    reasoning_effort: str = Field(default="low", description="Groq reasoning effort")
     timeout_seconds: float = Field(default=15.0, description="Request timeout in seconds")
-    max_retries: int = Field(default=2, description="Maximum network retry attempts")
+    max_retries: int = Field(default=1, description="Maximum network retry attempts")
 
     @classmethod
     def from_settings(cls) -> "LLMConfig":
@@ -37,7 +38,8 @@ class LLMConfig(BaseModel):
             model_id=getattr(settings, "GROQ_MODEL_ID", "openai/gpt-oss-120b"),
             api_key=key,
             temperature=getattr(settings, "GROQ_TEMPERATURE", 0.1),
-            max_tokens=getattr(settings, "GROQ_MAX_TOKENS", 1500),
+            max_tokens=getattr(settings, "GROQ_MAX_TOKENS", 1200),
+            reasoning_effort=getattr(settings, "GROQ_REASONING_EFFORT", "low"),
             timeout_seconds=getattr(settings, "GROQ_REQUEST_TIMEOUT_SECONDS", 15.0),
         )
 

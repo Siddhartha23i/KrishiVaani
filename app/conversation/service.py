@@ -67,6 +67,7 @@ from app.conversation.intent import (
     INTENT_GOVERNMENT_SCHEME,
     INTENT_AGRICULTURAL_ADVICE,
     INTENT_GENERAL_CONVERSATION,
+    is_pure_greeting,
 )
 
 logger = logging.getLogger(__name__)
@@ -126,10 +127,28 @@ class ConversationOrchestrator:
         is_telegram = (getattr(request, "channel", None) == "telegram") or (bool(request.farmer_id) and request.farmer_id.startswith("tg_"))
         channel = "telegram" if is_telegram else (getattr(request, "channel", None) or "default")
 
-        # 2. Farmer Context Resolution
+        if is_pure_greeting(request.question):
+            greeting = "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+            latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
+            return ConversationResponse(
+                intent=INTENT_GENERAL_CONVERSATION,
+                language=lang_code,
+                response_text=greeting,
+                is_abstention=False,
+                evidence_citations=[],
+                weather_metadata=None,
+                safety_status="PASSED",
+                safety_validation_status="PASSED",
+                safety_reason=None,
+                latency_breakdown_ms=latencies,
+            )
+
+        # 2. Farmer Context & Location Resolution
         t0 = time.perf_counter()
         farmer_model, resolved_context, has_weather_consent = self._resolve_farmer_context(request)
-        latencies["farmer_lookup_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+        farmer_lookup_ms = round((time.perf_counter() - t0) * 1000, 2)
+        latencies["farmer_lookup_ms"] = farmer_lookup_ms
+        latencies["location_resolution_ms"] = farmer_lookup_ms
 
         # 3. Intent Classification
         t0 = time.perf_counter()
@@ -152,6 +171,8 @@ class ConversationOrchestrator:
             if not district:
                 # District not confirmed - strictly ask farmer to confirm district
                 latencies["weather_retrieval_ms"] = 0.0
+                latencies["weatherapi_ms"] = 0.0
+                latencies["imd_ms"] = 0.0
                 latencies["safety_validation_ms"] = None
                 latencies["safety_validation_status"] = "NOT_RUN"
                 latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
@@ -164,7 +185,10 @@ class ConversationOrchestrator:
             formatted_text = self.weather_service.format_imd_warning_for_farmer(
                 district, day="Day_1", language=prompt_lang
             )
-            latencies["weather_retrieval_ms"] = round((time.perf_counter() - t_w) * 1000, 2)
+            imd_elapsed = round((time.perf_counter() - t_w) * 1000, 2)
+            latencies["weatherapi_ms"] = 0.0
+            latencies["imd_ms"] = imd_elapsed
+            latencies["weather_retrieval_ms"] = imd_elapsed
             latencies["safety_validation_ms"] = 0.0
             latencies["safety_validation_status"] = "PASSED" if warning_rec.has_data else "ABSTAINED"
             latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
@@ -210,6 +234,11 @@ class ConversationOrchestrator:
                 channel=channel,
             )
             latencies["weather_retrieval_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+            latencies["weatherapi_ms"] = weather_res.get("weatherapi_ms", 0.0)
+            latencies["imd_ms"] = weather_res.get("imd_ms", 0.0)
+            latencies["location_resolution_ms"] = round(
+                latencies["location_resolution_ms"] + weather_res.get("loc_gate_ms", 0.0), 2
+            )
 
             # If weather handling returned a terminal abstention (e.g. consent or location missing)
             if weather_res.get("terminal_response") is not None:
@@ -224,6 +253,8 @@ class ConversationOrchestrator:
             weather_meta = weather_res.get("metadata")
         else:
             latencies["weather_retrieval_ms"] = 0.0
+            latencies["weatherapi_ms"] = 0.0
+            latencies["imd_ms"] = 0.0
 
         # 5. Approved Knowledge Retrieval (Phase 7.3)
         t0 = time.perf_counter()
@@ -446,11 +477,15 @@ class ConversationOrchestrator:
         Handle meteorological query routing with strict privacy consent and location gates.
         Returns dict with keys: 'facts', 'metadata', and optional 'terminal_response'.
         """
+        t_gate_start = time.perf_counter()
         # RULE 1: Consent check
         if not has_consent:
             logger.info("Weather routing blocked: explicit weather_provider_sharing_consent is missing.")
             return {
-                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY)
+                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel),
+                "loc_gate_ms": round((time.perf_counter() - t_gate_start) * 1000, 2),
+                "weatherapi_ms": 0.0,
+                "imd_ms": 0.0,
             }
 
         # RULE 1.5: Conflicting or ambiguous location check (do not silently pick an arbitrary location)
@@ -464,7 +499,10 @@ class ConversationOrchestrator:
         if not has_confirmed_loc and has_conflicting_locations(request.question):
             logger.info("Weather routing blocked: Conflicting or ambiguous location references in question.")
             return {
-                "terminal_response": self._create_conflicting_location_clarification(lang_code, channel=channel)
+                "terminal_response": self._create_conflicting_location_clarification(lang_code, channel=channel),
+                "loc_gate_ms": round((time.perf_counter() - t_gate_start) * 1000, 2),
+                "weatherapi_ms": 0.0,
+                "imd_ms": 0.0,
             }
 
         # RULE 2: Location check
@@ -484,8 +522,15 @@ class ConversationOrchestrator:
         if not district and not village and not has_coords:
             logger.info("Weather routing blocked: insufficient location parameters provided.")
             return {
-                "terminal_response": self._create_location_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel)
+                "terminal_response": self._create_location_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel),
+                "loc_gate_ms": round((time.perf_counter() - t_gate_start) * 1000, 2),
+                "weatherapi_ms": 0.0,
+                "imd_ms": 0.0,
             }
+
+        loc_gate_ms = round((time.perf_counter() - t_gate_start) * 1000, 2)
+        weatherapi_ms = 0.0
+        imd_ms = 0.0
 
         # RULE 3: Retrieve Weather via WeatherService or WeatherAPIProvider
         try:
@@ -494,8 +539,10 @@ class ConversationOrchestrator:
 
             # Path A: Using stored farmer profile ID
             if farmer and farmer.farmer_id:
+                t_wapi = time.perf_counter()
                 curr_weather = self.weather_service.get_current_weather(farmer.farmer_id)
                 forecast_weather = self.weather_service.get_forecast(farmer.farmer_id, days=3)
+                weatherapi_ms = round((time.perf_counter() - t_wapi) * 1000, 2)
 
                 # Format current conditions observation
                 loc_name = getattr(curr_weather.location, "location_name", None) or district or "Telangana"
@@ -540,6 +587,7 @@ class ConversationOrchestrator:
 
                 # Optional official IMD warning context (Phase 7.8) - fresh warnings only
                 if district:
+                    t_imd = time.perf_counter()
                     try:
                         imd_rec = self.weather_service.get_imd_district_warning(district, day="Day_1")
                         if imd_rec.has_data and not imd_rec.is_stale:
@@ -554,7 +602,9 @@ class ConversationOrchestrator:
                                 )
                             )
                     except Exception as exc:
-                        logger.warning("Could not append IMD warning context for %s: %s", district, exc)
+                        logger.warning("Could not append IMD warning context for district warning: %s", type(exc).__name__)
+                    finally:
+                        imd_ms = round((time.perf_counter() - t_imd) * 1000, 2)
 
                 meta = WeatherMetadata(
                     source_name=curr_weather.source_name,
@@ -568,7 +618,13 @@ class ConversationOrchestrator:
                     disclaimer_language=lang_code,
                 )
 
-                return {"facts": facts, "metadata": meta}
+                return {
+                    "facts": facts,
+                    "metadata": meta,
+                    "loc_gate_ms": loc_gate_ms,
+                    "weatherapi_ms": weatherapi_ms,
+                    "imd_ms": imd_ms,
+                }
 
             # Path B: Using caller-provided confirmed location (no stored profile ID)
             else:
@@ -579,6 +635,7 @@ class ConversationOrchestrator:
                 parts = [p for p in [village, mandal, district, "Telangana, India"] if p]
                 query_str = f"{lat:.6f},{lon:.6f}" if (lat and lon) else ", ".join(parts)
 
+                t_wapi = time.perf_counter()
                 try:
                     curr_weather = self.weather_service.weatherapi_provider.get_current_weather(
                         query=query_str, lat=lat, lon=lon, language=lang_code
@@ -590,7 +647,7 @@ class ConversationOrchestrator:
                     # If detailed village/mandal query fails on WeatherAPI, fallback to district
                     if district and query_str != f"{district}, Telangana, India":
                         fallback_query = f"{district}, Telangana, India"
-                        logger.info("WeatherAPI location not found for '%s'; falling back to district '%s'", query_str, fallback_query)
+                        logger.info("WeatherAPI detailed location not found; falling back to district level.")
                         curr_weather = self.weather_service.weatherapi_provider.get_current_weather(
                             query=fallback_query, language=lang_code
                         )
@@ -599,6 +656,8 @@ class ConversationOrchestrator:
                         )
                     else:
                         raise
+                finally:
+                    weatherapi_ms = round((time.perf_counter() - t_wapi) * 1000, 2)
 
                 loc_name = getattr(curr_weather.location, "location_name", None) or district or "Telangana"
                 obs_summary = (
@@ -638,6 +697,7 @@ class ConversationOrchestrator:
 
                 # Optional official IMD warning context (Phase 7.8) - fresh warnings only
                 if district:
+                    t_imd = time.perf_counter()
                     try:
                         imd_rec = self.weather_service.get_imd_district_warning(district, day="Day_1")
                         if imd_rec.has_data and not imd_rec.is_stale:
@@ -652,7 +712,9 @@ class ConversationOrchestrator:
                                 )
                             )
                     except Exception as exc:
-                        logger.warning("Could not append IMD warning context for %s: %s", district, exc)
+                        logger.warning("Could not append IMD warning context: %s", type(exc).__name__)
+                    finally:
+                        imd_ms = round((time.perf_counter() - t_imd) * 1000, 2)
 
                 meta = WeatherMetadata(
                     source_name=curr_weather.source_name,
@@ -664,11 +726,17 @@ class ConversationOrchestrator:
                     disclaimer_language=lang_code,
                 )
 
-                return {"facts": facts, "metadata": meta}
+                return {
+                    "facts": facts,
+                    "metadata": meta,
+                    "loc_gate_ms": loc_gate_ms,
+                    "weatherapi_ms": weatherapi_ms,
+                    "imd_ms": imd_ms,
+                }
 
         except WeatherLocationSharingConsentRequiredError:
             return {
-                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY)
+                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel)
             }
         except (LocationNotFoundError, LocationDistrictMismatchError) as e:
             logger.warning("Weather location mismatch: %s", str(e))
@@ -681,13 +749,21 @@ class ConversationOrchestrator:
                 "terminal_response": self._create_weather_service_error_abstention(lang_code, str(e), channel=channel)
             }
 
-    def _create_consent_required_abstention(self, lang_code: str, detected_intent: str) -> ConversationResponse:
+    def _create_consent_required_abstention(
+        self, lang_code: str, detected_intent: str, channel: Optional[str] = None
+    ) -> ConversationResponse:
         """Create safe abstention when weather location sharing consent is absent."""
         if lang_code.startswith("te"):
-            msg = (
-                "వాతావరణ సమాచారం పొందడానికి మీ స్థాన వివరాలను వాతావరణ ప్రొవైడర్‌తో పంచుకోవడానికి "
-                "మీ సమ్మతి అవసరం. దయచేసి వాతావరణ సేవలను పొందడానికి సమ్మతిని తెలపండి."
-            )
+            if channel == "telegram":
+                msg = (
+                    "మీ ఊరి వాన, వాతావరణ వివరాలు చూడాలంటే, మీ ప్రాంతం పేరును బయటి వాతావరణ సేవతో పంచుకోవాల్సి ఉంటుంది. "
+                    "అందుకు మీకు ఓకే నా అండి? అవును అంటే సరే అని చెప్పండి."
+                )
+            else:
+                msg = (
+                    "వాతావరణ సమాచారం పొందడానికి మీ స్థాన వివరాలను వాతావరణ ప్రొవైడర్‌తో పంచుకోవడానికి "
+                    "మీ సమ్మతి అవసరం. దయచేసి వాతావరణ సేవలను పొందడానికి సమ్మతిని తెలపండి."
+                )
         elif lang_code.startswith("hi"):
             msg = (
                 "मौसम की जानकारी प्राप्त करने के लिए मौसम प्रदाता के साथ स्थान साझा करने की आपकी सहमति आवश्यक है। "
@@ -720,7 +796,13 @@ class ConversationOrchestrator:
     ) -> ConversationResponse:
         """Create safe clarification guidance when conflicting or ambiguous location parameters are provided."""
         if lang_code.startswith("te"):
-            msg = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
+            if channel == "telegram":
+                msg = (
+                    "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. "
+                    "సరైన వాతావరణ వివరాలు చూడటానికి, మీకు ఏ ఊరు లేదా మండలం వాతావరణం కావాలో ఒకటి స్పష్టంగా చెప్తారా?"
+                )
+            else:
+                msg = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
         elif lang_code.startswith("hi"):
             msg = "आपने अलग-अलग स्थानों के नाम बताए हैं। कृपया स्पष्ट करें कि आपको किस गांव या मंडल के मौसम की जानकारी चाहिए।"
         else:

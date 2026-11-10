@@ -1297,6 +1297,216 @@ class TestConflictingLocationAndEchoPrevention(unittest.IsolatedAsyncioTestCase)
         self.assertIsNone(session.pending_weather_query)
 
 
+class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
+    """Focused Part 1 tests for natural, human-friendly Telugu conversations and voice consistency."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.db_path = Path(self.temp_dir.name) / "test_part1.db"
+        from app.db.database import init_db
+        init_db(self.db_path)
+
+        from app.telegram.session import TelegramSessionRepository
+        from app.telegram.handlers import TelegramHandler
+        self.session_repo = TelegramSessionRepository(db_path=self.db_path)
+        self.mock_orchestrator = MagicMock()
+        self.mock_voice_service = MagicMock()
+        self.handler = TelegramHandler(
+            orchestrator=self.mock_orchestrator,
+            voice_service=self.mock_voice_service,
+            session_repo=self.session_repo,
+        )
+        self.mock_context = MagicMock()
+        self.mock_context.bot.send_chat_action = AsyncMock()
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_no_automatic_andi_prefix_in_templates_or_policy(self):
+        """Ensure responses never automatically start with 'అండి,' and WhatsApp base instructions remain isolated."""
+        from app.conversation.service import ConversationOrchestrator
+        from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION, BASE_SYSTEM_INSTRUCTION
+        from app.llm.safety import LLMSafetyValidator
+        from app.llm.schemas import LLMReasoningRequest, LLMResponseSchema
+        from app.telegram.handlers import (
+            START_MESSAGE,
+            GREETING_MESSAGE,
+            DURATION_LIMIT_MESSAGE,
+            FALLBACK_ERROR_MESSAGE,
+            TELEGRAM_ABSTENTION_FALLBACK,
+        )
+
+        orchestrator = ConversationOrchestrator(db_path=self.db_path)
+        req_tg = LLMReasoningRequest(farmer_question="ఏ మందు వేయాలి?", language="Telugu", channel="telegram")
+        safety_abst = LLMSafetyValidator._create_safe_abstention(req_tg, LLMResponseSchema(intent="pest", language="Telugu", abstain=True, response="placeholder"), ["no_evidence"])
+
+        templates = [
+            START_MESSAGE,
+            GREETING_MESSAGE,
+            DURATION_LIMIT_MESSAGE,
+            FALLBACK_ERROR_MESSAGE,
+            TELEGRAM_ABSTENTION_FALLBACK,
+            safety_abst.response,
+            orchestrator._create_consent_required_abstention("te-IN", "weather_inquiry", channel="telegram").response_text,
+            orchestrator._create_location_required_abstention("te-IN", "weather_inquiry", channel="telegram").response_text,
+            orchestrator._create_conflicting_location_clarification("te-IN", channel="telegram").response_text,
+            orchestrator._create_district_confirmation_required_response("te-IN", channel="telegram").response_text,
+            orchestrator._create_weather_service_error_abstention("te-IN", "timeout", channel="telegram").response_text,
+        ]
+        for tpl in templates:
+            self.assertFalse(
+                tpl.strip().startswith("అండి"),
+                f"Template must not automatically start with 'అండి': {tpl}",
+            )
+
+        # Prompt policy explicitly guards against starting with 'అండి,' and stays isolated from BASE_SYSTEM_INSTRUCTION
+        self.assertIn("NEVER begin every sentence or response automatically with 'అండి,'", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertNotIn("NEVER begin every sentence", BASE_SYSTEM_INSTRUCTION)
+        self.assertNotIn("మీ పరిస్థితికి తగ్గట్టు మంచి సూచనలు చెప్పడానికి అడుగుతున్నాను", BASE_SYSTEM_INSTRUCTION)
+
+    def test_natural_followup_questions_policy_and_framing(self):
+        """Verify Telugu framing guidance includes helpful context-why explanations and single follow-up question."""
+        from app.conversation.service import ConversationOrchestrator
+        from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION
+
+        self.assertIn("మీ పరిస్థితికి తగ్గట్టు మంచి సూచనలు చెప్పడానికి అడుగుతున్నాను", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertIn("Give useful, verified facts FIRST before asking any follow-up question", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertIn("ASK ONLY ONE PRIMARY QUESTION AT A TIME", TELEGRAM_SYSTEM_INSTRUCTION)
+
+        orchestrator = ConversationOrchestrator(db_path=self.db_path)
+        consent_resp = orchestrator._create_consent_required_abstention("te-IN", "weather_inquiry", channel="telegram")
+        # Telegram consent message explains why naturally without stiff Sanskrit 'సమ్మతి'
+        self.assertNotIn("సమ్మతి", consent_resp.response_text)
+        self.assertIn("సరే అని చెప్పండి", consent_resp.response_text)
+
+        # WhatsApp consent preserves original text
+        wa_consent_resp = orchestrator._create_consent_required_abstention("te-IN", "weather_inquiry", channel="whatsapp")
+        self.assertIn("సమ్మతి అవసరం", wa_consent_resp.response_text)
+
+    def test_natural_conversational_endings_and_short_reply_rule(self):
+        """Verify closing invitation guidance and rule against tacking endings onto short weather replies."""
+        from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION
+
+        self.assertIn("ఇంకా ఏమైనా సందేహాలుంటే అడగండి. మీకు సహాయం చేస్తాను.", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertIn("Do NOT tack a closing invitation onto very short replies like a quick rainfall answer", TELEGRAM_SYSTEM_INSTRUCTION)
+
+    def test_no_repetitive_greetings_in_regular_replies(self):
+        """Verify regular guidance/clarification responses avoid repeating 'నమస్తే'."""
+        from app.conversation.service import ConversationOrchestrator
+        from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION
+        from app.telegram.handlers import TELEGRAM_ABSTENTION_FALLBACK
+
+        self.assertIn("avoid repeating greetings like 'నమస్తే' or 'హలో'", TELEGRAM_SYSTEM_INSTRUCTION)
+
+        orchestrator = ConversationOrchestrator(db_path=self.db_path)
+        non_greeting_replies = [
+            TELEGRAM_ABSTENTION_FALLBACK,
+            orchestrator._create_consent_required_abstention("te-IN", "weather_inquiry", channel="telegram").response_text,
+            orchestrator._create_location_required_abstention("te-IN", "weather_inquiry", channel="telegram").response_text,
+            orchestrator._create_conflicting_location_clarification("te-IN", channel="telegram").response_text,
+        ]
+        for reply in non_greeting_replies:
+            self.assertNotIn("నమస్తే", reply)
+
+    def test_voice_pronunciation_normalization_preserves_numeric_weather_facts(self):
+        """Verify Telugu voice normalization expands abbreviations/units accurately without losing numbers or adding SSML."""
+        from app.voice.service import VoicePipelineService, prepare_telugu_text_for_voice
+
+        sample = "**నిజామాబాద్** వాతావరణం: ఉష్ణోగ్రత 28.8°C, వర్షం 12.5 mm, అవకాశం 85% — వివరాలు AO (AO) లేదా KVK ని అడగండి."
+        spoken = prepare_telugu_text_for_voice(sample)
+
+        # Numbers preserved verbatim
+        self.assertIn("28.8", spoken)
+        self.assertIn("12.5", spoken)
+        self.assertIn("85", spoken)
+        # Units expanded to natural Telugu words
+        self.assertIn("28.8 డిగ్రీల సెల్సియస్", spoken)
+        self.assertIn("12.5 మిల్లీమీటర్లు", spoken)
+        self.assertIn("85 శాతం", spoken)
+        # Acronyms expanded, redundant parenthetical (AO) dropped, markdown stripped, NO SSML
+        self.assertIn("ఏఓ", spoken)
+        self.assertIn("కేవీకే", spoken)
+        self.assertNotIn("(AO)", spoken)
+        self.assertNotIn("**", spoken)
+        self.assertNotIn("<speak>", spoken)
+        self.assertNotIn("<break", spoken)
+
+        # Verify channel isolation inside VoicePipelineService._synthesize_speech
+        mock_tts = MagicMock()
+        mock_tts.synthesize.return_value = b"RIFF_wav"
+        service = VoicePipelineService(stt_client=MagicMock(), tts_client=mock_tts, orchestrator=MagicMock())
+
+        # Telegram Telugu applies voice normalization
+        service.synthesize_speech("ఉష్ణోగ్రత 30°C, 10%", language="te-IN", channel="telegram")
+        tg_sent_text = mock_tts.synthesize.call_args[1]["text"]
+        self.assertIn("30 డిగ్రీల సెల్సియస్", tg_sent_text)
+        self.assertIn("10 శాతం", tg_sent_text)
+
+        # WhatsApp / default leaves text unaltered
+        mock_tts.reset_mock()
+        raw_wa = "ఉష్ణోగ్రత 30°C, 10%"
+        service.synthesize_speech(raw_wa, language="te-IN", channel="whatsapp")
+        self.assertEqual(mock_tts.synthesize.call_args[1]["text"], raw_wa)
+
+    @patch("app.telegram.handlers.convert_ogg_opus_to_wav")
+    @patch("app.telegram.handlers.convert_wav_bytes_to_ogg_opus")
+    async def test_telegram_voice_and_text_response_consistency(self, mock_to_ogg, mock_to_wav):
+        """Verify Telegram text and voice consent acknowledgment & weather replies deliver consistent messages."""
+        from app.voice.schemas import VoiceProcessingResponse
+
+        mock_to_wav.return_value = b"wav_bytes"
+        mock_to_ogg.return_value = (b"OggS_voice_bytes", 2.0)
+
+        # 1. Text unprompted consent grant without pending query
+        txt_update = MagicMock()
+        txt_update.update_id = 4101
+        txt_update.effective_user = MagicMock(id=8801)
+        txt_update.effective_message = MagicMock()
+        txt_update.effective_message.text = "సమ్మతి ఇస్తున్నాను"
+        txt_update.effective_message.reply_text = AsyncMock()
+        await self.handler.handle_text(txt_update, self.mock_context)
+        text_ack_sent = txt_update.effective_message.reply_text.call_args[0][0]
+
+        # 2. Voice unprompted consent grant without pending query
+        v_update = MagicMock()
+        v_update.update_id = 4102
+        v_update.effective_user = MagicMock(id=8802)
+        v_update.effective_chat = MagicMock(id=8802)
+        v_update.effective_message = MagicMock()
+        v_update.effective_message.voice = MagicMock(file_id="f1", duration=2)
+        v_update.effective_message.audio = None
+        v_update.effective_message.reply_voice = AsyncMock()
+        v_update.effective_message.reply_text = AsyncMock()
+
+        mock_file = MagicMock()
+        mock_file.download_as_bytearray = AsyncMock(return_value=bytearray(b"raw_ogg"))
+        self.mock_context.bot.get_file = AsyncMock(return_value=mock_file)
+
+        self.mock_voice_service.process_audio_bytes.return_value = VoiceProcessingResponse(
+            status="success",
+            transcript="సమ్మతి ఇస్తున్నాను",
+            detected_language="te-IN",
+            intent="general_conversation",
+            response_text="",
+            safety_status="PASSED",
+        )
+        captured_tts_texts = []
+        def fake_synth(text, lang="te-IN", channel=None):
+            captured_tts_texts.append((text, lang, channel))
+            return b"RIFF_wav"
+        self.mock_voice_service.synthesize_speech = fake_synth
+
+        await self.handler.handle_voice(v_update, self.mock_context)
+
+        self.assertEqual(len(captured_tts_texts), 1)
+        voice_ack_sent, lang_used, channel_used = captured_tts_texts[0]
+        self.assertEqual(text_ack_sent, voice_ack_sent)
+        self.assertEqual(lang_used, "te-IN")
+        self.assertEqual(channel_used, "telegram")
+        v_update.effective_message.reply_voice.assert_called_once()
+        v_update.effective_message.reply_text.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
 

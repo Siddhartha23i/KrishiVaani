@@ -983,7 +983,7 @@ class TestConversationOrchestration(unittest.TestCase):
             response="నమస్కారం! ఎలా ఉన్నారు?",
         )
 
-        req = ConversationRequest(question="నమస్కారం", language="te-IN", farmer_id="FARMER-SAFE-001")
+        req = ConversationRequest(question="నమస్కారం, పత్తి పంట ఎలా చూసుకోవాలి?", language="te-IN", farmer_id="FARMER-SAFE-001")
         res = self.orchestrator.process_message(req)
 
         self.assertEqual(res.safety_validation_status, "PASSED")
@@ -1011,7 +1011,7 @@ class TestConversationOrchestration(unittest.TestCase):
                 language="English",
                 response="Normal conversational greeting.",
             )
-            req = ConversationRequest(question="Hello", language="en-IN")
+            req = ConversationRequest(question="Can you help me with my crop?", language="en-IN")
             res = self.orchestrator.process_message(req)
 
             self.assertTrue(res.is_abstention)

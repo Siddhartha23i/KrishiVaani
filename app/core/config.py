@@ -125,8 +125,14 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     GROQ_MODEL_ID: str = "openai/gpt-oss-120b"
     GROQ_REQUEST_TIMEOUT_SECONDS: float = 15.0
-    GROQ_MAX_TOKENS: int = 1500
+    GROQ_MAX_TOKENS: int = 1200
     GROQ_TEMPERATURE: float = 0.1
+    GROQ_REASONING_EFFORT: str = "low"
+    LLM_PROVIDER: str = "sarvam"
+    SARVAM_API_KEY: Optional[str] = None
+    SARVAM_MODEL: str = "sarvam-105b-conversations"
+    SARVAM_MAX_TOKENS: int = 900
+    SARVAM_LENGTH_RETRY_MULTIPLIER: float = 1.5
 
     # PJTAU Agromet Advisories (Phase 6.3 Integration)
     PJTAU_ARCHIVE_URL: str = "https://pjtau.edu.in/agromet-advisories/"

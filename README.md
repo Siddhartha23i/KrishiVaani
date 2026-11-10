@@ -360,9 +360,15 @@ KrishiVaani uses Pydantic-Settings to load configuration from environment variab
 | `GROQ_API_KEY` | **Yes** | *None* | API key for Groq Cloud LLM inference. |
 | `GNANI_API_KEY` | **Yes** | *None* | Unified API key for Gnani Prisma STT and Timbre TTS platforms. |
 | `WEATHERAPI_API_KEY` | **Yes** | *None* | API key for WeatherAPI.com forecast services. |
+| `LLM_PROVIDER` | No | `sarvam` | Active LLM provider: `sarvam` or `groq`. Sarvam falls back to Groq once on provider failure. |
+| `SARVAM_API_KEY` | When `LLM_PROVIDER=sarvam` | *None* | API key for Sarvam chat completions. |
+| `SARVAM_MODEL` | No | `sarvam-105b-conversations` | Sarvam model identifier. |
 | `GROQ_MODEL_ID` | No | `openai/gpt-oss-120b` | Approved reasoning model ID on Groq Cloud. |
 | `GROQ_TEMPERATURE` | No | `0.1` | Sampling temperature (kept low for factual evidence compliance). |
-| `GROQ_MAX_TOKENS` | No | `1500` | Maximum token allocation for LLM reasoning and structured JSON output. |
+| `GROQ_MAX_TOKENS` | No | `1200` | Maximum token allocation for Groq structured JSON output. |
+| `GROQ_REASONING_EFFORT` | No | `low` | Groq reasoning effort. |
+| `SARVAM_MAX_TOKENS` | No | `900` | Maximum token allocation for Sarvam structured JSON output. |
+| `SARVAM_LENGTH_RETRY_MULTIPLIER` | No | `1.5` | Multiplier for one retry when Sarvam truncates a response. |
 | `GROQ_REQUEST_TIMEOUT_SECONDS` | No | `15.0` | Timeout in seconds for LLM completions. |
 | `DATABASE_PATH` | No | `data/krishivaani.db` | Path to persistent SQLite database (`/app/data/krishivaani.db` in Docker). |
 | `WEATHERAPI_BASE_URL` | No | `https://api.weatherapi.com/v1` | WeatherAPI base endpoint URL. |

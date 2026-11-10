@@ -13,6 +13,7 @@ Integrates:
 """
 
 import os
+import re
 import time
 import base64
 import logging
@@ -58,6 +59,70 @@ STT_ERROR_MESSAGES = {
     "hi-IN": "क्षमा करें, आपके ध्वनि संदेश को संसाधित करने में तकनीकी समस्या हुई। कृपया कुछ समय बाद पुनः प्रयास करें।",
     "en-IN": "Sorry, there was a technical issue processing your voice message. Please try again after some time.",
 }
+
+
+def prepare_telugu_text_for_voice(text: str) -> str:
+    """
+    Normalize validated Telugu text for natural Gnani Timbre v2.5 Kaveri pronunciation.
+    - Expands meteorological/agricultural units and English abbreviations cleanly into Telugu phonetics.
+    - Strips markdown symbols and redundant parenthetical English acronyms without altering factual values.
+    - Uses natural plain-text punctuation (no unsupported SSML tags).
+    """
+    if not text or not text.strip():
+        return text
+
+    out = text.strip()
+
+    # 1. Remove markdown bold/italic/code/heading markers and stray XML/SSML tags
+    out = re.sub(r"<[^>]+>", " ", out)
+    out = re.sub(r"[*_`#]+", "", out)
+
+    # 2. Convert bullet lines and multi-line breaks into well-paced spoken sentences
+    lines = []
+    for raw_line in out.splitlines():
+        line = re.sub(r"^[\s•\-]+", "", raw_line).strip()
+        if line:
+            lines.append(line)
+    if len(lines) > 1:
+        joined = []
+        for idx, line in enumerate(lines):
+            if idx < len(lines) - 1 and line[-1] not in ".?!।\u0964":
+                joined.append(f"{line}.")
+            else:
+                joined.append(line)
+        out = " ".join(joined)
+    elif lines:
+        out = lines[0]
+
+    # 3. Expand numeric weather/agricultural units while preserving numbers accurately
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*°\s*C\b", r"\1 డిగ్రీల సెల్సియస్", out, flags=re.IGNORECASE)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 శాతం", out)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*mm\b", r"\1 మిల్లీమీటర్లు", out, flags=re.IGNORECASE)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*cm\b", r"\1 సెంటీమీటర్లు", out, flags=re.IGNORECASE)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*సెం\.?\s*మీ\.?", r"\1 సెంటీమీటర్లు", out)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*(?:km/h|kph)\b", r"గంటకు \1 కిలోమీటర్లు", out, flags=re.IGNORECASE)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*kg\b", r"\1 కిలోలు", out, flags=re.IGNORECASE)
+    out = re.sub(r"(\d+(?:\.\d+)?)\s*ml\b", r"\1 మిల్లీలీటర్లు", out, flags=re.IGNORECASE)
+
+    # 4. Remove redundant parenthetical English acronym repeats following Telugu phrases
+    out = re.sub(r"\s*\(\s*(?:AO|KVK|IMD|PIN|DAP|NPK)\s*\)", "", out, flags=re.IGNORECASE)
+
+    # 5. Expand standalone English acronyms into natural Telugu phonetic forms
+    out = re.sub(r"\bAO\b", "ఏఓ", out)
+    out = re.sub(r"\bKVK\b", "కేవీకే", out)
+    out = re.sub(r"\bIMD\b", "ఐఎండీ", out)
+    out = re.sub(r"\bDAP\b", "డీఏపీ", out)
+    out = re.sub(r"\bNPK\b", "ఎన్‌పీకే", out)
+    out = re.sub(r"\bMOP\b", "ఎంఓపీ", out)
+    out = re.sub(r"\bPIN\s*code\b", "పిన్ కోడ్", out, flags=re.IGNORECASE)
+    out = re.sub(r"\bPIN\b", "పిన్", out)
+
+    # 6. Smooth punctuation for spoken prosody
+    out = out.replace("—", ", ")
+    out = re.sub(r"\s+-\s+", ", ", out)
+    out = re.sub(r"\(\s*\)", "", out)
+    out = re.sub(r"\s+", " ", out).strip()
+    return out
 
 
 class VoicePipelineService:
@@ -181,7 +246,9 @@ class VoicePipelineService:
             t_tts = time.perf_counter()
             if self.tts_client:
                 try:
-                    tts_bytes = self._synthesize_speech(clarification_text, detected_lang)
+                    tts_bytes = self._synthesize_speech(
+                        clarification_text, detected_lang, channel=request.channel
+                    )
                     tts_audio_b64 = base64.b64encode(tts_bytes).decode("ascii")
                     audio_dur = len(tts_bytes) / (48000 * 2)  # 48kHz 16-bit mono estimate
                 except Exception as tts_err:
@@ -288,7 +355,9 @@ class VoicePipelineService:
         if self.tts_client and conv_resp.response_text:
             try:
                 audio_bytes = self._synthesize_speech(
-                    text=conv_resp.response_text, language=conv_resp.language
+                    text=conv_resp.response_text,
+                    language=conv_resp.language,
+                    channel=request.channel,
                 )
                 latencies["tts_ms"] = round((time.perf_counter() - t0) * 1000, 2)
                 audio_b64 = base64.b64encode(audio_bytes).decode("ascii")
@@ -364,13 +433,17 @@ class VoicePipelineService:
                 except Exception as cleanup_err:
                     logger.warning("Failed to remove temporary file %s: %s", temp_path, cleanup_err)
 
-    def synthesize_speech(self, text: str, language: str = "te-IN") -> bytes:
+    def synthesize_speech(
+        self, text: str, language: str = "te-IN", channel: Optional[str] = None
+    ) -> bytes:
         """
         Synthesize text into WAV audio using Gnani Timbre v2.5 Kaveri voice.
         """
-        return self._synthesize_speech(text=text, language=language)
+        return self._synthesize_speech(text=text, language=language, channel=channel)
 
-    def _synthesize_speech(self, text: str, language: str) -> bytes:
+    def _synthesize_speech(
+        self, text: str, language: str, channel: Optional[str] = None
+    ) -> bytes:
         """
         Synthesize text into WAV audio using Gnani Timbre v2.5 Kaveri voice.
         """
@@ -380,9 +453,14 @@ class VoicePipelineService:
         # Timbre v2.5 Kaveri voice
         voice = "Kaveri"
         target_lang, _ = normalize_language(language)
+        spoken_text = (
+            prepare_telugu_text_for_voice(text)
+            if (target_lang == "te-IN" and channel == "telegram")
+            else text
+        )
 
         audio_bytes = self.tts_client.synthesize(
-            text=text,
+            text=spoken_text,
             voice=voice,
             model="timbre-v2.5",
             language=target_lang,

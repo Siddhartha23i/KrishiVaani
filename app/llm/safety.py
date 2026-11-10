@@ -298,7 +298,12 @@ class LLMSafetyValidator:
         """Generate a safe, voice-friendly abstention response in the requested language."""
         lang = (request.language or "Telugu").strip().lower()
 
-        if "telugu" in lang or getattr(request, "channel", None) == "telegram":
+        if getattr(request, "channel", None) == "telegram":
+            fallback_text = (
+                "దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు అండి. "
+                "మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి."
+            )
+        elif "telugu" in lang:
             fallback_text = (
                 "క్షమించండి, మీ ప్రశ్నకు ఖచ్చితమైన సమాధానం ఇవ్వడానికి అధికారిక ఆధారాలు అందుబాటులో లేవు. "
                 "దయచేసి మీ మండల వ్యవసాయ అధికారిని (AO) లేదా దగ్గరి కృషి విజ్ఞాన కేంద్రాన్ని (KVK) సంప్రదించండి."

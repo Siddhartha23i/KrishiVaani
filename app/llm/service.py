@@ -6,7 +6,8 @@ Groq inference, and deterministic safety validation.
 
 import time
 import logging
-from typing import Optional, List, Dict, Any
+import re
+from typing import Optional, List, Dict, Any, Protocol
 
 from app.llm.schemas import (
     LLMReasoningRequest,
@@ -16,6 +17,8 @@ from app.llm.schemas import (
     WeatherFactItem,
 )
 from app.llm.providers.groq_provider import GroqProvider
+from app.llm.providers.sarvam_provider import SarvamProvider
+from app.core.config import settings
 from app.llm.safety import LLMSafetyValidator
 from app.llm.exceptions import (
     LLMError,
@@ -28,6 +31,19 @@ from app.llm.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class LLMProvider(Protocol):
+    model_id: str
+
+    def generate_completion(
+        self,
+        messages: List[Dict[str, str]],
+        json_mode: bool = True,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+    ) -> LLMResponseSchema:
+        ...
 
 BASE_SYSTEM_INSTRUCTION = """You are KrishiVaani, an AI agricultural advisory assistant for farmers in Telangana.
 Your primary mission is farmer safety, financial security, and strict evidence-grounded truth.
@@ -53,7 +69,7 @@ Return valid JSON only matching this schema:
   "response": string
 }"""
 
-TELEGRAM_SYSTEM_INSTRUCTION = """You are KrishiVaani, an AI agricultural advisory assistant for farmers in Telangana.
+TELEGRAM_SYSTEM_INSTRUCTION = """You are కృషివాణి, an AI agricultural advisory assistant for farmers in Telangana. Your assistant name is exactly "కృషివాణి".
 Your primary mission is farmer safety, financial security, and strict evidence-grounded truth.
 
 CORE ADVISORY RULES:
@@ -62,16 +78,24 @@ CORE ADVISORY RULES:
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
 5. RESTRICTIONS: Preserve all geographical, crop, variety, and validity-period restrictions stated in the evidence.
-6. SPOKEN VOICE OUTPUT & NATURAL CONVERSATIONAL TELUGU (Phase 8.4):
-   - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, or asterisks.
+6. SPOKEN VOICE OUTPUT & NATURAL CONVERSATIONAL TELUGU (Telegram Channel):
+   - Use evidence only when it is directly relevant to the farmer's question; ignore unrelated weather or safety evidence.
+   - If evidence only partly covers the question, give the supported part first, then clearly say what is missing.
+   - Answer in at most 3 short complete sentences. Never stop mid-sentence.
+   - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, asterisks, and NEVER use parentheses () anywhere in your Telugu response.
    - For Telugu (te-IN or Telugu):
-     * Use natural everyday conversational Telugu (Telangana conversational style, respectful with 'అండి').
-     * Personality: A friendly, knowledgeable, respectful local agriculture assistant (like a helpful AO sir).
-     * Tone: Avoid Sanskritised, literary (Granthika), or bureaucratic vocabulary (e.g. NEVER use 'సమ్మతి', 'భౌగోళిక స్థానం', 'దృక్పథం', 'ప్రణాళిక', 'అనుమతి'). Avoid exaggerated slang.
-     * Code-mixing: Use familiar everyday agricultural terms: Urea (యూరియా), DAP (డీఏపీ), Potash (పొటాష్), Fertilizer (ఎరువు), Pesticide (పురుగు మందు), Spraying (మందు కొట్టడం / స్ప్రే చేయడం), Tractor (ట్రాక్టర్), Borewell (బోరు), Motor (మోటారు), Drip (డ్రిప్), PIN code (పిన్ కోడ్), Location (లొకేషన్), Soil test (మట్టి పరీక్ష), KVK (కేవీకే), Agriculture Officer (AO సార్ / వ్యవసాయ అధికారి), Acre (ఎకరం), Gunta (గుంట - 1/40 acre).
-     * Missing parameters / Clarifications: ASK ONLY ONE PRIMARY QUESTION AT A TIME (e.g., 'మీరు ఏ పంట వేశారు?', 'ఎన్ని ఎకరాలు ఉంది?', 'బోరు నీళ్లా, కాలువ నీళ్లా?').
-     * Sentence length: Default to no more than two concise sentences per voice response, unless safety or clarity strictly requires more.
-     * Weather responses: Use natural words such as 'వాన', 'ఊరు', 'రేపు', 'వాతావరణ రిపోర్ట్'. Never invent a rainfall value or claim absolute certainty. State forecast uncertainty simply (e.g., 'రేపు మీ ఊరిలో వాన పడే అవకాశం లేదు', 'వాతావరణ రిపోర్ట్ అంచనా మాత్రమే, మారొచ్చు').
+     * Use natural everyday conversational Telugu (Telangana conversational style, friendly, positive, and respectful with 'అండి').
+     * Personality: Speak like a patient, knowledgeable, friendly local agricultural advisor having a face-to-face chat — never like a government form, automated questionnaire, or scripted survey. Never blame or discourage farmers, and stay calm and realistic without empty hype or exaggerated promises.
+     * NATURAL SENTENCE FRAMING & 'అండి' PLACEMENT:
+       - NEVER begin every sentence or response automatically with 'అండి,' (for example, avoid "అండి, మీరు వరి పంటకు ఏ రకమైన నీటి వనరును (బోరు, కాలువ, వర్షపు నీరు) ఉపయోగిస్తున్నారు?").
+       - Use 'అండి' naturally at the end of a sentence or clause where politeness fits naturally, and avoid repeating greetings like 'నమస్తే' or 'హలో' in regular responses unless the farmer just greeted you.
+       - Instead of parenthetical lists, ask naturally and briefly explain why the detail helps (e.g., "వరి పంటకు మీరు ఏ నీటిని ఉపయోగిస్తున్నారు? బోరు నీరా, కాలువ నీరా, లేక వర్షపు నీరా? మీ పరిస్థితికి తగ్గట్టు మంచి సూచనలు చెప్పడానికి అడుగుతున్నాను.").
+     * Tone: Avoid Sanskritised, literary (Granthika), or bureaucratic vocabulary (e.g. NEVER use 'సమ్మతి', 'భౌగోళిక స్థానం', 'దృక్పథం', 'ప్రణాళిక', 'అనుమతి', 'వనరు', 'పరిశీలన'). Avoid exaggerated slang.
+     * Code-mixing & Pronunciation: Avoid excessive English mixing. Use familiar everyday agricultural terms and write abbreviations/units cleanly in Telugu so speech synthesis pronounces them smoothly: Urea (యూరియా), DAP (డీఏపీ), Potash (పొటాష్), Fertilizer (ఎరువు), Pesticide (పురుగు మందు), Spraying (మందు కొట్టడం / స్ప్రే చేయడం), Tractor (ట్రాక్టర్), Borewell (బోరు), Motor (మోటారు), Drip (డ్రిప్), PIN code (పిన్ కోడ్), Location (లొకేషన్), Soil test (మట్టి పరీక్ష), KVK (కేవీకే / కృషి విజ్ఞాన కేంద్రం), Agriculture Officer (AO సార్ / ఏఓ గారు / వ్యవసాయ అధికారి), Acre (ఎకరం), Gunta (గుంట). Write 'శాతం' instead of '%', 'మిల్లీమీటర్లు' instead of 'mm', and 'డిగ్రీల సెల్సియస్' instead of '°C'.
+     * Helpful First, One Question at a Time: Give useful, verified facts FIRST before asking any follow-up question. When missing field details, ASK ONLY ONE PRIMARY QUESTION AT A TIME (e.g., 'మీరు ఏ పంట వేశారు?', 'ఎన్ని ఎకరాలు ఉంది?', 'బోరు నీళ్లా, కాలువ నీళ్లా?') and briefly say why it helps.
+     * Natural Conversation Endings: For multi-sentence guidance, crop/pest/scheme advisories, or detailed answers, end warmly with a varied helpful invitation when appropriate (such as "ఇంకా ఏమైనా సందేహాలుంటే అడగండి. మీకు సహాయం చేస్తాను." or "దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి."). Do NOT tack a closing invitation onto very short replies like a quick rainfall answer or simple confirmation question.
+     * Sentence length & Accuracy: Keep sentences short and clear (default 2-3 concise spoken sentences unless safety requires more). Always preserve exact validated numbers, dates, units, and percentages.
+     * Weather responses: Use natural words such as 'వాన', 'ఊరు', 'రేపు', 'వాతావరణ రిపోర్ట్'. Never invent a rainfall value or claim absolute certainty. State forecast uncertainty accurately using the exact numbers provided (e.g., 'రేపు మీ ఊరిలో వాన పడే అవకాశం చాలా తక్కువగా ఉంది', 'వాతావరణ రిపోర్ట్ అంచనా మాత్రమే, మారొచ్చు').
      * Ambiguity: If a word like 'మందు' is ambiguous, clarify politely whether the farmer means fertilizer (ఎరువు) or pesticide (పురుగు మందు).
 
 OUTPUT FORMAT:
@@ -97,9 +121,18 @@ class LLMReasoningService:
     deterministic Python safety checks on all generated responses.
     """
 
-    def __init__(self, provider: Optional[GroqProvider] = None, validator: Optional[LLMSafetyValidator] = None):
-        self.provider = provider or GroqProvider()
+    def __init__(self, provider: Optional[LLMProvider] = None, validator: Optional[LLMSafetyValidator] = None):
+        self.provider = provider or self._create_default_provider()
         self.validator = validator or LLMSafetyValidator()
+
+    @staticmethod
+    def _create_default_provider() -> LLMProvider:
+        provider_name = (getattr(settings, "LLM_PROVIDER", "groq") or "groq").strip().lower()
+        if provider_name == "sarvam":
+            return SarvamProvider()
+        if provider_name == "groq":
+            return GroqProvider()
+        raise ValueError(f"Unsupported LLM_PROVIDER '{provider_name}'. Expected 'groq' or 'sarvam'.")
 
     def process_query(self, request: LLMReasoningRequest) -> LLMResponseSchema:
         """
@@ -111,18 +144,24 @@ class LLMReasoningService:
         # 2. Execute LLM completion via provider
         try:
             raw_response = self.provider.generate_completion(messages=messages, json_mode=True)
-        except LLMProviderNotConfiguredError as e:
-            logger.error("LLM Provider unconfigured: %s", str(e))
-            return self._create_error_abstention(request, "PROVIDER_NOT_CONFIGURED", str(e))
-        except (LLMAuthenticationError, LLMRateLimitError, LLMTimeoutError, LLMProviderUnavailableError) as e:
+        except LLMError as e:
+            if isinstance(self.provider, SarvamProvider):
+                return self._try_groq_fallback(request, messages, e)
             logger.error("LLM Provider execution failure: %s", str(e))
-            return self._create_error_abstention(request, type(e).__name__, str(e))
-        except LLMMalformedResponseError as e:
-            logger.error("LLM Provider returned malformed JSON: %s", str(e))
-            return self._create_error_abstention(request, "MALFORMED_RESPONSE", str(e))
+            error_code = "PROVIDER_NOT_CONFIGURED" if isinstance(e, LLMProviderNotConfiguredError) else (
+                "MALFORMED_RESPONSE" if isinstance(e, LLMMalformedResponseError) else type(e).__name__
+            )
+            return self._create_error_abstention(request, error_code, str(e))
         except Exception as e:
+            if isinstance(self.provider, SarvamProvider):
+                return self._try_groq_fallback(request, messages, e)
             logger.error("Unexpected error in LLM reasoning service: %s", str(e))
             return self._create_error_abstention(request, "UNEXPECTED_ERROR", str(e))
+
+        raw_response.evidence_citations = [
+            re.sub(r"^\s*EVIDENCE\s*\[\s*|\s*\]\s*$", "", citation, flags=re.IGNORECASE).strip()
+            for citation in raw_response.evidence_citations
+        ]
 
         # 3. Independent Deterministic Safety Validation (Phase 7.5.1: Measured timing & fail-closed)
         t_val_start = time.perf_counter_ns()
@@ -137,6 +176,40 @@ class LLMReasoningService:
         val_ns = time.perf_counter_ns() - t_val_start
         validated_response.validation_latency_ms = round(val_ns / 1_000_000.0, 3)
 
+        return validated_response
+
+    def _try_groq_fallback(
+        self, request: LLMReasoningRequest, messages: List[Dict[str, str]], sarvam_error: Exception
+    ) -> LLMResponseSchema:
+        logger.warning("Sarvam failed with %s; trying Groq fallback once.", type(sarvam_error).__name__)
+        try:
+            raw_response = GroqProvider().generate_completion(messages=messages, json_mode=True)
+        except LLMError as fallback_error:
+            logger.error("Groq fallback failed after Sarvam error: %s", str(fallback_error))
+            error_code = "PROVIDER_NOT_CONFIGURED" if isinstance(fallback_error, LLMProviderNotConfiguredError) else (
+                "MALFORMED_RESPONSE" if isinstance(fallback_error, LLMMalformedResponseError) else type(fallback_error).__name__
+            )
+            return self._create_error_abstention(request, error_code, str(fallback_error))
+        except Exception as fallback_error:
+            logger.error("Groq fallback failed after Sarvam error: %s", str(fallback_error))
+            return self._create_error_abstention(request, "UNEXPECTED_ERROR", str(fallback_error))
+
+        raw_response.evidence_citations = [
+            re.sub(r"^\s*EVIDENCE\s*\[\s*|\s*\]\s*$", "", citation, flags=re.IGNORECASE).strip()
+            for citation in raw_response.evidence_citations
+        ]
+        t_val_start = time.perf_counter_ns()
+        try:
+            validated_response = self.validator.validate(request, raw_response)
+        except Exception as validation_error:
+            logger.error("Fail-closed after Groq fallback: %s", str(validation_error), exc_info=True)
+            validated_response = self._create_error_abstention(
+                request, "SAFETY_VALIDATION_ERROR", f"Safety validation exception (fail-closed): {str(validation_error)}"
+            )
+            validated_response.safety_status = "REJECTED"
+        validated_response.validation_latency_ms = round(
+            (time.perf_counter_ns() - t_val_start) / 1_000_000.0, 3
+        )
         return validated_response
 
     def _build_prompt_messages(self, request: LLMReasoningRequest) -> List[Dict[str, str]]:
@@ -202,10 +275,14 @@ class LLMReasoningService:
         lang = (request.language or "Telugu").strip().lower()
 
         if "telugu" in lang:
-            if request.channel == "telegram":
+            if error_code == "LLMRateLimitError":
+                fallback = (
+                    "అండి, ప్రస్తుతం చాలా మంది అడుగుతున్నారు. కొన్ని సెకన్లు ఆగి మళ్లీ అడగండి."
+                )
+            elif request.channel == "telegram":
                 fallback = (
                     "సాంకేతిక సమస్య వల్ల ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను అండి. "
-                    "దయచేసి మీ మండల వ్యవసాయ అధికారిని సంప్రదించండి."
+                    "అత్యవసరమైతే మీ స్థానిక వ్యవసాయ అధికారిని అడగండి, లేదా కాసేపటి తర్వాత మళ్ళీ అడగండి."
                 )
             else:
                 fallback = (
@@ -236,4 +313,3 @@ class LLMReasoningService:
             safety_status="ABSTAINED",
             safety_violations=[f"{error_code}: {error_detail}"],
         )
-

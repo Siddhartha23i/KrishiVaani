@@ -433,7 +433,7 @@ class TestLLMServiceAndProvider(unittest.TestCase):
         self.assertTrue(resp.abstain)
         self.assertEqual(resp.safety_status, "ABSTAINED")
         self.assertTrue(any("LLMRateLimitError" in v for v in resp.safety_violations))
-        self.assertIn("సాంకేతిక సమస్య", resp.response)
+        self.assertIn("కొన్ని సెకన్లు ఆగి", resp.response)
 
     # 14. Safe abstention enforcement
     def test_safe_abstention_enforcement(self):
@@ -503,4 +503,3 @@ class TestLLMServiceAndProvider(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

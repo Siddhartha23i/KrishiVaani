@@ -20,6 +20,7 @@ Provides asynchronous handlers for:
 import io
 import time
 import base64
+import inspect
 import logging
 import asyncio
 from datetime import datetime, timezone
@@ -31,6 +32,7 @@ from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from app.conversation.service import ConversationOrchestrator
+from app.conversation.intent import is_pure_greeting
 from app.conversation.schemas import ConversationRequest, LocationInput, GuestWeatherConsentEvent
 from app.voice.service import VoicePipelineService
 from app.voice.schemas import VoiceProcessingRequest
@@ -61,11 +63,11 @@ def _generate_fallback_wav_bytes() -> bytes:
 
 logger = logging.getLogger(__name__)
 
-# Standard localized natural conversational messages (Phase 8.4)
+# Standard localized natural conversational messages (Phase 8.4 / Part 1)
 START_MESSAGE = (
     "నమస్తే అండి! నేను మీ కృషీవాణిని.\n\n"
-    "పంటలు, వానలు, ప్రభుత్వ స్కీమ్ల గురించి ఏ సందేహం ఉన్నా వాయిస్ మెసేజ్ లేదా టెక్స్ట్ ద్వారా అడగండి.\n\n"
-    "గమనిక: ఇది సమాచార సహాయం మాత్రమే అండి. తుది నిర్ణయానికి మీ స్థానిక AO గారిని అడగండి."
+    "పంటలు, వానలు, ప్రభుత్వ పథకాల గురించి ఏ సందేహం ఉన్నా వాయిస్ మెసేజ్ లేదా టెక్స్ట్ ద్వారా అడగండి.\n\n"
+    "చిన్న గమనిక: ఇది ప్రాథమిక సమాచారం మాత్రమే అండి. పంటకు తుది నిర్ణయం తీసుకునే ముందు మీ స్థానిక AO గారిని అడగండి."
 )
 
 GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
@@ -78,6 +80,11 @@ DURATION_LIMIT_MESSAGE = (
 FALLBACK_ERROR_MESSAGE = (
     "క్షమించండి అండి, మీ మెసేజ్ అందుకోవడంలో చిన్న సాంకేతిక సమస్య వచ్చింది. "
     "దయచేసి కాసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి."
+)
+
+TELEGRAM_ABSTENTION_FALLBACK = (
+    "దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు అండి. "
+    "మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి."
 )
 
 GREETING_PATTERNS = {
@@ -93,6 +100,8 @@ def is_greeting(text: Optional[str]) -> bool:
     Check if the user input is a pure conversational greeting.
     Bypasses expensive LLM reasoning for simple greetings while keeping responses fast and non-empty.
     """
+    if is_pure_greeting(text or ""):
+        return True
     if not text:
         return False
     cleaned = text.strip()
@@ -279,8 +288,8 @@ class TelegramHandler:
                     return
                 else:
                     ack_msg = (
-                        "ధన్యవాదాలు! వాతావరణ సమాచారం కోసం మీ సమ్మతి నమోదు చేయబడింది. "
-                        "మీరు ఇప్పుడు మీ ప్రాంతం వాతావరణ సమాచారాన్ని అడగవచ్చు."
+                        "సరే అండి, ఇప్పుడు మీ ప్రాంతం వాతావరణ వివరాలు చూసి చెప్తాను. "
+                        "ఏ ఊరు లేదా మండలం వాతావరణం కావాలో అడగండి."
                     )
                     await message.reply_text(ack_msg)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -390,7 +399,33 @@ class TelegramHandler:
                 elapsed_ms,
             )
 
-    async def _reply_voice_telugu(self, message, text: str) -> bool:
+    def _log_voice_telemetry(self, update_id: Optional[int], flow: str, timings: dict) -> None:
+        """Emit privacy-safe structured stage latency INFO log (zero IDs, transcripts, or locations)."""
+        logger.info(
+            "Voice pipeline telemetry | update_id=%s | flow=%s | "
+            "telegram_download_ms=%.2f | ogg_to_wav_ms=%.2f | prisma_stt_ms=%.2f | "
+            "intent_classification_ms=%.2f | location_resolution_ms=%.2f | "
+            "weatherapi_ms=%.2f | imd_ms=%.2f | groq_llm_ms=%.2f | "
+            "timbre_tts_ms=%.2f | wav_to_ogg_ms=%.2f | telegram_delivery_ms=%.2f | total_ms=%.2f",
+            update_id,
+            flow,
+            timings.get("telegram_download_ms", 0.0),
+            timings.get("ogg_to_wav_ms", 0.0),
+            timings.get("prisma_stt_ms", 0.0),
+            timings.get("intent_classification_ms", 0.0),
+            timings.get("location_resolution_ms", 0.0),
+            timings.get("weatherapi_ms", 0.0),
+            timings.get("imd_ms", 0.0),
+            timings.get("groq_llm_ms", 0.0),
+            timings.get("timbre_tts_ms", 0.0),
+            timings.get("wav_to_ogg_ms", 0.0),
+            timings.get("telegram_delivery_ms", 0.0),
+            timings.get("total_ms", 0.0),
+        )
+
+    async def _reply_voice_telugu(
+        self, message, text: str, timings_out: Optional[dict] = None
+    ) -> bool:
         """
         Synthesize Telugu text into Kaveri voice WAV via Timbre v2.5,
         convert to mono OGG Opus, and deliver via message.reply_voice.
@@ -398,25 +433,39 @@ class TelegramHandler:
         """
         clean_text = text
         if not clean_text or any(c in clean_text.lower() for c in ("apologize", "verified official evidence")):
-            clean_text = (
-                "క్షమించండి, మీ ప్రశ్నకు ఖచ్చితమైన సమాధానం ఇవ్వడానికి అధికారిక ఆధారాలు అందుబాటులో లేవు. "
-                "దయచేసి మీ మండల వ్యవసాయ అధికారిని (AO) లేదా దగ్గరి కృషి విజ్ఞాన కేంద్రాన్ని (KVK) సంప్రదించండి."
-            )
+            clean_text = TELEGRAM_ABSTENTION_FALLBACK
 
         try:
             synth_func = getattr(self.voice_service, "synthesize_speech", None) or getattr(self.voice_service, "_synthesize_speech", None)
             wav_bytes = None
+            t_tts = time.perf_counter()
             if synth_func:
                 try:
-                    wav_bytes = await asyncio.to_thread(synth_func, clean_text, "te-IN")
+                    supports_channel = False
+                    try:
+                        sig = inspect.signature(synth_func)
+                        supports_channel = "channel" in sig.parameters
+                    except (ValueError, TypeError):
+                        supports_channel = False
+
+                    if supports_channel:
+                        wav_bytes = await asyncio.to_thread(
+                            synth_func, clean_text, "te-IN", channel="telegram"
+                        )
+                    else:
+                        wav_bytes = await asyncio.to_thread(synth_func, clean_text, "te-IN")
                 except Exception as synth_err:
                     logger.warning("Speech synthesis call failed: %s", synth_err)
                     wav_bytes = None
+            tts_ms = round((time.perf_counter() - t_tts) * 1000, 2)
+            if timings_out is not None:
+                timings_out["timbre_tts_ms"] = round(timings_out.get("timbre_tts_ms", 0.0) + tts_ms, 2)
 
             if not isinstance(wav_bytes, (bytes, bytearray)) or len(wav_bytes) == 0:
                 wav_bytes = _generate_fallback_wav_bytes()
 
             ogg_bytes = None
+            t_enc = time.perf_counter()
             try:
                 ogg_res = await asyncio.to_thread(convert_wav_bytes_to_ogg_opus, wav_bytes)
                 if isinstance(ogg_res, tuple):
@@ -425,16 +474,32 @@ class TelegramHandler:
                     ogg_bytes = ogg_res
             except Exception as conv_err:
                 logger.warning("WAV to OGG conversion failed: %s", conv_err)
+            wav_to_ogg_ms = round((time.perf_counter() - t_enc) * 1000, 2)
+            if timings_out is not None:
+                timings_out["wav_to_ogg_ms"] = wav_to_ogg_ms
 
             if not isinstance(ogg_bytes, (bytes, bytearray)) or len(ogg_bytes) == 0:
-                ogg_bytes = b"OggS_fallback_audio"
+                t_deliv = time.perf_counter()
+                await message.reply_text(clean_text)
+                if timings_out is not None:
+                    timings_out["telegram_delivery_ms"] = round(
+                        (time.perf_counter() - t_deliv) * 1000, 2
+                    )
+                return False
 
+            t_deliv = time.perf_counter()
             await message.reply_voice(voice=io.BytesIO(ogg_bytes))
+            telegram_delivery_ms = round((time.perf_counter() - t_deliv) * 1000, 2)
+            if timings_out is not None:
+                timings_out["telegram_delivery_ms"] = telegram_delivery_ms
             return True
         except Exception as e:
             logger.error("Failed to deliver Telugu voice reply: %s", e)
             telugu_fallback = clean_text
+            t_deliv = time.perf_counter()
             await message.reply_text(telugu_fallback)
+            if timings_out is not None:
+                timings_out["telegram_delivery_ms"] = round((time.perf_counter() - t_deliv) * 1000, 2)
             return False
 
     async def handle_voice(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -455,14 +520,17 @@ class TelegramHandler:
         user = update.effective_user
         user_id = str(user.id if user else "guest")
         chat_id = update.effective_chat.id if update.effective_chat else None
-        logger.info("Handling Telegram voice from user %s (update_id: %s)", user_id, update.update_id)
+        timings: dict = {}
+        logger.info("Handling Telegram voice event (update_id: %s)", update.update_id)
 
         try:
             # 1. Quick duration check from Telegram metadata
             if voice_obj.duration and voice_obj.duration > 30:
-                logger.info("Telegram voice note duration %ss exceeds 30s limit.", voice_obj.duration)
-                await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE)
+                logger.info("Telegram voice note duration %ss exceeds 30s limit (update_id: %s).", voice_obj.duration, update.update_id)
+                await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE, timings_out=timings)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                timings["total_ms"] = elapsed_ms
+                self._log_voice_telemetry(update.update_id, "voice_duration_exceeded", timings)
                 logger.info(
                     "Telegram event: update_id=%s, type=voice_duration_exceeded, duration_ms=%.2f, status=rejected",
                     update.update_id,
@@ -477,12 +545,16 @@ class TelegramHandler:
                 except Exception as action_err:
                     logger.debug("Failed to send chat action: %s", action_err)
 
-            # 3. Download audio file bytes
+            # 3. Download audio file bytes (Stage 1)
+            t_dl = time.perf_counter()
             file = await context.bot.get_file(voice_obj.file_id)
             raw_audio_bytes = bytes(await file.download_as_bytearray())
+            timings["telegram_download_ms"] = round((time.perf_counter() - t_dl) * 1000, 2)
 
-            # 4. Convert incoming OGG/Opus to WAV in thread
+            # 4. Convert incoming OGG/Opus to WAV in thread (Stage 2)
+            t_ogg2wav = time.perf_counter()
             wav_bytes = await asyncio.to_thread(convert_ogg_opus_to_wav, raw_audio_bytes)
+            timings["ogg_to_wav_ms"] = round((time.perf_counter() - t_ogg2wav) * 1000, 2)
 
             # 5. Session & Consent preparation
             session = self.session_repo.get_session(user_id)
@@ -519,20 +591,32 @@ class TelegramHandler:
                 voice_req,
             )
 
+            stage_lat = getattr(voice_res, "stage_latencies_ms", None) or {}
+            timings["prisma_stt_ms"] = stage_lat.get("stt_ms", 0.0)
+            timings["intent_classification_ms"] = stage_lat.get("intent_classification_ms", 0.0)
+            timings["location_resolution_ms"] = stage_lat.get("location_resolution_ms", stage_lat.get("farmer_lookup_ms", 0.0))
+            timings["weatherapi_ms"] = stage_lat.get("weatherapi_ms", 0.0)
+            timings["imd_ms"] = stage_lat.get("imd_ms", 0.0)
+            timings["groq_llm_ms"] = stage_lat.get("llm_inference_ms", 0.0)
+            timings["timbre_tts_ms"] = stage_lat.get("tts_ms", 0.0)
+
             transcript = (voice_res.transcript or "").strip()
-            logger.info("Transcribed Telegram voice for user %s: '%s'", user_id, transcript)
+            synthesized_text = voice_res.response_text
+            logger.info("Transcribed Telegram voice (update_id: %s, transcript_chars: %d)", update.update_id, len(transcript))
 
             # 6A. Location deletion request check
             if is_location_deletion_request(transcript):
-                logger.info("User %s requested location deletion via voice.", user_id)
+                logger.info("Location deletion requested via voice (update_id: %s).", update.update_id)
                 self.session_repo.clear_location(user_id)
                 self.session_repo.clear_pending_query(user_id)
                 del_msg = (
-                    "మీ లొకేషన్ వివరాలు విజయవంతంగా తొలగించబడ్డాయి అండి. "
-                    "వాతావరణ సమాచారం కోసం మళ్ళీ అడిగినప్పుడు వివరాలు ఇవ్వవచ్చు."
+                    "మీ ప్రాంతం వివరాలు తీసేశాను అండి. "
+                    "తర్వాత మళ్ళీ వాతావరణం తెలుసుకోవాలంటే మీ ఊరి పేరు చెప్పొచ్చు."
                 )
-                await self._reply_voice_telugu(message, del_msg)
+                await self._reply_voice_telugu(message, del_msg, timings_out=timings)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                timings["total_ms"] = elapsed_ms
+                self._log_voice_telemetry(update.update_id, "voice_location_deleted", timings)
                 logger.info(
                     "Telegram event: update_id=%s, type=voice_location_deleted, duration_ms=%.2f, status=success",
                     update.update_id,
@@ -542,16 +626,18 @@ class TelegramHandler:
 
             # 6B. Explicit consent rejection check
             if is_consent_reject(transcript):
-                logger.info("User %s rejected weather consent via voice.", user_id)
+                logger.info("Weather consent rejected via voice (update_id: %s).", update.update_id)
                 self.session_repo.set_consent(user_id, consent_given=False)
                 self.session_repo.clear_location(user_id)
                 self.session_repo.clear_pending_query(user_id)
                 reject_msg = (
-                    "ధన్యవాదాలు అండి. మీ అభ్యర్థన మేరకు వాతావరణ సమాచార సమ్మతి నమోదు చేయబడలేదు. "
-                    "మీరు ఇతర వ్యవసాయ సమాచారం లేదా పంటల గురించి ఏమైనా అడగవచ్చు."
+                    "సరే అండి, మీ మాట ప్రకారం వాతావరణ సమాచారం కోసం లొకేషన్ తీసుకోవడం లేదు. "
+                    "మీరు పంటలు, సాగు గురించి ఏమైనా సందేహాలుంటే అడగవచ్చు."
                 )
-                await self._reply_voice_telugu(message, reject_msg)
+                await self._reply_voice_telugu(message, reject_msg, timings_out=timings)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                timings["total_ms"] = elapsed_ms
+                self._log_voice_telemetry(update.update_id, "voice_consent_rejected", timings)
                 logger.info(
                     "Telegram event: update_id=%s, type=voice_consent_rejected, duration_ms=%.2f, status=success",
                     update.update_id,
@@ -561,7 +647,7 @@ class TelegramHandler:
 
             # 6C. Explicit or contextual consent grant check
             if is_consent_grant(transcript, awaiting_consent=session.awaiting_consent):
-                logger.info("User %s granted weather sharing consent via voice (awaiting=%s).", user_id, session.awaiting_consent)
+                logger.info("Weather sharing consent granted via voice (update_id: %s, awaiting=%s).", update.update_id, session.awaiting_consent)
                 session = self.session_repo.set_consent(user_id, consent_given=True)
 
                 # Check if this voice message also provided location entities
@@ -572,7 +658,7 @@ class TelegramHandler:
 
                 pending_query = session.pending_weather_query
                 if pending_query:
-                    logger.info("Resuming pending weather query '%s' for user %s after voice consent.", pending_query, user_id)
+                    logger.info("Resuming pending weather query after voice consent (update_id: %s).", update.update_id)
                     self.session_repo.clear_pending_query(user_id)
 
                     guest_consent = GuestWeatherConsentEvent(
@@ -602,6 +688,16 @@ class TelegramHandler:
                         channel="telegram",
                     )
                     conv_res = await asyncio.to_thread(self.orchestrator.process_message, conv_req)
+                    conv_lat = getattr(conv_res, "latency_breakdown_ms", None) or {}
+                    for k_src, k_dst in [
+                        ("intent_classification_ms", "intent_classification_ms"),
+                        ("location_resolution_ms", "location_resolution_ms"),
+                        ("weatherapi_ms", "weatherapi_ms"),
+                        ("imd_ms", "imd_ms"),
+                        ("llm_inference_ms", "groq_llm_ms"),
+                    ]:
+                        timings[k_dst] = round(timings.get(k_dst, 0.0) + (conv_lat.get(k_src) or 0.0), 2)
+
                     reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
 
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
@@ -609,8 +705,10 @@ class TelegramHandler:
                     else:
                         self.session_repo.clear_temp_location(user_id)
 
-                    await self._reply_voice_telugu(message, reply_text)
+                    await self._reply_voice_telugu(message, reply_text, timings_out=timings)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                    timings["total_ms"] = elapsed_ms
+                    self._log_voice_telemetry(update.update_id, "voice_consent_resumed_weather", timings)
                     logger.info(
                         "Telegram event: update_id=%s, type=voice_consent_resumed_weather, duration_ms=%.2f, status=success",
                         update.update_id,
@@ -619,11 +717,13 @@ class TelegramHandler:
                     return
                 else:
                     ack_msg = (
-                        "ధన్యవాదాలు అండి! వాతావరణ సమాచారం కోసం మీ సమ్మతి నమోదు చేయబడింది. "
-                        "మీరు ఇప్పుడు మీ ప్రాంతం వాతావరణ సమాచారాన్ని అడగవచ్చు."
+                        "సరే అండి, ఇప్పుడు మీ ప్రాంతం వాతావరణ వివరాలు చూసి చెప్తాను. "
+                        "ఏ ఊరు లేదా మండలం వాతావరణం కావాలో అడగండి."
                     )
-                    await self._reply_voice_telugu(message, ack_msg)
+                    await self._reply_voice_telugu(message, ack_msg, timings_out=timings)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                    timings["total_ms"] = elapsed_ms
+                    self._log_voice_telemetry(update.update_id, "voice_consent_ack", timings)
                     logger.info(
                         "Telegram event: update_id=%s, type=voice_consent_ack, duration_ms=%.2f, status=success",
                         update.update_id,
@@ -633,9 +733,11 @@ class TelegramHandler:
 
             # 6D. Greeting shortcut for voice
             if is_greeting(transcript):
-                logger.info("Detected greeting from user %s in voice, returning direct voice greeting.", user_id)
-                await self._reply_voice_telugu(message, GREETING_MESSAGE)
+                logger.info("Detected greeting in voice, returning direct voice greeting (update_id: %s).", update.update_id)
+                await self._reply_voice_telugu(message, GREETING_MESSAGE, timings_out=timings)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                timings["total_ms"] = elapsed_ms
+                self._log_voice_telemetry(update.update_id, "voice_greeting", timings)
                 logger.info(
                     "Telegram event: update_id=%s, type=voice_greeting, duration_ms=%.2f, status=success",
                     update.update_id,
@@ -646,14 +748,14 @@ class TelegramHandler:
             # 6E. Location extraction & pending weather query resumption
             v, m, d, p = extract_location_from_text(transcript)
             if any([v, m, d, p]):
-                logger.info("Extracted location entities from Telegram voice for user %s: v=%s, m=%s, d=%s, p=%s", user_id, v, m, d, p)
+                logger.info("Extracted location entities from Telegram voice (update_id: %s).", update.update_id)
                 self.session_repo.update_location(user_id, village=v, mandal=m, district=d, pin_code=p)
                 session = self.session_repo.get_session(user_id)
 
                 from app.conversation.intent import is_weather_query
                 if session.pending_weather_query and not is_weather_query(transcript):
+                    logger.info("Resuming pending weather query with voice-provided location (update_id: %s).", update.update_id)
                     pending_q = session.pending_weather_query
-                    logger.info("Resuming pending weather query '%s' with voice-provided location for user %s", pending_q, user_id)
                     self.session_repo.clear_pending_query(user_id)
 
                     guest_consent = None
@@ -680,6 +782,16 @@ class TelegramHandler:
                         channel="telegram",
                     )
                     conv_res = await asyncio.to_thread(self.orchestrator.process_message, conv_req)
+                    conv_lat = getattr(conv_res, "latency_breakdown_ms", None) or {}
+                    for k_src, k_dst in [
+                        ("intent_classification_ms", "intent_classification_ms"),
+                        ("location_resolution_ms", "location_resolution_ms"),
+                        ("weatherapi_ms", "weatherapi_ms"),
+                        ("imd_ms", "imd_ms"),
+                        ("llm_inference_ms", "groq_llm_ms"),
+                    ]:
+                        timings[k_dst] = round(timings.get(k_dst, 0.0) + (conv_lat.get(k_src) or 0.0), 2)
+
                     reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
 
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
@@ -687,8 +799,10 @@ class TelegramHandler:
                     else:
                         self.session_repo.clear_temp_location(user_id)
 
-                    await self._reply_voice_telugu(message, reply_text)
+                    await self._reply_voice_telugu(message, reply_text, timings_out=timings)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+                    timings["total_ms"] = elapsed_ms
+                    self._log_voice_telemetry(update.update_id, "voice_location_resumed_weather", timings)
                     logger.info(
                         "Telegram event: update_id=%s, type=voice_location_resumed_weather, duration_ms=%.2f, status=success",
                         update.update_id,
@@ -700,7 +814,7 @@ class TelegramHandler:
             q_clean = transcript.strip().strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965").lower()
             resp_clean = (voice_res.response_text or "").strip().strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965").lower()
             if resp_clean and resp_clean == q_clean:
-                logger.warning("Telegram handler detected voice_res echoing transcript. Overriding with clarification.")
+                logger.warning("Telegram handler detected voice_res echoing transcript (update_id: %s). Overriding with clarification.", update.update_id)
                 voice_res.response_text = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
                 voice_res.safety_reason = "LOCATION_PARAMETERS_REQUIRED"
                 voice_res.is_abstention = True
@@ -716,27 +830,36 @@ class TelegramHandler:
 
             # 8. Deliver voice reply (All responses to voice messages MUST be delivered as voice notes)
             sent_voice = False
-            if voice_res.audio_base64 and not voice_res.is_fallback_text_only:
+            audio_matches_text = voice_res.response_text == synthesized_text
+            if (
+                voice_res.audio_base64
+                and not voice_res.is_fallback_text_only
+                and audio_matches_text
+            ):
                 try:
                     reply_wav_bytes = base64.b64decode(voice_res.audio_base64)
+                    t_enc = time.perf_counter()
                     ogg_bytes, _ = await asyncio.to_thread(convert_wav_bytes_to_ogg_opus, reply_wav_bytes)
+                    timings["wav_to_ogg_ms"] = round((time.perf_counter() - t_enc) * 1000, 2)
+
+                    t_deliv = time.perf_counter()
                     await message.reply_voice(voice=io.BytesIO(ogg_bytes))
+                    timings["telegram_delivery_ms"] = round((time.perf_counter() - t_deliv) * 1000, 2)
                     sent_voice = True
                 except Exception as voice_send_err:
-                    logger.warning("Failed to encode/send voice reply to user %s: %s", user_id, voice_send_err)
+                    logger.warning("Failed to encode/send voice reply (update_id: %s): %s", update.update_id, voice_send_err)
 
             # If voice was not pre-synthesized (e.g. safe abstention, rejection, or fallback), synthesize and deliver voice note now
             if not sent_voice:
                 resp_text = voice_res.response_text
                 if not resp_text or any(c in resp_text.lower() for c in ("apologize", "verified official evidence")):
-                    resp_text = (
-                        "క్షమించండి, మీ ప్రశ్నకు ఖచ్చితమైన సమాధానం ఇవ్వడానికి అధికారిక ఆధారాలు అందుబాటులో లేవు. "
-                        "దయచేసి మీ మండల వ్యవసాయ అధికారిని (AO) లేదా దగ్గరి కృషి విజ్ఞాన కేంద్రాన్ని (KVK) సంప్రదించండి."
-                    )
-                await self._reply_voice_telugu(message, resp_text)
+                    resp_text = TELEGRAM_ABSTENTION_FALLBACK
+                await self._reply_voice_telugu(message, resp_text, timings_out=timings)
                 sent_voice = True
 
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            timings["total_ms"] = elapsed_ms
+            self._log_voice_telemetry(update.update_id, "voice", timings)
             logger.info(
                 "Telegram event: update_id=%s, type=voice, voice_sent=%s, duration_ms=%.2f, status=success",
                 update.update_id,
@@ -745,9 +868,11 @@ class TelegramHandler:
             )
 
         except AudioDurationExceededError:
-            logger.info("Voice duration limit exceeded during pipeline processing.")
-            await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE)
+            logger.info("Voice duration limit exceeded during pipeline processing (update_id: %s).", update.update_id)
+            await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE, timings_out=timings)
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            timings["total_ms"] = elapsed_ms
+            self._log_voice_telemetry(update.update_id, "voice_duration_exceeded", timings)
             logger.info(
                 "Telegram event: update_id=%s, type=voice_duration_exceeded, duration_ms=%.2f, status=rejected",
                 update.update_id,
@@ -755,12 +880,14 @@ class TelegramHandler:
             )
 
         except Exception as e:
-            logger.error("Error processing Telegram voice note for user %s: %s", user_id, e, exc_info=True)
+            logger.error("Error processing Telegram voice note (update_id: %s): %s", update.update_id, e, exc_info=True)
             try:
-                await self._reply_voice_telugu(message, FALLBACK_ERROR_MESSAGE)
+                await self._reply_voice_telugu(message, FALLBACK_ERROR_MESSAGE, timings_out=timings)
             except Exception:
                 pass
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            timings["total_ms"] = elapsed_ms
+            self._log_voice_telemetry(update.update_id, "voice_error", timings)
             logger.warning(
                 "Telegram event: update_id=%s, type=voice, duration_ms=%.2f, status=error",
                 update.update_id,
@@ -775,4 +902,3 @@ class TelegramHandler:
                 await update.effective_message.reply_text(FALLBACK_ERROR_MESSAGE)
             except Exception:
                 pass
-

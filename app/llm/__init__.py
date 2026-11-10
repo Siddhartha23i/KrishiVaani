@@ -13,6 +13,7 @@ from app.llm.schemas import (
     WeatherFactItem,
 )
 from app.llm.providers.groq_provider import GroqProvider
+from app.llm.providers.sarvam_provider import SarvamProvider
 from app.llm.safety import LLMSafetyValidator
 from app.llm.service import LLMReasoningService
 from app.llm.knowledge_adapter import (
@@ -42,6 +43,7 @@ __all__ = [
     "ApprovedEvidenceItem",
     "WeatherFactItem",
     "GroqProvider",
+    "SarvamProvider",
     "LLMSafetyValidator",
     "LLMReasoningService",
     "ApprovedKnowledgeAdapter",
@@ -57,4 +59,3 @@ __all__ = [
     "LLMSafetyViolationError",
     "LLMAbstentionError",
 ]
-

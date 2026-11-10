@@ -100,6 +100,7 @@ class GroqProvider:
             "messages": messages,
             "temperature": temp_to_request,
             "max_tokens": tokens_to_request,
+            "reasoning_effort": self.config.reasoning_effort,
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
@@ -228,4 +229,3 @@ class GroqProvider:
                 provider="groq",
                 details={"parsed_json": data}
             ) from e
-
