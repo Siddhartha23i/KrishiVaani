@@ -1,30 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0a0a0f" />
 
-  <title>KrishiVaani — AI Voice Assistant for Indian Farmers</title>
-  <meta name="description" content="KrishiVaani is a Telugu-first AI voice assistant that helps farmers access real-time weather forecasts and verified agricultural guidance through natural voice conversations on Telegram." />
+  <title>KrishiVaani — Voice-First Farming Assistant for Indian Farmers</title>
+  <meta name="description" content="KrishiVaani is a voice-first farming assistant for Indian farmers. Ask by voice in your own language and hear a clear answer. Real-time weather and verified advice on Telegram." />
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Facebook -->
   <meta property="og:type"        content="website" />
-  <meta property="og:title"       content="KrishiVaani — AI Voice Assistant for Indian Farmers" />
-  <meta property="og:description" content="Speak in your language, get instant farm guidance. Telugu-first voice AI on Telegram." />
+  <meta property="og:title"       content="KrishiVaani — Voice-First Farming Assistant for Indian Farmers" />
+  <meta property="og:description" content="Ask by voice in your own language, hear a clear answer you can trust. Live on Telegram." />
   <meta property="og:url"         content="https://siddhartha23i.github.io/KrishiVaani/" />
-  <meta property="og:image"       content="https://siddhartha23i.github.io/KrishiVaani/assets/og-image.png" />
+  <meta property="og:image"       content="https://siddhartha23i.github.io/KrishiVaani/assets/og-preview.png" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="KrishiVaani — AI Voice for Farmers" />
-  <meta name="twitter:description" content="Telugu-first AI voice assistant for Indian farmers. Weather forecasts and farm guidance on Telegram." />
+  <meta name="twitter:title"       content="KrishiVaani — Voice-First AI Advisor for Farmers" />
+  <meta name="twitter:description" content="Ask by voice in your own language, hear a clear answer you can trust. Live on Telegram." />
+  <meta name="twitter:image"       content="https://siddhartha23i.github.io/KrishiVaani/assets/og-preview.png" />
 
-  <!-- Fonts — Inter via Google Fonts with font-display:swap -->
+  <!-- Fonts: Inter & Noto Sans Telugu with font-display: swap -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
 
@@ -32,12 +33,11 @@
 </head>
 <body>
 
-  <!-- Background effects -->
+  <!-- Ambient Visuals -->
   <canvas id="bg-canvas" aria-hidden="true"></canvas>
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="glow-orb glow-orb-1" aria-hidden="true"></div>
   <div class="glow-orb glow-orb-2" aria-hidden="true"></div>
-  <div class="glow-orb glow-orb-3" aria-hidden="true"></div>
 
   <!-- ── Navigation ─────────────────────────────────────────── -->
   <nav id="main-nav" class="nav" aria-label="Main navigation">
@@ -48,28 +48,29 @@
       </a>
       <ul class="nav-links" role="list">
         <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#see-it-in-action">See it in action</a></li>
         <li><a href="#trust">Why trust it</a></li>
         <li>
           <a
-            href="#"
+            href="https://t.me/KrishiVaaniBot"
             class="btn btn-primary"
             data-telegram-link
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Try KrishiVaani on Telegram"
-          >Try it</a>
+          >Try it live</a>
         </li>
       </ul>
     </div>
   </nav>
 
-  <!-- ── Hero ───────────────────────────────────────────────── -->
-  <section class="hero" aria-labelledby="hero-heading">
+  <!-- ── Hero Section ───────────────────────────────────────── -->
+  <header class="hero" aria-labelledby="hero-heading">
     <div class="container hero-inner">
 
       <span class="hero-eyebrow" aria-label="Gnani AI Great Indian AI Internship Challenge">
         <span class="live-dot" aria-hidden="true"></span>
-        Gnani AI · Great Indian AI Challenge
+        Built for the Great Indian AI Internship Challenge
       </span>
 
       <h1 id="hero-heading" class="hero-title">
@@ -79,253 +80,457 @@
       </h1>
 
       <p class="hero-subtitle">
-        KrishiVaani is a <strong>Telugu-first voice assistant</strong> that answers farmers'
-        questions about weather, crops, and agriculture — naturally, in their own language,
-        over a simple voice note on Telegram.
+        KrishiVaani is a voice-first farming assistant for Indian farmers. Ask by voice in your own language
+        (English is fine too) and hear a clear answer. Voice replies are in Telugu today; other languages get text replies.
       </p>
 
-      <p class="hero-telugu" lang="te" aria-label="Telugu tagline: Your questions, in your language">
+      <p class="hero-telugu" lang="te" aria-label="Telugu tagline">
         మీ పంట, మీ భాష, మీ AI సహాయకుడు.
       </p>
 
       <div class="hero-cta">
         <a
-          href="#"
+          href="https://t.me/KrishiVaaniBot"
           class="btn btn-primary btn-pulse"
           data-telegram-link
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Open KrishiVaani on Telegram (live)"
+          aria-label="Try on Telegram: Live"
         >
           <span class="live-dot" aria-hidden="true"></span>
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
           </svg>
-          Try on Telegram — Live
+          Try on Telegram: Live
         </a>
 
         <button
           class="btn btn-disabled"
           disabled
           aria-disabled="true"
-          aria-label="WhatsApp — coming soon"
+          aria-label="WhatsApp: Soon"
           title="WhatsApp support is coming soon"
         >
           <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
             <path d="M12 0C5.373 0 0 5.373 0 12c0 2.07.527 4.02 1.455 5.717L.057 23.59l5.983-1.572A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.206-1.49l-.373-.222-3.372.886.9-3.274-.243-.389A9.818 9.818 0 0112 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.421-4.398 9.818-9.818 9.818z"/>
           </svg>
-          WhatsApp
+          WhatsApp: Soon
           <span class="coming-soon-badge" aria-label="Coming soon">Soon</span>
         </button>
       </div>
 
-      <div class="hero-scroll-hint" aria-hidden="true">
-        <span>See how it works</span>
-        <svg class="scroll-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M10 4v12M5 11l5 5 5-5"/>
-        </svg>
-      </div>
-
     </div>
-  </section>
+  </header>
 
-  <!-- ── How it works ───────────────────────────────────────── -->
+  <!-- ── How It Works (Pipeline Diagram with 3-Way Branching) ──── -->
   <section id="how-it-works" class="section pipeline-section" aria-labelledby="pipeline-heading">
     <div class="container">
-      <header class="section-header">
-        <p class="section-eyebrow">The pipeline</p>
-        <h2 id="pipeline-heading" class="section-title">From voice to verified answer<br />in seconds</h2>
-        <p class="section-desc">
-          Every voice note travels through a 7-stage pipeline that understands Telugu, reasons
-          over live data, and verifies every answer before the farmer hears it.
+      <header class="section-header text-center">
+        <p class="section-eyebrow">The Pipeline</p>
+        <h2 id="pipeline-heading" class="section-title">From voice to a safe answer, in seconds</h2>
+        <p class="section-desc text-center">
+          Every voice note travels through seven guarded stages that transcribe your speech, route your request,
+          and verify facts before a voice reply is generated.
         </p>
       </header>
 
-      <ol class="pipeline-list" aria-label="7-step voice pipeline">
+      <div class="pipeline-diagram" role="list" aria-label="Seven-step agricultural voice pipeline">
 
-        <li class="pipeline-step" aria-label="Step 1: Farmer speaks">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/farmer.svg" alt="" width="26" height="26" />
+        <!-- Node 01 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <circle cx="24" cy="18" r="8" stroke-width="2.5"/>
+              <path d="M12 38c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M24 38v4M20 42h8" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 01</p>
-            <h3 class="step-title">Farmer speaks naturally</h3>
-            <p class="step-desc">
-              The farmer sends a Telugu voice note on Telegram — no typing, no app to install,
-              no special commands. Just speak.
+          <div class="node-card">
+            <p class="node-step-tag">Step 01</p>
+            <h3 class="node-title">Farmer speaks</h3>
+            <p class="node-desc">
+              Sends a voice note on Telegram, in their own language. No typing, no forms.
             </p>
-            <span class="step-tech">Telegram Bot API</span>
           </div>
-        </li>
+        </article>
 
-        <li class="pipeline-step" aria-label="Step 2: Speech to text">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/stt.svg" alt="" width="26" height="26" />
+        <!-- Node 02 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <rect x="8" y="14" width="22" height="20" rx="4" stroke-width="2.5"/>
+              <circle cx="19" cy="24" r="3" stroke-width="2"/>
+              <path d="M14 24h2M22 24h2" stroke-width="2" stroke-linecap="round"/>
+              <path d="M30 20c3 0 10 1 10 4s-7 4-10 4" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="40" cy="24" r="2.5" fill="currentColor"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 02</p>
-            <h3 class="step-title">Voice becomes text</h3>
-            <p class="step-desc">
-              The OGG audio is converted and sent to <strong>Gnani Prisma v3.0</strong>,
-              an Indian-language speech-to-text engine that accurately transcribes Telugu
-              with regional dialects.
+          <div class="node-card">
+            <p class="node-step-tag">Step 02</p>
+            <h3 class="node-title">Voice becomes text</h3>
+            <p class="node-desc">
+              Audio is converted and sent to Gnani Prisma speech-to-text.
             </p>
-            <span class="step-tech">Gnani Prisma v3.0 — STT</span>
           </div>
-        </li>
+        </article>
 
-        <li class="pipeline-step" aria-label="Step 3: Intent classification">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/router.svg" alt="" width="26" height="26" />
+        <!-- Node 03 (With 3-Way Branch Visualization) -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <circle cx="24" cy="12" r="4" stroke-width="2.5"/>
+              <circle cx="10" cy="36" r="4" stroke-width="2.5"/>
+              <circle cx="24" cy="36" r="4" stroke-width="2.5"/>
+              <circle cx="38" cy="36" r="4" stroke-width="2.5"/>
+              <path d="M24 16v6M24 22L10 32M24 22v10M24 22l14 10" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 03</p>
-            <h3 class="step-title">Question is understood and routed</h3>
-            <p class="step-desc">
-              The transcript is classified into one of three tiers — general agricultural knowledge,
-              live weather forecast, or personalised farm advice — so the right data sources
-              are queried.
+          <div class="node-card">
+            <p class="node-step-tag">Step 03</p>
+            <h3 class="node-title">Question is routed to a tier</h3>
+            <p class="node-desc">
+              Question is classified into general knowledge, live weather, or consequential farm advice.
             </p>
-            <span class="step-tech">Intent classifier · Location resolver</span>
-          </div>
-        </li>
 
-        <li class="pipeline-step" aria-label="Step 4: AI reasoning">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/brain.svg" alt="" width="26" height="26" />
+            <!-- 3-Way Branching Visualization -->
+            <div class="branch-container" aria-label="Routing tiers">
+              <div class="branch-card branch-general">
+                <div class="branch-header">
+                  <span class="branch-title">General Knowledge</span>
+                  <span class="branch-badge badge-model-knowledge">Model Knowledge</span>
+                </div>
+                <p class="branch-desc">Agricultural concepts, crop cycles, and baseline practices answered freely.</p>
+              </div>
+
+              <div class="branch-card branch-weather">
+                <div class="branch-header">
+                  <span class="branch-title">Live Weather</span>
+                  <span class="branch-badge badge-live-data">Live Data</span>
+                </div>
+                <p class="branch-desc">Real-time WeatherAPI forecasts and IMD district alerts for Telangana.</p>
+              </div>
+
+              <div class="branch-card branch-farm">
+                <div class="branch-header">
+                  <span class="branch-title">Farm Advice</span>
+                  <span class="branch-badge badge-approved-evidence">Approved Evidence Only</span>
+                </div>
+                <p class="branch-desc">Verified agronomic package of practices, or safe referral to experts.</p>
+              </div>
+            </div>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 04</p>
-            <h3 class="step-title">AI reasons over live data</h3>
-            <p class="step-desc">
-              Relevant weather data (WeatherAPI + IMD warnings), crop knowledge, and
-              conversation context are assembled into a prompt. An LLM — currently
-              <strong>Groq-hosted openai/gpt-oss-120b</strong> — writes a natural Telugu answer.
+        </article>
+
+        <!-- Node 04 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <rect x="8" y="8" width="32" height="32" rx="8" stroke-width="2.5"/>
+              <circle cx="17" cy="20" r="2.5" fill="currentColor"/>
+              <circle cx="24" cy="20" r="2.5" fill="currentColor"/>
+              <circle cx="31" cy="20" r="2.5" fill="currentColor"/>
+              <path d="M14 28h20" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M14 33h12" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="node-card">
+            <p class="node-step-tag">Step 04</p>
+            <h3 class="node-title">AI writes the answer</h3>
+            <p class="node-desc">
+              <!-- TODO: Confirm whether default provider in production deployment is Sarvam AI LM or Groq -->
+              Groq-hosted language model writes a short answer in the farmer's language (with Sarvam AI supported in codebase). General questions use model knowledge, weather questions use live WeatherAPI data (plus IMD warnings for Telangana), and farm advice uses approved sources only.
             </p>
-            <span class="step-tech">Groq · WeatherAPI · IMD</span>
           </div>
-        </li>
+        </article>
 
-        <li class="pipeline-step" aria-label="Step 5: Safety guardrails">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/shield.svg" alt="" width="26" height="26" />
+        <!-- Node 05 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <path d="M24 6L8 14v12c0 9 7.2 17.4 16 20 8.8-2.6 16-11 16-20V14L24 6z" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M17 24l5 5 9-10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 05</p>
-            <h3 class="step-title">Every answer is checked</h3>
-            <p class="step-desc">
-              Deterministic safety checks verify the response before it is delivered.
-              Consequential agrochemical or pesticide advice must be backed by an approved
-              source or routes the farmer to an Agricultural Officer, KVK, or
-              Kisan Call Centre&nbsp;<strong>1800-180-1551</strong>.
+          <div class="node-card">
+            <p class="node-step-tag">Step 05</p>
+            <h3 class="node-title">Safety checks</h3>
+            <p class="node-desc">
+              Deterministic checks block unsafe or ungrounded claims: pesticide doses, scheme eligibility and amounts, prices, yield promises, unapproved or expired sources, wrong location. If there is no approved source, the farmer is referred to the Agricultural Officer, KVK or Kisan Call Centre 1800-180-1551.
             </p>
-            <span class="step-tech">Safety guardrails · Evidence checks</span>
           </div>
-        </li>
+        </article>
 
-        <li class="pipeline-step" aria-label="Step 6: Text to speech">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/tts.svg" alt="" width="26" height="26" />
+        <!-- Node 06 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <path d="M6 20c0 7.18 5.82 13 13 13h4l8 8V33h-1c7.18 0 13-5.82 13-13S38.18 7 31 7H19C11.82 7 6 12.82 6 20z" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M14 20h20M14 26h12" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 06</p>
-            <h3 class="step-title">Answer becomes natural voice</h3>
-            <p class="step-desc">
-              The verified Telugu text is sent to <strong>Gnani Timbre v2.5 — Kaveri voice</strong>,
-              producing a warm, natural-sounding Telugu voice reply optimised for rural listening
-              environments.
+          <div class="node-card">
+            <p class="node-step-tag">Step 06</p>
+            <h3 class="node-title">Text becomes voice</h3>
+            <p class="node-desc">
+              Gnani Timbre (Kaveri voice) speaks the answer in Telugu.
             </p>
-            <span class="step-tech">Gnani Timbre v2.5 — Kaveri TTS</span>
           </div>
-        </li>
+        </article>
 
-        <li class="pipeline-step" aria-label="Step 7: Farmer hears the answer">
-          <div class="step-icon-wrap" aria-hidden="true">
-            <img src="assets/icons/voice-reply.svg" alt="" width="26" height="26" />
+        <!-- Node 07 -->
+        <article class="pipeline-node" role="listitem">
+          <div class="node-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <rect x="6" y="8" width="28" height="28" rx="6" stroke-width="2.5"/>
+              <path d="M10 22h20M10 28h12" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M38 18l4-4M38 24h4M38 30l4 4" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
           </div>
-          <div class="step-body">
-            <p class="step-number">Step 07</p>
-            <h3 class="step-title">Farmer hears the answer</h3>
-            <p class="step-desc">
-              A voice message is delivered directly to the farmer's Telegram chat.
-              No reading required — the entire interaction is voice-to-voice.
+          <div class="node-card">
+            <p class="node-step-tag">Step 07</p>
+            <h3 class="node-title">Farmer hears the answer</h3>
+            <p class="node-desc">
+              A voice message arrives in the same Telegram chat.
             </p>
-            <span class="step-tech">Telegram voice message</span>
           </div>
-        </li>
+        </article>
 
-      </ol>
+      </div>
     </div>
   </section>
 
-  <!-- ── Live status strip ───────────────────────────────────── -->
-  <div class="status-strip" role="complementary" aria-label="Current system status">
-    <div class="container status-inner">
-      <div class="status-item">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="status-label">Telegram bot:</span>
-        <span>Live on Railway</span>
-      </div>
-      <div class="status-item">
-        <span class="status-dot amber" aria-hidden="true"></span>
-        <span class="status-label">WhatsApp:</span>
-        <span>Coming soon</span>
-      </div>
-      <div class="status-item">
-        <span class="status-dot purple" aria-hidden="true"></span>
-        <span class="status-label">Language:</span>
-        <span>Telugu (primary) · Expanding</span>
-      </div>
-      <div class="status-item">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="status-label">Voice pipeline:</span>
-        <span>Gnani Prisma v3.0 + Timbre v2.5</span>
+  <!-- ── See It in Action (Telegram Chat Mockup) ─────────────── -->
+  <section id="see-it-in-action" class="section" aria-labelledby="action-heading">
+    <div class="container">
+      <header class="section-header text-center">
+        <p class="section-eyebrow">Real Conversations</p>
+        <h2 id="action-heading" class="section-title">See it in action</h2>
+        <p class="section-desc text-center">
+          Listen to how farmers interact with KrishiVaani on Telegram using their voice.
+        </p>
+      </header>
+
+      <div class="chat-showcase-grid">
+        <div class="telegram-card" aria-label="Telegram chat preview">
+          <div class="telegram-header">
+            <div class="telegram-profile">
+              <div class="telegram-avatar" aria-hidden="true">KV</div>
+              <div>
+                <div class="telegram-name">KrishiVaani (@KrishiVaaniBot)</div>
+                <div class="telegram-status">
+                  <span class="live-dot" style="width:6px;height:6px;background:var(--accent-primary);" aria-hidden="true"></span>
+                  bot &bull; online
+                </div>
+              </div>
+            </div>
+            <a href="https://t.me/KrishiVaaniBot" data-telegram-link target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding:0.4rem 0.9rem;font-size:0.75rem;">Open Chat</a>
+          </div>
+
+          <div class="telegram-body">
+
+            <!-- Exchange 1: Farmer Voice Query -->
+            <!-- TODO: Replace with real farmer voice query transcript #1 -->
+            <div class="chat-bubble chat-bubble-out">
+              <div class="voice-waveform-preview">
+                <div class="voice-play-icon" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="voice-bars" aria-hidden="true">
+                  <div class="voice-bar" style="height:12px"></div>
+                  <div class="voice-bar" style="height:18px"></div>
+                  <div class="voice-bar" style="height:8px"></div>
+                  <div class="voice-bar" style="height:22px"></div>
+                  <div class="voice-bar" style="height:16px"></div>
+                  <div class="voice-bar" style="height:10px"></div>
+                  <div class="voice-bar" style="height:20px"></div>
+                  <div class="voice-bar" style="height:14px"></div>
+                </div>
+                <span style="font-family:var(--font-mono);font-size:0.75rem;">0:05</span>
+              </div>
+              <p style="font-style:italic;" lang="te">
+                <!-- TODO: [Insert real farmer Telugu voice question transcript here, e.g. వరి పంటలో ఎరువుల యాజమాన్యం గురించి చెప్పండి] -->
+                [రైతు వాయిస్ ప్రశ్న: వరి సాగు మరియు వర్ష సూచన వివరాలు అడుగుతున్నారు...]
+              </p>
+              <div class="chat-meta">10:14 AM &bull; Voice message</div>
+            </div>
+
+            <!-- Exchange 1: Bot Voice & Text Reply -->
+            <!-- TODO: Replace with real KrishiVaani reply transcript #1 -->
+            <div class="chat-bubble chat-bubble-in">
+              <div class="voice-waveform-preview">
+                <div class="voice-play-icon" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="voice-bars" aria-hidden="true">
+                  <div class="voice-bar" style="height:16px"></div>
+                  <div class="voice-bar" style="height:24px"></div>
+                  <div class="voice-bar" style="height:14px"></div>
+                  <div class="voice-bar" style="height:20px"></div>
+                  <div class="voice-bar" style="height:26px"></div>
+                  <div class="voice-bar" style="height:18px"></div>
+                  <div class="voice-bar" style="height:12px"></div>
+                  <div class="voice-bar" style="height:22px"></div>
+                  <div class="voice-bar" style="height:15px"></div>
+                </div>
+                <span style="font-family:var(--font-mono);font-size:0.75rem;">0:14</span>
+              </div>
+              <p lang="te">
+                <!-- TODO: [Insert real KrishiVaani Telugu voice reply transcript here] -->
+                నమస్కారం! మీ ప్రాంతంలో రాబోయే రెండు రోజుల్లో తేలికపాటి వర్షం కురిసే అవకాశం ఉంది. వరి పంటకు సంబంధించి అవసరమైన వ్యవసాయ సలహాలను అధికారుల ద్వారా సరిచూసి మీకు అందిస్తున్నాము.
+              </p>
+              <div class="chat-meta">10:14 AM &bull; KrishiVaani (Kaveri Voice)</div>
+            </div>
+
+            <!-- Exchange 2: Referral Case -->
+            <!-- TODO: Replace with real referral exchange transcript #2 -->
+            <div class="chat-bubble chat-bubble-out">
+              <div class="voice-waveform-preview">
+                <div class="voice-play-icon" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="voice-bars" aria-hidden="true">
+                  <div class="voice-bar" style="height:10px"></div>
+                  <div class="voice-bar" style="height:15px"></div>
+                  <div class="voice-bar" style="height:22px"></div>
+                  <div class="voice-bar" style="height:12px"></div>
+                </div>
+                <span style="font-family:var(--font-mono);font-size:0.75rem;">0:04</span>
+              </div>
+              <p style="font-style:italic;" lang="te">
+                <!-- TODO: [Insert real consequential farmer question transcript, e.g. specific chemical dosage] -->
+                [రైతు వాయిస్ ప్రశ్న: మందుల మోతాదు లేదా పురుగు మందు పిచికారీ వివరాలు...]
+              </p>
+              <div class="chat-meta">10:16 AM &bull; Voice message</div>
+            </div>
+
+            <div class="chat-bubble chat-bubble-in">
+              <p lang="te">
+                పురుగు మందుల మోతాదును నేరుగా సూచించడం సురక్షితం కాదు. దయచేసి మీ సమీప వ్యవసాయ అధికారిని (AO), లేదా కిసాన్ కాల్ సెంటర్ <strong>1800-180-1551</strong> ని సంప్రదించండి.
+              </p>
+              <div class="chat-meta">10:16 AM &bull; Honest Guardrail Referral</div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ── Why trust it ───────────────────────────────────────── -->
+  <!-- ── Demo Video Section ─────────────────────────────────── -->
+  <section class="section" aria-labelledby="video-heading">
+    <div class="container">
+      <header class="section-header text-center">
+        <p class="section-eyebrow">Walkthrough</p>
+        <h2 id="video-heading" class="section-title">Watch KrishiVaani in action</h2>
+        <p class="section-desc text-center">
+          A short video walkthrough demonstrating real Telugu voice query processing and live weather retrieval.
+        </p>
+      </header>
+
+      <div class="video-container">
+        <!-- TODO: Add actual video URL in js/main.js or embed iframe -->
+        <div id="demo-video-box" class="video-poster-box" role="button" tabindex="0" aria-label="Play KrishiVaani demo video">
+          <div class="video-play-btn" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="6 3 20 12 6 21 6 3"/>
+            </svg>
+          </div>
+          <div class="video-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>
+            Demo Video &bull; 1:15
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Try It Section (With Desktop QR Code) ──────────────── -->
+  <section id="try-it" class="section" aria-labelledby="try-heading">
+    <div class="container">
+      <div class="try-it-grid">
+        <div>
+          <p class="section-eyebrow">Instant Access</p>
+          <h2 id="try-heading" class="section-title">Send a voice note in your language</h2>
+          <p class="section-desc" style="margin-bottom:1.75rem;">
+            No setup, no registration forms, and no app installation required. Open Telegram, tap the microphone,
+            and speak naturally in Telugu or English.
+          </p>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+            <a
+              href="https://t.me/KrishiVaaniBot"
+              class="btn btn-primary btn-pulse"
+              data-telegram-link
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open KrishiVaani Telegram Bot"
+            >
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+              </svg>
+              Open Telegram (@KrishiVaaniBot)
+            </a>
+          </div>
+        </div>
+
+        <!-- Desktop QR Code -->
+        <div class="qr-code-box" aria-label="Scan QR Code to open Telegram bot">
+          <img src="assets/qr-code.svg" alt="QR Code to open https://t.me/KrishiVaaniBot" class="qr-code-img" width="190" height="190" />
+          <p class="qr-label">Scan with your phone camera to start chatting</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Why Trust It (Trust Cards) ─────────────────────────── -->
   <section id="trust" class="section" aria-labelledby="trust-heading">
     <div class="container">
-      <header class="section-header">
-        <p class="section-eyebrow">Built responsibly</p>
+      <header class="section-header text-center">
+        <p class="section-eyebrow">Built Responsibly</p>
         <h2 id="trust-heading" class="section-title">Advice farmers can trust</h2>
-        <p class="section-desc">
-          KrishiVaani is not a general-purpose chatbot. It is designed specifically
-          for Indian farmers, with hard safety rules baked into the pipeline.
+        <p class="section-desc text-center">
+          KrishiVaani is designed specifically for agriculture, with deterministic rules baked into every turn.
         </p>
       </header>
 
       <ul class="trust-grid" role="list">
 
+        <!-- Card 1 -->
         <li class="trust-card">
-          <img class="trust-card-icon" src="assets/icons/shield.svg" alt="" width="44" height="44" />
-          <h3 class="trust-card-title">Grounded, not hallucinated</h3>
+          <svg class="trust-card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" aria-hidden="true">
+            <circle cx="24" cy="12" r="4" stroke-width="2.5"/>
+            <circle cx="10" cy="36" r="4" stroke-width="2.5"/>
+            <circle cx="24" cy="36" r="4" stroke-width="2.5"/>
+            <circle cx="38" cy="36" r="4" stroke-width="2.5"/>
+            <path d="M24 16v6M24 22L10 32M24 22v10M24 22l14 10" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <h3 class="trust-card-title">Three tiers, three rules</h3>
           <p class="trust-card-desc">
-            Every weather forecast is sourced from live WeatherAPI data and IMD district
-            warnings — not AI memory. Answers that cannot be grounded in verified data
-            are withheld, not guessed.
+            General knowledge is answered freely, live weather comes from real data, consequential farm advice needs approved evidence.
           </p>
         </li>
 
+        <!-- Card 2 -->
         <li class="trust-card">
-          <img class="trust-card-icon" src="assets/icons/verified.svg" alt="" width="44" height="44" />
-          <h3 class="trust-card-title">Safe referral for high-stakes advice</h3>
+          <svg class="trust-card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M24 6L8 14v12c0 9 7.2 17.4 16 20 8.8-2.6 16-11 16-20V14L24 6z" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M17 24l5 5 9-10" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3 class="trust-card-title">Honest referral</h3>
           <p class="trust-card-desc">
-            Pesticide doses, emergency crop disease identification, and legal or financial
-            decisions are routed to qualified Agricultural Officers, KVK scientists,
-            or Kisan Call Centre <strong>1800-180-1551</strong> — never answered without evidence.
+            When there is no approved source, KrishiVaani says so and refers to the AO, KVK or Kisan Call Centre.
           </p>
         </li>
 
+        <!-- Card 3 -->
         <li class="trust-card">
-          <img class="trust-card-icon" src="assets/icons/global.svg" alt="" width="44" height="44" />
-          <h3 class="trust-card-title">Telugu-first, farmer-centric design</h3>
+          <svg class="trust-card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M24 6C14.059 6 6 14.059 6 24s8.059 18 18 18 18-8.059 18-18S33.941 6 24 6z" stroke-width="2.5"/>
+            <path d="M16 24l5 5 11-11" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3 class="trust-card-title">Your data</h3>
           <p class="trust-card-desc">
-            KrishiVaani speaks like an experienced agricultural helper, not a government
-            form or automated questionnaire. Responses use natural, conversational Telugu
-            — keeping farmer dignity at the centre.
+            The bot remembers earlier questions to help you; /forget deletes them. No phone numbers or names are stored.
           </p>
         </li>
 
@@ -333,55 +538,64 @@
     </div>
   </section>
 
+  <!-- ── Status Strip ───────────────────────────────────────── -->
+  <aside class="status-strip" aria-label="System status strip">
+    <div class="container status-inner">
+      <div class="status-tag">
+        <span class="status-dot-active" aria-hidden="true"></span>
+        <span><strong>Telegram bot:</strong> live.</span>
+      </div>
+      <div class="status-tag">
+        <span><strong>Voice replies:</strong> Telugu.</span>
+      </div>
+      <div class="status-tag">
+        <span><strong>Verified farm advice:</strong> Telangana.</span>
+      </div>
+      <div class="status-tag">
+        <span><strong>Weather:</strong> any district.</span>
+      </div>
+      <div class="status-tag">
+        <span><strong>Other languages:</strong> text replies.</span>
+      </div>
+      <div class="status-tag">
+        <span><strong>WhatsApp:</strong> coming soon.</span>
+      </div>
+      <div class="status-tag">
+        <span style="color:var(--accent-warning);">&bull;</span>
+        <span><strong>Prototype:</strong> confirm important crop decisions with your local Agricultural Officer.</span>
+      </div>
+    </div>
+  </aside>
+
   <!-- ── Footer ─────────────────────────────────────────────── -->
   <footer class="footer" role="contentinfo">
     <div class="container">
       <p class="footer-logo">KrishiVaani</p>
-      <p class="footer-tagline">AI voice assistant for Indian farmers</p>
-
-      <nav class="footer-links" aria-label="Footer links">
-        <a
-          href="#"
-          data-telegram-link
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open KrishiVaani on Telegram"
-        >Try on Telegram</a>
-        <a
-          href="#"
-          data-github-link
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View source code on GitHub"
-        >GitHub</a>
-        <a href="#how-it-works">How it works</a>
-        <a href="#trust">Why trust it</a>
-      </nav>
+      <p class="footer-tagline">Voice-First Farming Assistant for Indian Farmers</p>
 
       <div class="footer-hashtags" aria-label="Project hashtags">
-        <span class="hashtag">#KrishiVaani</span>
         <span class="hashtag">#GnaniAI</span>
-        <span class="hashtag">#GreatIndianAIChallenge</span>
+        <span class="hashtag">#GreatIndianAIInternshipChallenge</span>
+        <span class="hashtag">#KrishiVaani</span>
         <span class="hashtag">#VoiceForFarmers</span>
-        <span class="hashtag">#TeluguAI</span>
       </div>
 
       <p class="footer-credit">
         Built for the
-        <a
-          href="https://gnani.ai"
-          target="_blank"
-          rel="noopener noreferrer"
-        >Gnani AI</a>
-        Great Indian AI Internship Challenge &nbsp;&middot;&nbsp;
-        Deployed on <a href="https://railway.app" target="_blank" rel="noopener noreferrer">Railway</a>
-        &nbsp;&middot;&nbsp;
-        Voice by <a href="https://gnani.ai" target="_blank" rel="noopener noreferrer">Gnani Prisma &amp; Timbre</a>
+        <a href="https://gnani.ai" target="_blank" rel="noopener noreferrer">Great Indian AI Internship Challenge</a>
+        &nbsp;&bull;&nbsp;
+        <a href="https://github.com/Siddhartha23i/KrishiVaani" data-github-link target="_blank" rel="noopener noreferrer">GitHub Repository</a>
       </p>
     </div>
   </footer>
 
+  <!-- ── Floating Dark/Light Mode Switcher ──────────────────── -->
+  <button id="theme-toggle" class="theme-toggle-btn" aria-label="Switch Theme">
+    <span id="theme-icon" class="theme-toggle-icon" aria-hidden="true"></span>
+    <span class="theme-toggle-label">Theme:</span>
+    <span id="theme-state-text" class="theme-toggle-state">Dark</span>
+  </button>
+
   <script src="js/main.js" defer></script>
 </body>
 </html>
-

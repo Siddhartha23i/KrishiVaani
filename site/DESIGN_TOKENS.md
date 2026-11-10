@@ -1,47 +1,66 @@
 # KrishiVaani — Design Tokens
 
-Extracted and adapted from the visual style of siddhidynamics.in (dark deep-tech premium aesthetic).
-Our own colors, content, and assets — no copied assets.
+Extracted and refined for KrishiVaani: deep-tech dark aesthetic (default) with full light mode support.
+Engineered for high contrast, accessibility, and smooth transitions.
 
 ## Color Palette
 
+### Dark Mode (Default)
 | Token | CSS Variable | Value | Usage |
 |---|---|---|---|
-| Background base | `--bg-base` | `#0a0a0f` | Page background |
-| Background deep | `--bg-deep` | `#06060a` | Darkest sections |
-| Surface 1 | `--surface-1` | `#111118` | Card backgrounds |
-| Surface 2 | `--surface-2` | `#1a1a2a` | Elevated surfaces |
-| Surface glass | `--surface-glass` | `rgba(16,16,32,0.6)` | Glassmorphism panels |
-| Border dim | `--border-dim` | `rgba(255,255,255,0.07)` | Subtle card borders |
-| Border glow | `--border-glow` | `rgba(0,220,160,0.25)` | Accent borders on hover |
-| Accent primary | `--accent-primary` | `#00dc96` | CTA buttons, highlights (teal-green for agriculture) |
-| Accent secondary | `--accent-secondary` | `#6366f1` | Secondary highlights, pipeline icons |
-| Accent tertiary | `--accent-tertiary` | `#38bdf8` | Info accents |
-| Glow primary | `--glow-primary` | `rgba(0,220,150,0.18)` | Box-shadow glow |
-| Glow secondary | `--glow-secondary` | `rgba(99,102,241,0.18)` | Secondary glow |
-| Text primary | `--text-primary` | `#f0f0f8` | Headings, main text |
-| Text secondary | `--text-secondary` | `#9494b0` | Body, descriptions |
-| Text muted | `--text-muted` | `#5a5a78` | Captions, placeholders |
-| Danger | `--danger` | `#f43f5e` | Warnings |
+| Background base | `--bg-base` | `#0a0a0f` | Main canvas |
+| Background deep | `--bg-deep` | `#06060a` | Deep contrast section background |
+| Surface 1 | `--surface-1` | `#12121c` | Elevated card & node background |
+| Surface 2 | `--surface-2` | `#1a1a2c` | Secondary pill / nested card background |
+| Surface glass | `--surface-glass` | `rgba(16, 16, 30, 0.75)` | Glassmorphism panels (nav, cards) |
+| Border dim | `--border-dim` | `rgba(255, 255, 255, 0.10)` | Baseline container borders |
+| Border glow | `--border-glow` | `rgba(0, 230, 153, 0.45)` | Active & hover glow borders |
+| Accent primary | `--accent-primary` | `#00dc96` | Primary CTAs, highlights, step 1-2 |
+| Accent secondary | `--accent-secondary` | `#818cf8` | Secondary highlights, routing, tech tags |
+| Accent tertiary | `--accent-tertiary` | `#38bdf8` | Live data & weather accents |
+| Accent warning | `--accent-warning` | `#fbbf24` | Guardrail alert & referral accents |
+| Glow primary | `--glow-primary` | `rgba(0, 220, 150, 0.25)` | Luminous button/node shadow |
+| Glow secondary | `--glow-secondary` | `rgba(129, 140, 248, 0.25)`| Luminous node shadow |
+| Text primary | `--text-primary` | `#f8fafc` | High-contrast headings |
+| Text secondary | `--text-secondary` | `#cbd5e1` | Legible descriptive copy |
+| Text muted | `--text-muted` | `#94a3b8` | Metadata, timestamps, captions |
+
+### Light Mode
+| Token | CSS Variable | Value | Usage |
+|---|---|---|---|
+| Background base | `--bg-base` | `#f8fafc` | Main canvas |
+| Background deep | `--bg-deep` | `#f1f5f9` | Deep contrast section background |
+| Surface 1 | `--surface-1` | `#ffffff` | Elevated card & node background |
+| Surface 2 | `--surface-2` | `#e2e8f0` | Secondary pill / nested card background |
+| Surface glass | `--surface-glass` | `rgba(255, 255, 255, 0.85)` | Glassmorphism panels |
+| Border dim | `--border-dim` | `rgba(15, 23, 42, 0.12)` | Baseline container borders |
+| Border glow | `--border-glow` | `rgba(5, 150, 105, 0.45)` | Active & hover glow borders |
+| Accent primary | `--accent-primary` | `#059669` | Primary CTAs, highlights |
+| Accent secondary | `--accent-secondary` | `#4f46e5` | Secondary highlights |
+| Accent tertiary | `--accent-tertiary` | `#0284c7` | Live data & weather accents |
+| Accent warning | `--accent-warning` | `#d97706` | Guardrail alert & referral accents |
+| Glow primary | `--glow-primary` | `rgba(5, 150, 105, 0.20)` | Button/node shadow |
+| Glow secondary | `--glow-secondary` | `rgba(79, 70, 229, 0.18)` | Secondary shadow |
+| Text primary | `--text-primary` | `#0f172a` | High-contrast headings |
+| Text secondary | `--text-secondary` | `#334155` | Legible descriptive copy |
+| Text muted | `--text-muted` | `#64748b` | Metadata, timestamps, captions |
 
 ## Typography
 
 | Token | CSS Variable | Value |
 |---|---|---|
 | Font display | `--font-display` | `'Inter', system-ui, -apple-system, sans-serif` |
-| Font mono | `--font-mono` | `'JetBrains Mono', 'Fira Code', monospace` |
-| Size xs | `--text-xs` | `0.75rem` |
-| Size sm | `--text-sm` | `0.875rem` |
-| Size base | `--text-base` | `1rem` |
-| Size lg | `--text-lg` | `1.125rem` |
-| Size xl | `--text-xl` | `1.25rem` |
-| Size 2xl | `--text-2xl` | `1.5rem` |
-| Size 3xl | `--text-3xl` | `2rem` |
-| Size 4xl | `--text-4xl` | `2.75rem` |
-| Size 5xl | `--text-5xl` | `3.75rem` |
-| Letter spacing tight | `--tracking-tight` | `-0.03em` |
-| Letter spacing wide | `--tracking-wide` | `0.08em` |
-| Line height relaxed | `--leading-relaxed` | `1.65` |
+| Font telugu | `--font-telugu` | `'Noto Sans Telugu', 'Mandali', 'Gautami', sans-serif` |
+| Font mono | `--font-mono` | `'JetBrains Mono', 'Fira Code', 'Consolas', monospace` |
+| Size xs | `--text-xs` | `0.75rem` (12px) |
+| Size sm | `--text-sm` | `0.875rem` (14px) |
+| Size base | `--text-base` | `1rem` (16px) |
+| Size lg | `--text-lg` | `1.125rem` (18px) |
+| Size xl | `--text-xl` | `1.25rem` (20px) |
+| Size 2xl | `--text-2xl` | `1.5rem` (24px) |
+| Size 3xl | `--text-3xl` | `2rem` (32px) |
+| Size 4xl | `--text-4xl` | `clamp(2rem, 5vw, 2.75rem)` |
+| Size 5xl | `--text-5xl` | `clamp(2.5rem, 7vw, 3.75rem)` |
 
 ## Spacing & Layout
 
@@ -52,26 +71,14 @@ Our own colors, content, and assets — no copied assets.
 | Container padding | `--container-px` | `clamp(1rem, 5vw, 2.5rem)` |
 | Card radius | `--radius-card` | `16px` |
 | Button radius | `--radius-btn` | `10px` |
-| Icon size | `--icon-size` | `48px` |
+| Pill radius | `--radius-pill` | `999px` |
 
-## Shadows & Blurs
+## Motion & Keyframes
 
-| Token | CSS Variable | Value |
-|---|---|---|
-| Card shadow | `--shadow-card` | `0 1px 2px rgba(0,0,0,0.5), 0 0 0 1px var(--border-dim)` |
-| Glow shadow | `--shadow-glow` | `0 0 32px var(--glow-primary)` |
-| Blur glass | `--blur-glass` | `12px` |
-
-## Animations
-
-| Name | Easing | Duration | Notes |
+| Animation | Duration | Easing | Notes |
 |---|---|---|---|
-| Fade-up reveal | `cubic-bezier(0.16,1,0.3,1)` | 600ms | Scroll-reveal items |
-| Hero title | `cubic-bezier(0.16,1,0.3,1)` | 900ms staggered | Letter/word reveal |
-| Button pulse | ease-in-out | 2.5s infinite | CTA glow pulse |
-| Pipeline flow | ease | 400ms stagger | Step sequential entrance |
-| Particle drift | linear | 20–40s infinite | Background canvas particles |
-| Hover card lift | ease | 200ms | translateY(-4px) |
-| Nav blur appear | ease | 150ms | backdrop-filter on scroll |
-| Live dot blink | ease-in-out | 1.5s infinite | Telegram live indicator |
-
+| Signal line flow | `3s infinite` | `linear` | Animated SVG stroke / gradient flow |
+| Card fade-up | `600ms` | `cubic-bezier(0.16, 1, 0.3, 1)` | Scroll-triggered intersection observer |
+| Button pulse | `2.5s infinite`| `ease-in-out` | Luminous glow pulse on Telegram CTA |
+| Live dot blink | `1.5s infinite`| `ease-in-out` | Active Telegram status indicator |
+| Theme switch | `250ms` | `ease` | Color transitions on theme toggle |
