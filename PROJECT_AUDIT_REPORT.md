@@ -419,7 +419,7 @@ unrelated Telangana data.
 
 ### Handler-level placeholders and untranslated strings
 
-The default `START_MESSAGE`, `GREETING_MESSAGE`, `DURATION_LIMIT_MESSAGE`, `FALLBACK_ERROR_MESSAGE`, voice location-deletion text, and voice consent-rejection text remain Telugu-only constants in `app/telegram/handlers.py`; they are not localized when a user has no stored language. The text-path error, duration, consent acknowledgement, and consent-decline strings are localized for all ten supported language codes. The voice path still needs per-language TTS/text fallback wiring for non-Telugu languages.
+`/start` now sends the exact English onboarding text with the ten-language selection keyboard when no language is stored, and sends the selected localized onboarding text thereafter (`app/telegram/handlers.py:35-91,361-432`). The nine non-English onboarding translations are machine-written and require human language review. The text-path error, duration, consent acknowledgement, and consent-decline strings are localized for all ten supported language codes. The voice path still needs per-language TTS/text fallback wiring for non-Telugu languages.
 
 | Case | Intent | Gate | Safety | Verdict | Latency (s) | Answer |
 |---|---|---|---|---|---:|---|

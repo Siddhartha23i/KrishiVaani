@@ -41,6 +41,7 @@ from app.telegram.session import (
 from app.telegram.handlers import (
     TelegramHandler,
     START_MESSAGE,
+    START_MESSAGES,
     GREETING_MESSAGE,
     DURATION_LIMIT_MESSAGE,
     FALLBACK_ERROR_MESSAGE,
@@ -120,12 +121,14 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
         return update
 
     # --- Test 1: /start Command ---
-    async def test_start_command_returns_telugu_greeting(self):
+    async def test_start_command_returns_english_welcome_and_language_buttons(self):
         update = self._create_mock_update(update_id=101, text="/start")
 
         await self.handler.handle_start(update, self.mock_context)
 
-        update.effective_message.reply_text.assert_called_once_with(START_MESSAGE)
+        call = update.effective_message.reply_text.call_args
+        self.assertEqual(call.args[0], START_MESSAGES["en-IN"])
+        self.assertIn("reply_markup", call.kwargs)
         self.mock_orchestrator.process_message.assert_not_called()
 
     # --- Test 2: Text Greetings Bypass LLM ---
@@ -1085,14 +1088,10 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
     """Focused tests for Phase 8.4 Natural Conversational Telugu implementation."""
 
     def test_welcome_message_natural_telangana_style(self):
-        # Must start with respectful, friendly 'నమస్తే అండి' and the exact assistant identity.
-        self.assertIn("నమస్తే అండి", START_MESSAGE)
-        self.assertIn("నేను మీ కృషివాణిని", START_MESSAGE)
-        # Uses natural conversational words 'వానలు', 'స్కీమ్ల' instead of literary 'వర్షపాతం' or 'పథకములు'
-        self.assertIn("వానలు", START_MESSAGE)
-        # Avoids bureaucratic 'వ్యవసాయ అధికారిని సంప్రదించండి', uses 'AO గారిని'
-        self.assertIn("AO గారిని", START_MESSAGE)
-        self.assertNotIn("కృషివాణి టెలిగ్రామ్ సేవకు స్వాగతం", START_MESSAGE)
+        self.assertIn("నేను కృషివాణిని", START_MESSAGE)
+        self.assertIn("వ్యవసాయ అధికారితో", START_MESSAGE)
+        self.assertFalse(START_MESSAGE.startswith("అండి"))
+        self.assertLessEqual(START_MESSAGE.count("అండి"), 1)
 
     def test_greeting_message_natural_style(self):
         self.assertIn("నమస్తే అండి", GREETING_MESSAGE)
