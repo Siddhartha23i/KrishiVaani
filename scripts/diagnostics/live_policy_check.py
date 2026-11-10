@@ -5,6 +5,10 @@ from __future__ import annotations
 import sys
 import time
 import sqlite3
+import asyncio
+import tempfile
+import re
+from types import SimpleNamespace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,6 +18,8 @@ from app.conversation.schemas import ConversationRequest, GuestWeatherConsentEve
 from app.conversation.service import ConversationOrchestrator
 from app.llm.knowledge_adapter import KnowledgeRetrievalFilter
 from app.core.config import settings
+from app.telegram.handlers import TelegramHandler
+from app.telegram.session import TelegramSessionRepository
 
 
 CASES = [
@@ -60,6 +66,11 @@ def _evaluate(case: dict, response_text: str, intent: str) -> str:
         failures.append("andi-count>1")
     if case["expected_intent"] == "general_explanation" and response_text.rstrip().endswith("?"):
         failures.append("tier1-trailing-question")
+    if case["expected_intent"] == "general_explanation":
+        for sentence in re.split(r"(?<=[.!?।])\s+", response_text.strip()):
+            if sentence and len(sentence.split()) < 4:
+                failures.append("short-sentence")
+                break
     if any(
         fragment.casefold() in response_text.casefold()
         for fragment in (
@@ -78,6 +89,59 @@ def _evaluate(case: dict, response_text: str, intent: str) -> str:
         if fragment.casefold() not in response_text.casefold():
             failures.append(f"missing-required={fragment}")
     return "FAIL: " + ", ".join(failures) if failures else "PASS"
+
+
+async def _run_real_handler_cases(orchestrator: ConversationOrchestrator) -> list[dict]:
+    """Exercise TelegramHandler text routing with a real orchestrator and isolated DB."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        repo = TelegramSessionRepository(db_path=Path(temp_dir) / "handler_check.db")
+        handler = TelegramHandler(orchestrator=orchestrator, session_repo=repo)
+
+        async def run(update_id: int, user_id: int, text: str) -> str:
+            replies: list[str] = []
+
+            async def reply_text(value: str, **_kwargs) -> None:
+                replies.append(value)
+
+            message = SimpleNamespace(text=text, reply_text=reply_text)
+            update = SimpleNamespace(
+                update_id=update_id,
+                effective_user=SimpleNamespace(id=user_id),
+                effective_message=message,
+            )
+            await handler.handle_text(update, SimpleNamespace())
+            return replies[-1] if replies else ""
+
+        rows = []
+        first = await run(2001, 2001, "I am in Warangal")
+        second = await run(2002, 2001, "Which cotton variety should I sow?")
+        rows.append({
+            "id": "real-handler-district",
+            "question": "I am in Warangal -> Which cotton variety should I sow?",
+            "intent": "crop_recommendation",
+            "gate": "handler-session-location",
+            "safety": "ABSTAINED" if "1800-180-1551" in second else "UNVERIFIED",
+            "answer": second,
+            "latency": 0.0,
+            "verdict": "PASS" if "1800-180-1551" in second and "Warangal" not in second.lower() else "FAIL",
+        })
+        consent_prompt = await run(2003, 2002, "What is the weather in Pune?")
+        declined = await run(2004, 2002, "No")
+        rows.append({
+            "id": "real-handler-consent-en",
+            "question": "What is the weather in Pune? -> No",
+            "intent": "weather_inquiry",
+            "gate": "consent-prompt-and-decline",
+            "safety": "ABSTAINED",
+            "answer": f"Prompt: {consent_prompt} Declined: {declined}",
+            "latency": 0.0,
+            "verdict": "PASS" if all(
+                any(char.isascii() and char.isalpha() for char in text)
+                and "వాతావరణ" not in text
+                for text in (consent_prompt, declined)
+            ) else "FAIL",
+        })
+        return rows
 
 
 def main() -> None:
@@ -175,6 +239,14 @@ def main() -> None:
         if case_id != CASES[-1]["id"]:
             time.sleep(15)
 
+    real_rows = asyncio.run(_run_real_handler_cases(orchestrator))
+    rows.extend(real_rows)
+    for row in real_rows:
+        print(
+            f"{row['id']} | {row['intent']} | {row['gate']} | "
+            f"{row['safety']} | {row['latency']:.2f}s | {row['answer'] or '[empty]'}"
+        )
+
     report = ROOT / "PROJECT_AUDIT_REPORT.md"
     existing = report.read_text(encoding="utf-8")
     marker = "\n\n## Updated live policy check"
@@ -187,6 +259,16 @@ def main() -> None:
         for district_name, crop_name, category_name, count in coverage_rows:
             handle.write(f"| {district_name} | {crop_name} | {category_name} | {count} |\n")
         handle.write("\n")
+        handle.write("### Handler-level placeholders and untranslated strings\n\n")
+        handle.write(
+            "The default `START_MESSAGE`, `GREETING_MESSAGE`, `DURATION_LIMIT_MESSAGE`, "
+            "`FALLBACK_ERROR_MESSAGE`, voice location-deletion text, and voice consent-rejection "
+            "text remain Telugu-only constants in `app/telegram/handlers.py`; they are not "
+            "localized when a user has no stored language. The text-path error, duration, "
+            "consent acknowledgement, and consent-decline strings are localized for all ten "
+            "supported language codes. The voice path still needs per-language TTS/text "
+            "fallback wiring for non-Telugu languages.\n\n"
+        )
         handle.write("| Case | Intent | Gate | Safety | Verdict | Latency (s) | Answer |\n|---|---|---|---|---|---:|---|\n")
         for row in rows:
             answer = (row["answer"] or "").replace("|", "\\|").replace("\n", " ")

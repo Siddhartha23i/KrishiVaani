@@ -32,6 +32,14 @@ def test_pesticide_dose_remains_consequential():
     assert classify_intent("పురుగు మందు మోతాదు ఎంత?") == INTENT_PEST_DISEASE_INQUIRY
 
 
+def test_english_consequential_questions_route_to_safe_intents():
+    assert classify_intent("Which cotton variety should I sow?") == "crop_recommendation"
+    assert classify_intent("Which crop should I plant in Haryana?") == "crop_recommendation"
+    assert classify_intent("When should I sow wheat?") == "crop_recommendation"
+    assert classify_intent("How much to spray for aphids?") == "pest_disease_inquiry"
+    assert classify_intent("How much fertilizer should I apply?") == "fertilizer_guidance"
+
+
 def test_leading_telugu_andi_is_removed_without_losing_text():
     result = normalize_response_style("అండి, ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి.")
     assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి అండి."

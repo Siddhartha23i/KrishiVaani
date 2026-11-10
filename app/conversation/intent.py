@@ -81,6 +81,9 @@ CROP_RECOMMENDATION_KEYWORDS_EN = [
     "which crop", "what crop", "recommend a crop", "crop recommendation",
     "should i plant", "should i grow", "best crop to sow", "suitable crop",
     "when can i sow", "when should i sow", "sowing", "planting date",
+    "which variety", "what variety", "variety should i sow", "variety should i plant",
+    "which seed", "what seed", "best crop for", "crop should i sow", "crop should i plant",
+    "when to sow", "when to plant", "best time to sow", "best time to plant",
 ]
 
 # Pest and Disease keywords (dosage removed to prevent fertilizer dosage collision)
@@ -100,6 +103,7 @@ PEST_DISEASE_KEYWORDS_EN = [
     "herbicide", "weedicide", "infestation", "blight", "caterpillar",
     "leaf curl", "stem borer", "bollworm", "aphid", "whitefly", "mite",
     "thrips", "rust", "wilt", "rot", "pesticide dosage", "spray dosage",
+    "how much to spray", "how much should i spray", "how much chemical",
 ]
 
 # Government scheme keywords

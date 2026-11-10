@@ -166,6 +166,44 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
             "వరిలో అగ్గితెగులు నివారణకు ట్రైసైక్లాజోల్ పిచికారీ చేయండి."
         )
 
+    async def test_real_handler_path_reuses_free_text_district_for_follow_up(self):
+        first = ConversationResponse(
+            intent="general_conversation",
+            language="en-IN",
+            response_text="I recorded Warangal as your district.",
+            is_abstention=False,
+            safety_status="PASSED",
+        )
+        second = ConversationResponse(
+            intent="crop_recommendation",
+            language="en-IN",
+            response_text=(
+                "No approved evidence is available for this crop in Warangal. "
+                "Please contact your Agricultural Officer, nearest KVK, or Kisan Call Centre at 1800-180-1551."
+            ),
+            is_abstention=True,
+            safety_status="ABSTAINED",
+            safety_reason="NO_APPROVED_EVIDENCE",
+        )
+        self.mock_orchestrator.process_message.side_effect = [first, second]
+
+        first_update = self._create_mock_update(update_id=130, text="I am in Warangal")
+        await self.handler.handle_text(first_update, self.mock_context)
+        second_update = self._create_mock_update(update_id=131, text="Which cotton variety should I sow?")
+        await self.handler.handle_text(second_update, self.mock_context)
+
+        request = self.mock_orchestrator.process_message.call_args_list[1].args[0]
+        self.assertEqual(request.location.district, "Warangal")
+        self.assertNotIn("district", second_update.effective_message.reply_text.call_args.args[0].lower())
+        self.assertIn("1800-180-1551", second_update.effective_message.reply_text.call_args.args[0])
+
+    async def test_consent_decline_uses_detected_english_language(self):
+        update = self._create_mock_update(update_id=132, text="No")
+        await self.handler.handle_text(update, self.mock_context)
+        reply = update.effective_message.reply_text.call_args.args[0]
+        self.assertIn("location", reply.lower())
+        self.assertNotIn("వాతావరణ", reply)
+
     # --- Test 4: Voice Message Success ---
     @patch("app.telegram.handlers.convert_ogg_opus_to_wav")
     @patch("app.telegram.handlers.convert_wav_bytes_to_ogg_opus")
@@ -642,8 +680,7 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
 
         # Polite Telugu revocation message sent
         update.effective_message.reply_text.assert_called_once_with(
-            "సరే, మీ లొకేషన్‌ను వాతావరణ సంస్థలతో పంచుకోవడానికి సమ్మతి రద్దు చేయబడింది "
-            "మరియు నిల్వ చేసిన లొకేషన్ వివరాలు తొలగించబడ్డాయి. లొకేషన్ వివరాలు పంపబడవు."
+            "సరే. వాతావరణం కోసం మీ లొకేషన్ పంచబడదు. నిల్వ చేసిన లొకేషన్ వివరాలను తొలగించాను."
         )
 
         # Consent is False, pending query is cleared, and location is purged

@@ -34,7 +34,7 @@ from telegram.ext import ContextTypes
 from app.conversation.service import ConversationOrchestrator
 from app.core.config import settings
 from app.telegram.memory import ConversationMemoryStore
-from app.conversation.intent import is_pure_greeting
+from app.conversation.intent import is_pure_greeting, is_weather_query
 from app.conversation.schemas import ConversationRequest, LocationInput, GuestWeatherConsentEvent
 from app.voice.service import VoicePipelineService
 from app.voice.schemas import VoiceProcessingRequest
@@ -116,22 +116,28 @@ LOCALIZED_FALLBACKS = {
     "hi-IN": {
         "error": "क्षमा करें, संदेश संसाधित करने में तकनीकी समस्या आई। कुछ सेकंड बाद फिर पूछें।",
         "duration": "आपका वॉइस संदेश 30 सेकंड से लंबा है। कृपया छोटा संदेश भेजें।",
+        "consent_declined": "ठीक है। मौसम के लिए आपका स्थान साझा नहीं किया जाएगा और सहेजे गए स्थान का विवरण हटा दिया गया है।",
+        "consent_ack": "ठीक है। मौसम की जानकारी के लिए आपका स्थान उपयोग किया जा सकता है। जिले या तहसील का मौसम पूछिए।",
     },
     "en-IN": {
         "error": "Sorry, a technical problem occurred. Please wait a few seconds and try again.",
         "duration": "Your voice message is longer than 30 seconds. Please send a shorter message.",
+        "consent_declined": "Okay. I will not share your location for weather, and I deleted the stored location details.",
+        "consent_ack": "Okay. I can use your location for weather. Ask for weather for a district or mandal.",
     },
     "te-IN": {
         "error": "క్షమించండి, సాంకేతిక సమస్య వచ్చింది. కొన్ని సెకన్లు ఆగి మళ్లీ అడగండి.",
         "duration": "మీ వాయిస్ సందేశం 30 సెకన్ల కంటే ఎక్కువగా ఉంది. చిన్న సందేశం పంపండి.",
+        "consent_declined": "సరే. వాతావరణం కోసం మీ లొకేషన్ పంచబడదు. నిల్వ చేసిన లొకేషన్ వివరాలను తొలగించాను.",
+        "consent_ack": "సరే. వాతావరణం కోసం మీ లొకేషన్‌ను ఉపయోగించవచ్చు. జిల్లా లేదా మండలం వాతావరణం అడగండి.",
     },
-    "ta-IN": {"error": "மன்னிக்கவும், தொழில்நுட்ப சிக்கல் ஏற்பட்டது. சில விநாடிகள் கழித்து மீண்டும் கேளுங்கள்.", "duration": "உங்கள் குரல் செய்தி 30 விநாடிகளுக்கு மேல் உள்ளது. சிறிய செய்தியை அனுப்புங்கள்."},
-    "kn-IN": {"error": "ಕ್ಷಮಿಸಿ, ತಾಂತ್ರಿಕ ತೊಂದರೆ ಉಂಟಾಗಿದೆ. ಕೆಲವು ಸೆಕೆಂಡುಗಳ ನಂತರ ಮತ್ತೆ ಕೇಳಿ.", "duration": "ನಿಮ್ಮ ಧ್ವನಿ ಸಂದೇಶ 30 ಸೆಕೆಂಡುಗಳಿಗಿಂತ ಉದ್ದವಾಗಿದೆ. ಚಿಕ್ಕ ಸಂದೇಶ ಕಳುಹಿಸಿ."},
-    "mr-IN": {"error": "माफ करा, तांत्रिक अडचण आली. काही सेकंद थांबून पुन्हा विचारा.", "duration": "तुमचा आवाज संदेश ३० सेकंदांपेक्षा मोठा आहे. छोटा संदेश पाठवा."},
-    "ml-IN": {"error": "ക്ഷമിക്കണം, സാങ്കേതിക പ്രശ്നമുണ്ടായി. കുറച്ച് സെക്കൻഡ് കഴിഞ്ഞ് വീണ്ടും ചോദിക്കൂ.", "duration": "നിങ്ങളുടെ ശബ്ദസന്ദേശം 30 സെക്കൻഡിൽ കൂടുതലാണ്. ചെറിയ സന്ദേശം അയയ്ക്കൂ."},
-    "pa-IN": {"error": "ਮਾਫ਼ ਕਰਨਾ, ਤਕਨੀਕੀ ਸਮੱਸਿਆ ਆਈ। ਕੁਝ ਸਕਿੰਟ ਰੁਕ ਕੇ ਫਿਰ ਪੁੱਛੋ।", "duration": "ਤੁਹਾਡਾ ਵੌਇਸ ਸੁਨੇਹਾ 30 ਸਕਿੰਟ ਤੋਂ ਲੰਮਾ ਹੈ। ਛੋਟਾ ਸੁਨੇਹਾ ਭੇਜੋ।"},
-    "bn-IN": {"error": "দুঃখিত, প্রযুক্তিগত সমস্যা হয়েছে। কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।", "duration": "আপনার ভয়েস বার্তা ৩০ সেকেন্ডের বেশি। ছোট বার্তা পাঠান।"},
-    "gu-IN": {"error": "માફ કરશો, તકનીકી સમસ્યા આવી. થોડી સેકન્ડ પછી ફરી પૂછો.", "duration": "તમારો વૉઇસ સંદેશ 30 સેકન્ડથી લાંબો છે. ટૂંકો સંદેશ મોકલો."},
+    "ta-IN": {"error": "மன்னிக்கவும், தொழில்நுட்ப சிக்கல் ஏற்பட்டது. சில விநாடிகள் கழித்து மீண்டும் கேளுங்கள்.", "duration": "உங்கள் குரல் செய்தி 30 விநாடிகளுக்கு மேல் உள்ளது. சிறிய செய்தியை அனுப்புங்கள்.", "consent_declined": "சரி. வானிலைக்காக உங்கள் இருப்பிடம் பகிரப்படாது. சேமித்த இருப்பிட விவரங்கள் நீக்கப்பட்டன.", "consent_ack": "சரி. வானிலை தகவலுக்காக உங்கள் இருப்பிடத்தைப் பயன்படுத்தலாம். மாவட்டம் அல்லது வட்டத்தின் வானிலையைக் கேளுங்கள்."},
+    "kn-IN": {"error": "ಕ್ಷಮಿಸಿ, ತಾಂತ್ರಿಕ ತೊಂದರೆ ಉಂಟಾಗಿದೆ. ಕೆಲವು ಸೆಕೆಂಡುಗಳ ನಂತರ ಮತ್ತೆ ಕೇಳಿ.", "duration": "ನಿಮ್ಮ ಧ್ವನಿ ಸಂದೇಶ 30 ಸೆಕೆಂಡುಗಳಿಗಿಂತ ಉದ್ದವಾಗಿದೆ. ಚಿಕ್ಕ ಸಂದೇಶ ಕಳುಹಿಸಿ.", "consent_declined": "ಸರಿ. ಹವಾಮಾನಕ್ಕಾಗಿ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಿಕೊಳ್ಳುವುದಿಲ್ಲ. ಉಳಿಸಿದ ಸ್ಥಳದ ವಿವರಗಳನ್ನು ಅಳಿಸಲಾಗಿದೆ.", "consent_ack": "ಸರಿ. ಹವಾಮಾನ ಮಾಹಿತಿಗಾಗಿ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಬಳಸಬಹುದು. ಜಿಲ್ಲೆ ಅಥವಾ ಮಂಡಲದ ಹವಾಮಾನವನ್ನು ಕೇಳಿ."},
+    "mr-IN": {"error": "माफ करा, तांत्रिक अडचण आली. काही सेकंद थांबून पुन्हा विचारा.", "duration": "तुमचा आवाज संदेश ३० सेकंदांपेक्षा मोठा आहे. छोटा संदेश पाठवा.", "consent_declined": "ठीक आहे. हवामानासाठी तुमचे ठिकाण शेअर केले जाणार नाही आणि साठवलेली ठिकाणाची माहिती हटवली आहे.", "consent_ack": "ठीक आहे. हवामानासाठी तुमचे ठिकाण वापरता येईल. जिल्हा किंवा तालुक्याचे हवामान विचारा."},
+    "ml-IN": {"error": "ക്ഷമിക്കണം, സാങ്കേതിക പ്രശ്നമുണ്ടായി. കുറച്ച് സെക്കൻഡ് കഴിഞ്ഞ് വീണ്ടും ചോദിക്കൂ.", "duration": "നിങ്ങളുടെ ശബ്ദസന്ദേശം 30 സെക്കൻഡിൽ കൂടുതലാണ്. ചെറിയ സന്ദേശം അയയ്ക്കൂ.", "consent_declined": "ശരി. കാലാവസ്ഥയ്ക്കായി നിങ്ങളുടെ സ്ഥലം പങ്കിടില്ല. സൂക്ഷിച്ച സ്ഥലവിവരങ്ങൾ നീക്കി.", "consent_ack": "ശരി. കാലാവസ്ഥയ്ക്കായി നിങ്ങളുടെ സ്ഥലം ഉപയോഗിക്കാം. ജില്ലയുടെയോ മണ്ഡലത്തിന്റെയോ കാലാവസ്ഥ ചോദിക്കൂ."},
+    "pa-IN": {"error": "ਮਾਫ਼ ਕਰਨਾ, ਤਕਨੀਕੀ ਸਮੱਸਿਆ ਆਈ। ਕੁਝ ਸਕਿੰਟ ਰੁਕ ਕੇ ਫਿਰ ਪੁੱਛੋ।", "duration": "ਤੁਹਾਡਾ ਵੌਇਸ ਸੁਨੇਹਾ 30 ਸਕਿੰਟ ਤੋਂ ਲੰਮਾ ਹੈ। ਛੋਟਾ ਸੁਨੇਹਾ ਭੇਜੋ।", "consent_declined": "ਠੀਕ ਹੈ। ਮੌਸਮ ਲਈ ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾਵੇਗਾ ਅਤੇ ਸੁਰੱਖਿਅਤ ਟਿਕਾਣੇ ਦੀ ਜਾਣਕਾਰੀ ਮਿਟਾ ਦਿੱਤੀ ਗਈ ਹੈ।", "consent_ack": "ਠੀਕ ਹੈ। ਮੌਸਮ ਲਈ ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਵਰਤਿਆ ਜਾ ਸਕਦਾ ਹੈ। ਜ਼ਿਲ੍ਹੇ ਜਾਂ ਮੰਡਲ ਦਾ ਮੌਸਮ ਪੁੱਛੋ।"},
+    "bn-IN": {"error": "দুঃখিত, প্রযুক্তিগত সমস্যা হয়েছে। কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।", "duration": "আপনার ভয়েস বার্তা ৩০ সেকেন্ডের বেশি। ছোট বার্তা পাঠান।", "consent_declined": "ঠিক আছে। আবহাওয়ার জন্য আপনার অবস্থান শেয়ার করা হবে না এবং সংরক্ষিত অবস্থানের তথ্য মুছে দেওয়া হয়েছে।", "consent_ack": "ঠিক আছে। আবহাওয়ার তথ্যের জন্য আপনার অবস্থান ব্যবহার করা যাবে। জেলার আবহাওয়া জিজ্ঞাসা করুন।"},
+    "gu-IN": {"error": "માફ કરશો, તકનીકી સમસ્યા આવી. થોડી સેકન્ડ પછી ફરી પૂછો.", "duration": "તમારો વૉઇસ સંદેશ 30 સેકન્ડથી લાંબો છે. ટૂંકો સંદેશ મોકલો.", "consent_declined": "ઠીક છે. હવામાન માટે તમારું સ્થાન શેર કરવામાં આવશે નહીં અને સાચવેલી સ્થાન માહિતી કાઢી નાખી છે.", "consent_ack": "ઠીક છે. હવામાન માટે તમારું સ્થાન વાપરી શકાય છે. જિલ્લા અથવા તાલુકાનું હવામાન પૂછો."},
 }
 
 GREETING_PATTERNS = {
@@ -225,7 +231,7 @@ class TelegramHandler:
             return "bn-IN"
         if any("\u0a00" <= char <= "\u0a7f" for char in text):
             return "pa-IN"
-        return "te-IN"
+        return "en-IN"
 
     def _stored_language(self, user_id: str) -> Optional[str]:
         if not getattr(settings, "USER_ID_HASH_SALT", None):
@@ -387,9 +393,10 @@ class TelegramHandler:
                 self.session_repo.set_consent(user_id, consent_given=False)
                 self.session_repo.clear_location(user_id)  # Purge stored location on consent withdrawal
                 self.session_repo.clear_pending_query(user_id)
-                rejection_msg = (
-                    "సరే, మీ లొకేషన్‌ను వాతావరణ సంస్థలతో పంచుకోవడానికి సమ్మతి రద్దు చేయబడింది "
-                    "మరియు నిల్వ చేసిన లొకేషన్ వివరాలు తొలగించబడ్డాయి. లొకేషన్ వివరాలు పంపబడవు."
+                rejection_msg = self._localized_fallback(
+                    preferred_language,
+                    "consent_declined",
+                    "Okay. I will not share your location for weather, and I deleted the stored location details.",
                 )
                 await message.reply_text(rejection_msg)
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -458,8 +465,11 @@ class TelegramHandler:
                     return
                 else:
                     ack_msg = (
-                        "సరే అండి, ఇప్పుడు మీ ప్రాంతం వాతావరణ వివరాలు చూసి చెప్తాను. "
-                        "ఏ ఊరు లేదా మండలం వాతావరణం కావాలో అడగండి."
+                        self._localized_fallback(
+                            preferred_language,
+                            "consent_ack",
+                            "Okay. I can use your location for weather. Ask for weather for a district or mandal.",
+                        )
                     )
                     await message.reply_text(ack_msg)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -490,7 +500,6 @@ class TelegramHandler:
                 session = self.session_repo.get_session(user_id)
 
                 # If there was a pending weather query and this message provided location to answer it
-                from app.conversation.intent import is_weather_query
                 if session.pending_weather_query and not is_weather_query(text):
                     pending_q = session.pending_weather_query
                     logger.info("Resuming pending weather query with newly provided location.")
@@ -544,12 +553,15 @@ class TelegramHandler:
                 logger.info("Location required. Storing pending query.")
                 self.session_repo.set_pending_query(user_id, text, awaiting_consent=False)
             else:
-                # Weather or agricultural processing completed: clear temporary in-memory location context (Phase 8.5)
-                self.session_repo.clear_temp_location(user_id)
+                if is_weather_query(text):
+                    self.session_repo.clear_temp_location(user_id)
+                else:
+                    # Retain short-lived location context for a follow-up crop question.
+                    pass
 
             reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
             await message.reply_text(reply_text)
-            self._save_turn_background(user_id, "Telugu", text, conv_res)
+            self._save_turn_background(user_id, preferred_language, text, conv_res)
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             logger.info(
                 "Telegram event: update_id=%s, type=text, duration_ms=%.2f, status=success",
@@ -882,7 +894,7 @@ class TelegramHandler:
                         self.session_repo.clear_temp_location(user_id)
 
                     await self._reply_voice_telugu(message, reply_text, timings_out=timings)
-                    self._save_turn_background(user_id, "Telugu", query_to_run, conv_res)
+                    self._save_turn_background(user_id, preferred_language, query_to_run, conv_res)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
                     timings["total_ms"] = elapsed_ms
                     self._log_voice_telemetry(update.update_id, "voice_consent_resumed_weather", timings)
@@ -893,9 +905,10 @@ class TelegramHandler:
                     )
                     return
                 else:
-                    ack_msg = (
-                        "సరే అండి, ఇప్పుడు మీ ప్రాంతం వాతావరణ వివరాలు చూసి చెప్తాను. "
-                        "ఏ ఊరు లేదా మండలం వాతావరణం కావాలో అడగండి."
+                    ack_msg = self._localized_fallback(
+                        preferred_language,
+                        "consent_ack",
+                        "Okay. I can use your location for weather. Ask for weather for a district or mandal.",
                     )
                     await self._reply_voice_telugu(message, ack_msg, timings_out=timings)
                     elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -929,7 +942,6 @@ class TelegramHandler:
                 self.session_repo.update_location(user_id, village=v, mandal=m, district=d, pin_code=p)
                 session = self.session_repo.get_session(user_id)
 
-                from app.conversation.intent import is_weather_query
                 if session.pending_weather_query and not is_weather_query(transcript):
                     logger.info("Resuming pending weather query with voice-provided location (update_id: %s).", update.update_id)
                     pending_q = session.pending_weather_query
