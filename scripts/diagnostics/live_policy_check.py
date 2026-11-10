@@ -60,7 +60,16 @@ def _evaluate(case: dict, response_text: str, intent: str) -> str:
         failures.append("andi-count>1")
     if case["expected_intent"] == "general_explanation" and response_text.rstrip().endswith("?"):
         failures.append("tier1-trailing-question")
-    if any(fragment.casefold() in response_text.casefold() for fragment in ("i can search", "tell you more", "can help you find")):
+    if any(
+        fragment.casefold() in response_text.casefold()
+        for fragment in (
+            "i can search",
+            "tell you more",
+            "can help you find",
+            "share your local location",
+            "సందేహాలు ఉంటే అడగండి",
+        )
+    ):
         failures.append("capability-offer")
     for fragment in case["must_not_contain"]:
         if fragment.casefold() in response_text.casefold():

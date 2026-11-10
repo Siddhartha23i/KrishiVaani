@@ -60,6 +60,8 @@ def normalize_response_style(
         r"For advice on your specific .*?please share .*?\.",
         r"If you want .*? tell me .*?\.",
         r"अगर आप .*? तो बताइए.*?\.",
+        r"మీ పంటకు సంబంధించి ఏమైనా సందేహాలు ఉంటే అడగండి\.?",
+        r"For specific management steps in your field, you will need to share your local location and crop details\.?",
     )
     normalized = re.sub(
         r"(?:^|(?<=[.!?।])\s+)(?:" + "|".join(generic_closings) + r")\s*",
