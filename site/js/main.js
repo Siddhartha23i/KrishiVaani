@@ -44,8 +44,8 @@ document.querySelectorAll("[data-github-link]").forEach(el => {
     }
   }
 
-  // Check saved theme or default to Dark mode
-  const savedTheme = localStorage.getItem("krishivaani-theme") || "dark";
+  // Check saved theme or attribute or default to Dark mode
+  const savedTheme = localStorage.getItem("krishivaani-theme") || document.documentElement.getAttribute("data-theme") || "dark";
   applyTheme(savedTheme);
 
   if (themeToggle) {

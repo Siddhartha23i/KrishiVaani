@@ -325,11 +325,11 @@ ul, ol { list-style: none; }
 .hero {
   position: relative;
   z-index: 1;
-  min-height: 92svh;
+  min-height: min(92svh, 850px);
   display: flex;
   align-items: center;
-  padding-top: 7rem;
-  padding-bottom: 4rem;
+  padding-top: 6.5rem;
+  padding-bottom: 3.5rem;
   text-align: center;
 }
 .hero-inner {
@@ -352,6 +352,9 @@ ul, ol { list-style: none; }
   background: rgba(0, 220, 150, 0.08);
   border-radius: var(--radius-pill);
   padding: 0.45rem 1.1rem;
+  max-width: 92%;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .hero-title {
@@ -952,7 +955,16 @@ ul, ol { list-style: none; }
   .node-card { padding: 1.25rem; }
   .nav-links { display: none; }
   .theme-toggle-label { display: none; }
-  .theme-toggle-btn { padding: 0.65rem; }
+  .theme-toggle-btn { bottom: 1rem; right: 1rem; padding: 0.5rem 0.85rem; font-size: 0.8rem; }
+
+  .hero { padding-top: 5rem; padding-bottom: 2rem; }
+  .hero-eyebrow { font-size: 0.62rem; letter-spacing: 0.02em; padding: 0.35rem 0.75rem; white-space: normal; max-width: 95%; }
+  .hero-title { font-size: 2.1rem; line-height: 1.15; }
+  .hero-subtitle { font-size: 0.9rem; line-height: 1.55; padding-inline: 0.5rem; }
+  .hero-telugu { font-size: 0.95rem; padding: 0.35rem 0.8rem; }
+  .hero-cta { flex-direction: column; align-items: stretch; width: 100%; max-width: 300px; }
+  .btn { width: 100%; justify-content: center; }
+  .status-inner { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
