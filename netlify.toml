@@ -1,0 +1,31 @@
+# netlify.toml — KrishiVaani frontend deployment config
+# Backend (Telegram bot) runs separately on Railway.
+
+[build]
+  # Tell Netlify the static files are in the /site subfolder
+  publish = "site"
+  # No build command — pure static HTML/CSS/JS
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
+[[headers]]
+  for = "*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
