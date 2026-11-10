@@ -33,16 +33,20 @@ from app.llm.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-def normalize_response_style(text: str, language: str = "Telugu") -> str:
+def normalize_response_style(
+    text: str, language: str = "Telugu", allow_follow_up: bool = False
+) -> str:
     """Apply the short spoken-response style without cutting inside a sentence."""
     if not text:
         return text
     normalized = text.strip()
-    if not language.casefold().startswith(("te", "telugu")):
+    is_telugu = language.casefold().startswith(("te", "telugu"))
+    had_andi = is_telugu and bool(re.search(r"అండి", normalized))
+    if not is_telugu:
         normalized = re.sub(r"\s*అండి\s*,?", "", normalized)
         normalized = re.sub(r"[ \t]{2,}", " ", normalized)
     else:
-        normalized = re.sub(r"(?m)(^|(?<=[.!?।])\s+)అండి\s*,?\s*", r"\1", normalized)
+        normalized = re.sub(r"\s*అండి\s*,?", "", normalized)
     generic_closings = (
         r"ఇంకా ఏమైనా సందేహాలుంటే అడగండి\.?",
         r"దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి\.?",
@@ -51,6 +55,11 @@ def normalize_response_style(text: str, language: str = "Telugu") -> str:
         r"और कोई सवाल हो तो पूछिए\.?",
         r"क्या आप अपने खेत में इस व्यवस्था के बारे में और जानना चाहते हैं\??",
         r"இது எப்படி நடக்கிறது என்று உங்களுக்கு இன்னும் விரிவாக சொல்லட்டுமா\??",
+        r"మీ ఊరి పేరు చెబితే.*?సమాచారం.*?(?:వెతకగలను|చెప్పగలను)\.?",
+        r"మీ .*?(?:వివరాలు|పేరు) చెబితే.*?(?:సహాయం|సూచనలు).*?\??",
+        r"For advice on your specific .*?please share .*?\.",
+        r"If you want .*? tell me .*?\.",
+        r"अगर आप .*? तो बताइए.*?\.",
     )
     normalized = re.sub(
         r"(?:^|(?<=[.!?।])\s+)(?:" + "|".join(generic_closings) + r")\s*",
@@ -58,6 +67,18 @@ def normalize_response_style(text: str, language: str = "Telugu") -> str:
         normalized,
         flags=re.IGNORECASE,
     ).strip()
+    if not allow_follow_up:
+        normalized = re.sub(r"(?:^|(?<=[.!?।])\s+)[^.!?।]*\?\s*", "", normalized).strip()
+    if is_telugu and had_andi and normalized:
+        terminal = re.search(r"([.!?।])\s*$", normalized)
+        if terminal:
+            normalized = (
+                normalized[: terminal.start()].rstrip()
+                + " అండి"
+                + normalized[terminal.start() :]
+            )
+        else:
+            normalized = normalized.rstrip() + " అండి"
     sentences = re.split(r"(?<=[.!?।])\s+", normalized)
     if len(sentences) > 4:
         normalized = " ".join(sentences[:4]).strip()
@@ -85,7 +106,7 @@ CORE ADVISORY RULES:
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
 5. RESTRICTIONS: Preserve all geographical, crop, variety, and validity-period restrictions stated in the evidence.
-6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, and no repetition. Use "అండి" only when the target language is Telugu; never use it in English, Hindi, Tamil, Kannada, Malayalam, Marathi, Punjabi, Bengali, or Gujarati. In Telugu, never begin a sentence with "అండి"; use it at most once at the end of a sentence when natural. Avoid markdown formatting, tables, or asterisks. If responding in Telugu, use standard conversational Telugu.
+6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, repetition, follow-up questions, or offers to search/tell more for Tier 1 general questions. State only what you can do now; do not ask for village, land size, or water source for general questions. Use "అండి" only when the target language is Telugu; never use it in other languages. In Telugu, use it at most once at the end of the final sentence.
 
 OUTPUT FORMAT:
 Return valid JSON only matching this schema:
@@ -112,7 +133,7 @@ CORE ADVISORY RULES:
 6. SPOKEN VOICE OUTPUT & NATURAL CONVERSATIONAL TELUGU (Telegram Channel):
    - Use evidence only when it is directly relevant to the farmer's question; ignore unrelated weather or safety evidence.
    - If evidence only partly covers the question, give the supported part first, then clearly say what is missing.
-   - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, or repetition. Do not append a generic invitation to ask another question.
+   - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, repetition, follow-up questions, or offers to search/tell more for Tier 1 general questions. State only what you can do now; do not ask for village, land size, or water source for general questions.
    - Use "అండి" only for Telugu responses. Never include it in any non-Telugu response.
    - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, asterisks, and NEVER use parentheses () anywhere in your Telugu response.
    - For Telugu (te-IN or Telugu):
@@ -206,8 +227,16 @@ class LLMReasoningService:
             validated_response.safety_status = "REJECTED"
         val_ns = time.perf_counter_ns() - t_val_start
         validated_response.validation_latency_ms = round(val_ns / 1_000_000.0, 3)
+        allow_follow_up = validated_response.intent in {
+            "crop_recommendation",
+            "pest_disease_inquiry",
+            "fertilizer_guidance",
+            "government_scheme",
+        }
         validated_response.response = normalize_response_style(
-            validated_response.response, validated_response.language or request.language
+            validated_response.response,
+            validated_response.language or request.language,
+            allow_follow_up=allow_follow_up,
         )
         if validated_response.safety_status == "REJECTED":
             validated_response.response = self._localized_safety_fallback(request.language)
@@ -246,8 +275,16 @@ class LLMReasoningService:
         validated_response.validation_latency_ms = round(
             (time.perf_counter_ns() - t_val_start) / 1_000_000.0, 3
         )
+        allow_follow_up = validated_response.intent in {
+            "crop_recommendation",
+            "pest_disease_inquiry",
+            "fertilizer_guidance",
+            "government_scheme",
+        }
         validated_response.response = normalize_response_style(
-            validated_response.response, validated_response.language or request.language
+            validated_response.response,
+            validated_response.language or request.language,
+            allow_follow_up=allow_follow_up,
         )
         if validated_response.safety_status == "REJECTED":
             validated_response.response = self._localized_safety_fallback(request.language)

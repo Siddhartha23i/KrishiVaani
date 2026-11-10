@@ -34,7 +34,16 @@ def test_pesticide_dose_remains_consequential():
 
 def test_leading_telugu_andi_is_removed_without_losing_text():
     result = normalize_response_style("అండి, ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి.")
-    assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి."
+    assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి అండి."
+
+
+def test_telugu_andi_is_kept_once_at_final_sentence_end():
+    result = normalize_response_style(
+        "అండి, ఇది ముఖ్యం అండి. మళ్లీ అండి వివరాలు చూడండి అండి.",
+        "te-IN",
+    )
+    assert result.count("అండి") == 1
+    assert result.endswith("అండి.")
 
 
 def test_andi_is_removed_from_non_telugu_responses():

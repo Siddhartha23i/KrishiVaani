@@ -480,7 +480,7 @@ class ConversationOrchestrator:
     def _localized_thanks(lang_code: str) -> str:
         return {
             "te-IN": "ధన్యవాదాలు.",
-            "hi-IN": "धन्यवाद।",
+            "hi-IN": "आपका स्वागत है।",
             "en-IN": "You are welcome.",
             "ta-IN": "நன்றி.",
             "kn-IN": "ಧನ್ಯವಾದಗಳು.",
@@ -495,16 +495,26 @@ class ConversationOrchestrator:
     def _localized_no_evidence_response(lang_code: str, district: Optional[str]) -> str:
         place = f" for {district}" if district else ""
         if lang_code == "te-IN":
-            return "ఈ ప్రాంతంలో ఈ పంటకు సరిపడే నిర్ధారించిన ఆధారాలు ప్రస్తుతం లేవు."
+            return "ఈ ప్రాంతంలో ఈ పంటకు సరిపడే నిర్ధారించిన ఆధారాలు ప్రస్తుతం లేవు. మీ వ్యవసాయ అధికారిని, దగ్గర్లోని కేవీకేను లేదా కిసాన్ కాల్ సెంటర్ 1800-180-1551ను సంప్రదించండి."
         if lang_code == "hi-IN":
-            return f"{district or 'इस क्षेत्र'} में इस फसल के लिए अभी कोई सत्यापित रिकॉर्ड उपलब्ध नहीं है।"
+            return f"{district or 'इस क्षेत्र'} में इस फसल के लिए अभी कोई सत्यापित रिकॉर्ड उपलब्ध नहीं है। अपने कृषि अधिकारी, निकटतम KVK या किसान कॉल सेंटर 1800-180-1551 से संपर्क करें।"
         if lang_code == "en-IN":
-            return f"No approved evidence is currently available for this crop{place}."
+            return f"No approved evidence is currently available for this crop{place}. Please contact your Agricultural Officer, nearest KVK, or Kisan Call Centre at 1800-180-1551."
         if lang_code == "pa-IN":
-            return f"{district or 'ਇਸ ਖੇਤਰ'} ਵਿੱਚ ਇਸ ਫਸਲ ਲਈ ਇਸ ਵੇਲੇ ਕੋਈ ਪ੍ਰਮਾਣਿਤ ਰਿਕਾਰਡ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।"
+            return f"{district or 'ਇਸ ਖੇਤਰ'} ਵਿੱਚ ਇਸ ਫਸਲ ਲਈ ਇਸ ਵੇਲੇ ਕੋਈ ਪ੍ਰਮਾਣਿਤ ਰਿਕਾਰਡ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਆਪਣੇ ਖੇਤੀਬਾੜੀ ਅਧਿਕਾਰੀ, ਨੇੜਲੇ KVK ਜਾਂ ਕਿਸਾਨ ਕਾਲ ਸੈਂਟਰ 1800-180-1551 ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
         if lang_code == "mr-IN":
-            return f"{district or 'या भागात'} या पिकासाठी सध्या कोणताही पडताळलेला रेकॉर्ड उपलब्ध नाही."
-        return "No approved evidence is currently available for this crop in this area."
+            return f"{district or 'या भागात'} या पिकासाठी सध्या कोणताही पडताळलेला रेकॉर्ड उपलब्ध नाही. कृषी अधिकारी, जवळचे KVK किंवा किसान कॉल सेंटर 1800-180-1551 शी संपर्क करा."
+        if lang_code == "ta-IN":
+            return "இந்தப் பகுதியில் இந்தப் பயிருக்கு சரிபார்க்கப்பட்ட ஆதாரம் தற்போது இல்லை. வேளாண்மை அதிகாரி, அருகிலுள்ள KVK அல்லது கிசான் கால் சென்டர் 1800-180-1551-ஐ தொடர்புகொள்ளுங்கள்."
+        if lang_code == "kn-IN":
+            return "ಈ ಪ್ರದೇಶದಲ್ಲಿ ಈ ಬೆಳೆಗೆ ಪರಿಶೀಲಿತ ದಾಖಲೆ ಈಗ ಲಭ್ಯವಿಲ್ಲ. ಕೃಷಿ ಅಧಿಕಾರಿ, ಹತ್ತಿರದ KVK ಅಥವಾ ಕಿಸಾನ್ ಕಾಲ್ ಸೆಂಟರ್ 1800-180-1551 ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
+        if lang_code == "ml-IN":
+            return "ഈ പ്രദേശത്തെ ഈ വിളയ്ക്ക് പരിശോധിച്ച രേഖ ഇപ്പോൾ ലഭ്യമല്ല. കൃഷി ഉദ്യോഗസ്ഥനെയോ അടുത്തുള്ള KVK-യെയോ കിസാൻ കോൾ സെന്റർ 1800-180-1551-നെയോ ബന്ധപ്പെടൂ."
+        if lang_code == "bn-IN":
+            return "এই এলাকায় এই ফসলের জন্য যাচাই করা রেকর্ড এখন নেই। কৃষি আধিকারিক, নিকটস্থ KVK বা কিষান কল সেন্টার 1800-180-1551-এর সঙ্গে যোগাযোগ করুন।"
+        if lang_code == "gu-IN":
+            return "આ વિસ્તારમાં આ પાક માટે હાલમાં ચકાસાયેલ રેકોર્ડ નથી. કૃષિ અધિકારી, નજીકના KVK અથવા કિસાન કૉલ સેન્ટર 1800-180-1551નો સંપર્ક કરો."
+        return "No approved evidence is currently available for this crop in this area. Please contact your Agricultural Officer, nearest KVK, or Kisan Call Centre at 1800-180-1551."
 
     @staticmethod
     def _localized_weather_prompt(kind: str, lang_code: str) -> str:
