@@ -1,0 +1,25 @@
+# KrishiVaani - Core Dependencies
+gnani-vachana==0.9.0
+fastapi==0.115.2
+uvicorn[standard]==0.30.6
+python-dotenv==1.0.0
+pydantic==2.9.2
+pydantic-settings==2.12.0
+httpx==0.28.1
+requests==2.32.5
+
+# Telegram Bot (Phase 8.3 Long Polling)
+python-telegram-bot==22.8
+
+# LLM Reasoning (Phase 7.2 Groq)
+groq==0.37.1
+
+# Audio Processing & Codecs (OGG Opus / WAV)
+imageio-ffmpeg==0.6.0
+
+# Document & Evidence Parsing
+PyMuPDF==1.27.2.2
+beautifulsoup4==4.14.3
+
+# WhatsApp & Twilio Integrations
+twilio==9.13.0

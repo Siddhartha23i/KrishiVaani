@@ -1,0 +1,4 @@
+"""
+KrishiVaani - Domain models.
+"""
+

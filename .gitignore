@@ -1,0 +1,47 @@
+# Secrets, tokens, and local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.venv/
+env/
+venv/
+
+# Audio and media temporary outputs
+*.wav
+*.ogg
+*.m4a
+!test-audio/*.m4a
+
+# Node / open-wa artifacts
+/node_modules/
+/.open-wa/
+/_IGNORE_*/
+/*.data.json
+
+# Railway and runtime persistent volume data
+# Runtime SQLite database and ephemeral session files are excluded
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Explicitly track approved agricultural knowledge seed files
+!data_seed/
+!data_seed/**
+!data_seed/krishivaani.db

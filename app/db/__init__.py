@@ -1,0 +1,4 @@
+"""
+KrishiVaani - SQLite Database layer.
+"""
+
