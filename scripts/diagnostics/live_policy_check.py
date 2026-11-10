@@ -19,7 +19,7 @@ from app.conversation.service import ConversationOrchestrator
 from app.llm.knowledge_adapter import KnowledgeRetrievalFilter
 from app.core.config import settings
 from app.telegram.handlers import TelegramHandler
-from app.telegram.session import TelegramSessionRepository
+from app.telegram.session import TelegramSessionRepository, accepted_consent_phrases
 
 
 CASES = [
@@ -148,6 +148,7 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     orchestrator = ConversationOrchestrator()
+    print("accepted-consent-phrases | %s" % accepted_consent_phrases())
     cotton_evidence = orchestrator.knowledge_adapter.retrieve_approved_evidence(
         KnowledgeRetrievalFilter(
             farmer_state="Telangana",

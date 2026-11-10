@@ -27,6 +27,8 @@ class LocationInput(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     location_confirmed: bool = True
+    place_name: Optional[str] = None
+    named_in_message: bool = False
     # Plain caller-supplied boolean is UNTRUSTED by policy; cannot silently establish consent alone
     weather_sharing_consent: Optional[bool] = None
 

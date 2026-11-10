@@ -21,7 +21,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
 from app.core.config import settings
 from app.services.location_service import (
@@ -96,6 +96,14 @@ CONTEXTUAL_AFFIRMATIVE_TERMS = [
     "సరే", "సరే పర్వాలేదు", "అవును", "హా", "పర్మిషన్",
     "yes", "ok", "sure", "agree", "i agree", "allow", "yep",
 ]
+
+
+def accepted_consent_phrases() -> Dict[str, List[str]]:
+    """Return the exact accepted consent phrases without exposing user data."""
+    return {
+        "always_accepted": list(EXPLICIT_CONSENT_PHRASES),
+        "accepted_only_while_awaiting_consent": list(CONTEXTUAL_AFFIRMATIVE_TERMS),
+    }
 
 # Negative consent keywords / patterns (rejection / withdrawal)
 CONSENT_NEGATIVE_TERMS = [

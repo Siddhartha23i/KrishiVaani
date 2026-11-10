@@ -23,6 +23,8 @@ import base64
 import inspect
 import logging
 import asyncio
+import re
+from types import SimpleNamespace
 from datetime import datetime, timezone
 from typing import Optional, Set, List
 from collections import deque
@@ -69,18 +71,19 @@ START_MESSAGE = (
     "నమస్తే అండి! నేను మీ కృషివాణిని.\n\n"
     "పంటలు, వానలు, ప్రభుత్వ పథకాల గురించి ఏ సందేహం ఉన్నా వాయిస్ మెసేజ్ లేదా టెక్స్ట్ ద్వారా అడగండి.\n\n"
     "చిన్న గమనిక: ఇది ప్రాథమిక సమాచారం మాత్రమే అండి. పంటకు తుది నిర్ణయం తీసుకునే ముందు మీ స్థానిక AO గారిని అడగండి."
+    "\n\nజిల్లా లేదా పట్టణం పేరు చెబితే ఆ ప్రాంతం వాతావరణాన్ని నేరుగా చెబుతాను."
     "\n\nమీ ముందు అడిగిన ప్రశ్నలను మెరుగైన సహాయం కోసం గుర్తుంచుకుంటాను. /forget పంపితే అవి తొలగిపోతాయి."
 )
 START_MESSAGES = {
-    "hi-IN": "नमस्ते! मैं कृषिवाणी हूँ। फसल और मौसम के सवाल पूछिए। मैं आपकी पिछली बातचीत याद रखता हूँ; /forget से उसे मिटा सकते हैं।",
-    "en-IN": "Hello! I am KrishiVaani. Ask about crops or weather. I remember earlier questions to help; use /forget to delete them.",
-    "ta-IN": "வணக்கம்! நான் கிருஷிவாணி. பயிர்கள் மற்றும் வானிலை பற்றி கேளுங்கள். /forget மூலம் முந்தைய கேள்விகளை நீக்கலாம்.",
-    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿವಾಣಿ. ಬೆಳೆಗಳು ಮತ್ತು ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ. /forget ಮೂಲಕ ಹಿಂದಿನ ಪ್ರಶ್ನೆಗಳನ್ನು ಅಳಿಸಬಹುದು.",
-    "ml-IN": "നമസ്കാരം! ഞാൻ കൃഷിവാണിയാണ്. വിളകളെയും കാലാവസ്ഥയെയും കുറിച്ച് ചോദിക്കൂ. /forget ഉപയോഗിച്ച് പഴയ ചോദ്യങ്ങൾ നീക്കാം.",
-    "mr-IN": "नमस्कार! मी कृषिवाणी आहे. पिके आणि हवामानाबद्दल विचारा. /forget ने मागील प्रश्न हटवू शकता.",
-    "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਵਾਣੀ ਹਾਂ। ਫਸਲਾਂ ਅਤੇ ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ। /forget ਨਾਲ ਪੁਰਾਣੇ ਸਵਾਲ ਮਿਟਾ ਸਕਦੇ ਹੋ।",
-    "bn-IN": "নমস্কার! আমি কৃষিবাণী। ফসল ও আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন। /forget দিয়ে আগের প্রশ্ন মুছতে পারেন।",
-    "gu-IN": "નમસ્તે! હું કૃષિવાણી છું. પાક અને હવામાન વિશે પૂછો. /forgetથી જૂના પ્રશ્નો કાઢી શકો છો.",
+    "hi-IN": "नमस्ते! मैं कृषिवाणी हूँ। फसल और मौसम के सवाल पूछिए। किसी जिले या शहर का नाम लिखने पर मौसम सीधे मिल सकता है। मैं आपकी पिछली बातचीत याद रखता हूँ; /forget से उसे मिटा सकते हैं।",
+    "en-IN": "Hello! I am KrishiVaani. Ask about crops or weather. Name a district or town to get its weather directly. I remember earlier questions to help; use /forget to delete them.",
+    "ta-IN": "வணக்கம்! நான் கிருஷிவாணி. பயிர்கள் மற்றும் வானிலை பற்றி கேளுங்கள். மாவட்டம் அல்லது நகரத்தின் பெயரைச் சொன்னால் வானிலை நேரடியாக கிடைக்கும். /forget மூலம் முந்தைய கேள்விகளை நீக்கலாம்.",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು ಕೃಷಿವಾಣಿ. ಬೆಳೆಗಳು ಮತ್ತು ಹವಾಮಾನದ ಬಗ್ಗೆ ಕೇಳಿ. ಜಿಲ್ಲೆ ಅಥವಾ ಪಟ್ಟಣದ ಹೆಸರನ್ನು ಹೇಳಿದರೆ ಹವಾಮಾನವನ್ನು ನೇರವಾಗಿ ಪಡೆಯಬಹುದು. /forget ಮೂಲಕ ಹಿಂದಿನ ಪ್ರಶ್ನೆಗಳನ್ನು ಅಳಿಸಬಹುದು.",
+    "ml-IN": "നമസ്കാരം! ഞാൻ കൃഷിവാണിയാണ്. വിളകളെയും കാലാവസ്ഥയെയും കുറിച്ച് ചോദിക്കൂ. ജില്ലയുടെയോ പട്ടണത്തിന്റെയോ പേര് പറഞ്ഞാൽ കാലാവസ്ഥ നേരിട്ട് ലഭിക്കും. /forget ഉപയോഗിച്ച് പഴയ ചോദ്യങ്ങൾ നീക്കാം.",
+    "mr-IN": "नमस्कार! मी कृषिवाणी आहे. पिके आणि हवामानाबद्दल विचारा. जिल्हा किंवा शहराचे नाव सांगितल्यास हवामान थेट मिळेल. /forget ने मागील प्रश्न हटवू शकता.",
+    "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਵਾਣੀ ਹਾਂ। ਫਸਲਾਂ ਅਤੇ ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ। ਜ਼ਿਲ੍ਹੇ ਜਾਂ ਸ਼ਹਿਰ ਦਾ ਨਾਮ ਦਿਓ ਤਾਂ ਮੌਸਮ ਸਿੱਧਾ ਮਿਲ ਸਕਦਾ ਹੈ। /forget ਨਾਲ ਪੁਰਾਣੇ ਸਵਾਲ ਮਿਟਾ ਸਕਦੇ ਹੋ।",
+    "bn-IN": "নমস্কার! আমি কৃষিবাণী। ফসল ও আবহাওয়া সম্পর্কে জিজ্ঞাসা করুন। জেলার বা শহরের নাম লিখলে আবহাওয়া সরাসরি পাওয়া যাবে। /forget দিয়ে আগের প্রশ্ন মুছতে পারেন।",
+    "gu-IN": "નમસ્તે! હું કૃષિવાણી છું. પાક અને હવામાન વિશે પૂછો. જિલ્લો અથવા શહેરનું નામ આપશો તો હવામાન સીધું મળી શકે છે. /forgetથી જૂના પ્રશ્નો કાઢી શકો છો.",
 }
 
 GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
@@ -138,6 +141,31 @@ LOCALIZED_FALLBACKS = {
     "pa-IN": {"error": "ਮਾਫ਼ ਕਰਨਾ, ਤਕਨੀਕੀ ਸਮੱਸਿਆ ਆਈ। ਕੁਝ ਸਕਿੰਟ ਰੁਕ ਕੇ ਫਿਰ ਪੁੱਛੋ।", "duration": "ਤੁਹਾਡਾ ਵੌਇਸ ਸੁਨੇਹਾ 30 ਸਕਿੰਟ ਤੋਂ ਲੰਮਾ ਹੈ। ਛੋਟਾ ਸੁਨੇਹਾ ਭੇਜੋ।", "consent_declined": "ਠੀਕ ਹੈ। ਮੌਸਮ ਲਈ ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾਵੇਗਾ ਅਤੇ ਸੁਰੱਖਿਅਤ ਟਿਕਾਣੇ ਦੀ ਜਾਣਕਾਰੀ ਮਿਟਾ ਦਿੱਤੀ ਗਈ ਹੈ।", "consent_ack": "ਠੀਕ ਹੈ। ਮੌਸਮ ਲਈ ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਵਰਤਿਆ ਜਾ ਸਕਦਾ ਹੈ। ਜ਼ਿਲ੍ਹੇ ਜਾਂ ਮੰਡਲ ਦਾ ਮੌਸਮ ਪੁੱਛੋ।"},
     "bn-IN": {"error": "দুঃখিত, প্রযুক্তিগত সমস্যা হয়েছে। কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।", "duration": "আপনার ভয়েস বার্তা ৩০ সেকেন্ডের বেশি। ছোট বার্তা পাঠান।", "consent_declined": "ঠিক আছে। আবহাওয়ার জন্য আপনার অবস্থান শেয়ার করা হবে না এবং সংরক্ষিত অবস্থানের তথ্য মুছে দেওয়া হয়েছে।", "consent_ack": "ঠিক আছে। আবহাওয়ার তথ্যের জন্য আপনার অবস্থান ব্যবহার করা যাবে। জেলার আবহাওয়া জিজ্ঞাসা করুন।"},
     "gu-IN": {"error": "માફ કરશો, તકનીકી સમસ્યા આવી. થોડી સેકન્ડ પછી ફરી પૂછો.", "duration": "તમારો વૉઇસ સંદેશ 30 સેકન્ડથી લાંબો છે. ટૂંકો સંદેશ મોકલો.", "consent_declined": "ઠીક છે. હવામાન માટે તમારું સ્થાન શેર કરવામાં આવશે નહીં અને સાચવેલી સ્થાન માહિતી કાઢી નાખી છે.", "consent_ack": "ઠીક છે. હવામાન માટે તમારું સ્થાન વાપરી શકાય છે. જિલ્લા અથવા તાલુકાનું હવામાન પૂછો."},
+}
+
+CONSENT_INSTRUCTIONS = {
+    "te-IN": "దయచేసి ‘అవును’ లేదా ‘సరే’ అని రిప్లై చేయండి.",
+    "hi-IN": "कृपया ‘हाँ’ या ‘ठीक है’ लिखकर जवाब दें।",
+    "en-IN": "Please reply with “Yes” or “No”, or choose a button below.",
+    "ta-IN": "‘ஆம்’ அல்லது ‘சரி’ என்று பதில் அளிக்கவும்.",
+    "kn-IN": "‘ಹೌದು’ ಅಥವಾ ‘ಸರಿ’ ಎಂದು ಉತ್ತರಿಸಿ.",
+    "ml-IN": "‘അതെ’ അല്ലെങ്കിൽ ‘ശരി’ എന്ന് മറുപടി നൽകുക.",
+    "mr-IN": "‘हो’ किंवा ‘ठीक आहे’ असे उत्तर द्या.",
+    "pa-IN": "‘ਹਾਂ’ ਜਾਂ ‘ਠੀਕ ਹੈ’ ਲਿਖ ਕੇ ਜਵਾਬ ਦਿਓ।",
+    "bn-IN": "‘হ্যাঁ’ বা ‘ঠিক আছে’ লিখে উত্তর দিন।",
+    "gu-IN": "‘હા’ અથવા ‘ઠીક છે’ લખીને જવાબ આપો.",
+}
+CONSENT_BUTTONS = {
+    "te-IN": ("అవును", "వద్దు"),
+    "hi-IN": ("हाँ", "नहीं"),
+    "en-IN": ("Yes", "No"),
+    "ta-IN": ("ஆம்", "இல்லை"),
+    "kn-IN": ("ಹೌದು", "ಇಲ್ಲ"),
+    "ml-IN": ("അതെ", "ഇല്ല"),
+    "mr-IN": ("हो", "नाही"),
+    "pa-IN": ("ਹਾਂ", "ਨਹੀਂ"),
+    "bn-IN": ("হ্যাঁ", "না"),
+    "gu-IN": ("હા", "ના"),
 }
 
 GREETING_PATTERNS = {
@@ -233,6 +261,19 @@ class TelegramHandler:
             return "pa-IN"
         return "en-IN"
 
+    @staticmethod
+    def _explicit_weather_place(text: str) -> Optional[str]:
+        """Return a place named in the current weather question, if one is explicit."""
+        _, _, district, _ = extract_location_from_text(text)
+        if district:
+            return district
+        match = re.search(
+            r"\b(?:in|at|near)\s+([A-Za-z][A-Za-z .'-]{1,50}?)(?=\s+(?:today|tomorrow|weather|forecast|will|be)\b|[?!.]|$)",
+            text,
+            re.IGNORECASE,
+        )
+        return match.group(1).strip(" .,-") if match else None
+
     def _stored_language(self, user_id: str) -> Optional[str]:
         if not getattr(settings, "USER_ID_HASH_SALT", None):
             return None
@@ -241,6 +282,21 @@ class TelegramHandler:
     @staticmethod
     def _localized_fallback(language: str, kind: str, default: str) -> str:
         return LOCALIZED_FALLBACKS.get(language, {}).get(kind, default)
+
+    @staticmethod
+    def _consent_markup(language: str) -> InlineKeyboardMarkup:
+        yes, no = CONSENT_BUTTONS.get(language, CONSENT_BUTTONS["en-IN"])
+        return InlineKeyboardMarkup(
+            [[
+                InlineKeyboardButton(yes, callback_data="consent:yes"),
+                InlineKeyboardButton(no, callback_data="consent:no"),
+            ]]
+        )
+
+    @staticmethod
+    def _consent_prompt_text(language: str, text: str) -> str:
+        instruction = CONSENT_INSTRUCTIONS.get(language, CONSENT_INSTRUCTIONS["en-IN"])
+        return f"{text.rstrip()} {instruction}"
 
     @staticmethod
     def _localized_greeting(language: str) -> str:
@@ -324,6 +380,33 @@ class TelegramHandler:
             "bn-IN": "ভাষা বাংলা করা হয়েছে।",
             "gu-IN": "ભાષા ગુજરાતીમાં બદલી છે.",
         }[code])
+
+    async def handle_consent_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Route an inline consent choice through the same persisted handler path as typed text."""
+        query = update.callback_query
+        if not query or not query.data or not query.from_user or not query.message:
+            return
+        choice = query.data.removeprefix("consent:")
+        if choice not in {"yes", "no"}:
+            return
+        await query.answer()
+        try:
+            await query.edit_message_reply_markup(reply_markup=None)
+        except Exception:
+            logger.debug("Could not remove consent buttons after selection.", exc_info=True)
+        choice_text = "yes" if choice == "yes" else "no"
+        proxy_update = SimpleNamespace(
+            update_id=None,
+            effective_user=query.from_user,
+            effective_chat=getattr(query, "message", None).chat,
+            effective_message=SimpleNamespace(
+                text=choice_text,
+                reply_text=query.message.reply_text,
+                voice=None,
+                audio=None,
+            ),
+        )
+        await self.handle_text(proxy_update, context)
 
     async def handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command."""
@@ -494,6 +577,7 @@ class TelegramHandler:
 
             # 5. Location entity extraction from incoming text (only for non-consent, non-deletion, non-greeting messages)
             v, m, d, p = extract_location_from_text(text)
+            explicit_place = self._explicit_weather_place(text) if is_weather_query(text) else None
             if any([v, m, d, p]):
                 logger.info("Extracted location entities from Telegram text.")
                 self.session_repo.update_location(user_id, village=v, mandal=m, district=d, pin_code=p)
@@ -517,13 +601,15 @@ class TelegramHandler:
                 )
 
             loc_input = None
-            if session.district_name or session.village_name or session.mandal_name or session.pin_code:
+            if explicit_place or session.district_name or session.village_name or session.mandal_name or session.pin_code:
                 loc_input = LocationInput(
-                    district=session.district_name,
+                    district=explicit_place or session.district_name,
                     mandal=session.mandal_name,
                     village=session.village_name,
                     pin_code=session.pin_code,
                     location_confirmed=True,
+                    place_name=explicit_place,
+                    named_in_message=bool(explicit_place),
                 )
 
             conv_req = ConversationRequest(
@@ -560,7 +646,13 @@ class TelegramHandler:
                     pass
 
             reply_text = getattr(conv_res, "response_text", None) or self._localized_greeting(preferred_language)
-            await message.reply_text(reply_text)
+            if getattr(conv_res, "safety_reason", None) == "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED":
+                await message.reply_text(
+                    self._consent_prompt_text(preferred_language, reply_text),
+                    reply_markup=self._consent_markup(preferred_language),
+                )
+            else:
+                await message.reply_text(reply_text)
             self._save_turn_background(user_id, preferred_language, text, conv_res)
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             logger.info(

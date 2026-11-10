@@ -622,8 +622,14 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         await self.handler.handle_text(update, self.mock_context)
 
         # Bot replies with consent prompt
-        update.effective_message.reply_text.assert_called_once_with(
-            "వాతావరణ సమాచారం పొందడానికి మీ సమ్మతి అవసరం."
+        update.effective_message.reply_text.assert_called_once()
+        prompt_args, prompt_kwargs = update.effective_message.reply_text.call_args
+        self.assertIn("అవును", prompt_args[0])
+        self.assertIn("reply_markup", prompt_kwargs)
+        self.assertEqual(len(prompt_kwargs["reply_markup"].inline_keyboard[0]), 2)
+        self.assertEqual(
+            [button.text for button in prompt_kwargs["reply_markup"].inline_keyboard[0]],
+            ["అవును", "వద్దు"],
         )
 
         # Session records pending query and awaiting_consent
@@ -631,6 +637,50 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(session.awaiting_consent)
         self.assertEqual(session.pending_weather_query, "రేపు మా గ్రామంలో వర్షం పడుతుందా?")
         self.assertFalse(session.weather_provider_sharing_consent)
+
+    async def test_named_weather_place_answers_without_consent_prompt(self):
+        user_id = 7011
+        update = self._create_mock_update(
+            user_id=user_id,
+            text="What is the weather today in Warangal?",
+            update_id=70111,
+        )
+        response = MagicMock(spec=ConversationResponse)
+        response.response_text = "Warangal is currently warm and clear."
+        response.safety_reason = None
+        self.mock_orchestrator.process_message.return_value = response
+
+        await self.handler.handle_text(update, self.mock_context)
+
+        request = self.mock_orchestrator.process_message.call_args.args[0]
+        self.assertEqual(request.location.place_name, "Warangal")
+        self.assertTrue(request.location.named_in_message)
+        update.effective_message.reply_text.assert_called_once_with(response.response_text)
+        session = self.session_repo.get_session(str(user_id))
+        self.assertFalse(session.awaiting_consent)
+        self.assertIsNone(session.pending_weather_query)
+
+    async def test_english_weather_consent_prompt_explains_yes_or_no(self):
+        user_id = 7012
+        update = self._create_mock_update(
+            user_id=user_id,
+            text="What is the weather today?",
+            update_id=70121,
+        )
+        response = MagicMock(spec=ConversationResponse)
+        response.response_text = "Please provide consent for weather."
+        response.safety_reason = "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED"
+        self.mock_orchestrator.process_message.return_value = response
+
+        await self.handler.handle_text(update, self.mock_context)
+
+        prompt, kwargs = update.effective_message.reply_text.call_args
+        self.assertIn("Yes", prompt[0])
+        self.assertIn("No", prompt[0])
+        self.assertEqual(
+            [button.text for button in kwargs["reply_markup"].inline_keyboard[0]],
+            ["Yes", "No"],
+        )
 
     async def test_consent_granted_resumes_pending_weather_query(self):
         """2. User replies 'సమ్మతి ఇస్తున్నాను' -> persists consent and resumes original weather query."""
@@ -664,6 +714,36 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(session.weather_provider_sharing_consent)
         self.assertFalse(session.awaiting_consent)
         self.assertIsNone(session.pending_weather_query)
+
+    async def test_weather_ask_consent_answer_then_ask_again_uses_persisted_consent(self):
+        user_id = 7010
+        ask = self._create_mock_update(user_id=user_id, text="What is the weather in Warangal?", update_id=70101)
+        consent_response = MagicMock(spec=ConversationResponse)
+        consent_response.response_text = "Location consent is required for weather."
+        consent_response.safety_reason = "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED"
+        answer = MagicMock(spec=ConversationResponse)
+        answer.response_text = "The weather service returned the current weather for Warangal."
+        answer.safety_reason = None
+        self.mock_orchestrator.process_message.side_effect = [consent_response, answer, answer]
+
+        await self.handler.handle_text(ask, self.mock_context)
+        yes = self._create_mock_update(user_id=user_id, text="yes", update_id=70102)
+        await self.handler.handle_text(yes, self.mock_context)
+
+        session = self.session_repo.get_session(str(user_id))
+        self.assertTrue(session.weather_provider_sharing_consent)
+        self.assertFalse(session.awaiting_consent)
+        self.assertIsNone(session.pending_weather_query)
+        resumed_request = self.mock_orchestrator.process_message.call_args_list[1].args[0]
+        self.assertTrue(resumed_request.guest_consent.consent_given)
+        self.assertEqual(resumed_request.question, "What is the weather in Warangal?")
+
+        again = self._create_mock_update(user_id=user_id, text="What is the weather in Warangal?", update_id=70103)
+        await self.handler.handle_text(again, self.mock_context)
+        again_reply = again.effective_message.reply_text.call_args.args[0]
+        self.assertEqual(again_reply, answer.response_text)
+        self.assertNotIn("consent", again_reply.lower())
+        self.assertNotIn("అవును", again_reply)
 
     async def test_consent_rejected_revokes_consent_and_cancels_pending(self):
         """3. User replies 'సమ్మతి లేదు' -> revokes consent, purges location, cancels pending, sends polite Telugu notice."""

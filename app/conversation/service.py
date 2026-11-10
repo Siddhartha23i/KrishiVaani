@@ -771,22 +771,26 @@ class ConversationOrchestrator:
         Returns dict with keys: 'facts', 'metadata', and optional 'terminal_response'.
         """
         t_gate_start = time.perf_counter()
-        # RULE 1: Consent check
-        if not has_consent:
-            logger.info("Weather routing blocked: explicit weather_provider_sharing_consent is missing.")
-            return {
-                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel),
-                "loc_gate_ms": round((time.perf_counter() - t_gate_start) * 1000, 2),
-                "weatherapi_ms": 0.0,
-                "imd_ms": 0.0,
-            }
-
         # RULE 1.5: Conflicting or ambiguous location check (do not silently pick an arbitrary location)
         from app.telegram.session import has_conflicting_locations
 
+        named_place = bool(request.location and (
+            request.location.named_in_message or request.location.place_name
+        ))
+        if request.location and not named_place:
+            question_lower = request.question.casefold()
+            named_place = any(
+                value and value.casefold() in question_lower
+                for value in (
+                    request.location.district,
+                    request.location.mandal,
+                    request.location.village,
+                )
+            )
         has_confirmed_loc = bool(
             request.location and request.location.location_confirmed and (
                 request.location.district or request.location.mandal or request.location.village
+                or request.location.place_name
             )
         )
         if not has_confirmed_loc and has_conflicting_locations(request.question):
@@ -821,6 +825,17 @@ class ConversationOrchestrator:
                 "imd_ms": 0.0,
             }
 
+        # A place named in the current question is a direct WeatherAPI lookup and
+        # does not transmit stored/profile/GPS location.
+        if not named_place and not has_consent:
+            logger.info("Weather routing blocked: explicit weather_provider_sharing_consent is missing.")
+            return {
+                "terminal_response": self._create_consent_required_abstention(lang_code, detected_intent=INTENT_WEATHER_INQUIRY, channel=channel),
+                "loc_gate_ms": round((time.perf_counter() - t_gate_start) * 1000, 2),
+                "weatherapi_ms": 0.0,
+                "imd_ms": 0.0,
+            }
+
         loc_gate_ms = round((time.perf_counter() - t_gate_start) * 1000, 2)
         weatherapi_ms = 0.0
         imd_ms = 0.0
@@ -831,7 +846,7 @@ class ConversationOrchestrator:
             meta: Optional[WeatherMetadata] = None
 
             # Path A: Using stored farmer profile ID
-            if farmer and farmer.farmer_id:
+            if farmer and farmer.farmer_id and not named_place:
                 t_wapi = time.perf_counter()
                 curr_weather = self.weather_service.get_current_weather(farmer.farmer_id)
                 forecast_weather = self.weather_service.get_forecast(farmer.farmer_id, days=3)
@@ -936,8 +951,15 @@ class ConversationOrchestrator:
                 state = getattr(loc_input, "state", None) or (
                     resolved_context.state if resolved_context else None
                 )
+                place_name = getattr(loc_input, "place_name", None) or (
+                    district if named_place else None
+                )
                 parts = [p for p in [village, mandal, district, state or "Telangana", "India"] if p]
-                query_str = f"{lat:.6f},{lon:.6f}" if (lat and lon) else ", ".join(parts)
+                query_str = (
+                    f"{lat:.6f},{lon:.6f}" if (lat and lon)
+                    else place_name if place_name
+                    else ", ".join(parts)
+                )
 
                 t_wapi = time.perf_counter()
                 try:

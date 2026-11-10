@@ -34,6 +34,7 @@ def build_telegram_application(token: str, handler: TelegramHandler | None = Non
     application.add_handler(CommandHandler("forget", bot_handler.handle_forget))
     application.add_handler(CommandHandler("language", bot_handler.handle_language))
     application.add_handler(CallbackQueryHandler(bot_handler.handle_language_callback, pattern=r"^language:"))
+    application.add_handler(CallbackQueryHandler(bot_handler.handle_consent_callback, pattern=r"^consent:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_handler.handle_text))
     application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, bot_handler.handle_voice))
     application.add_error_handler(bot_handler.handle_error)

@@ -889,16 +889,21 @@ class TestConversationOrchestration(unittest.TestCase):
         self.assertEqual(res2.safety_reason, "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED")
         self.mock_weather_provider.get_current_weather.assert_not_called()
 
-        # Scenario 3: Guest farmer with no consent (farmer_id=None, guest_consent=None) -> BLOCKED
+        # Scenario 3: A named place is a direct WeatherAPI lookup and needs no consent.
         req3 = ConversationRequest(
             question="What is the weather in Nizamabad?",
             language="en-IN",
             location=LocationInput(district="Nizamabad"),
         )
         res3 = self.orchestrator.process_message(req3)
-        self.assertTrue(res3.is_abstention)
-        self.assertEqual(res3.safety_reason, "WEATHER_LOCATION_SHARING_CONSENT_REQUIRED")
-        self.mock_weather_provider.get_current_weather.assert_not_called()
+        self.assertFalse(res3.is_abstention)
+        self.mock_weather_provider.get_current_weather.assert_called()
+        self.assertEqual(
+            self.mock_weather_provider.get_current_weather.call_args.kwargs["query"],
+            "Nizamabad",
+        )
+        self.mock_weather_provider.get_current_weather.reset_mock()
+        self.mock_weather_provider.get_forecast.reset_mock()
 
         # Scenario 4: Guest with only caller-supplied boolean LocationInput(weather_sharing_consent=True) -> BLOCKED
         req4 = ConversationRequest(
