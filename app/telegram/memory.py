@@ -48,6 +48,15 @@ class ConversationMemoryStore:
                     """
                 )
                 conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS telegram_user_preferences (
+                        user_hash TEXT PRIMARY KEY,
+                        language TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_chat_turns_user_created "
                     "ON chat_turns(user_hash, created_at DESC)"
                 )
@@ -107,6 +116,36 @@ class ConversationMemoryStore:
             ),
         )
 
+    def get_language(self, telegram_user_id: str) -> Optional[str]:
+        user_hash = self._hash_user_id(telegram_user_id)
+        conn = get_connection(self.db_path)
+        try:
+            row = conn.execute(
+                "SELECT language FROM telegram_user_preferences WHERE user_hash = ?",
+                (user_hash,),
+            ).fetchone()
+            return row["language"] if row else None
+        finally:
+            conn.close()
+
+    def set_language(self, telegram_user_id: str, language: str) -> None:
+        user_hash = self._hash_user_id(telegram_user_id)
+        now = datetime.now(timezone.utc).isoformat()
+        conn = get_connection(self.db_path)
+        try:
+            with conn:
+                conn.execute(
+                    """
+                    INSERT INTO telegram_user_preferences(user_hash, language, updated_at)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(user_hash) DO UPDATE SET
+                        language = excluded.language, updated_at = excluded.updated_at
+                    """,
+                    (user_hash, language, now),
+                )
+        finally:
+            conn.close()
+
     def save_turn(
         self,
         telegram_user_id: str,
@@ -163,6 +202,7 @@ class ConversationMemoryStore:
         try:
             with conn:
                 conn.execute("DELETE FROM chat_turns WHERE user_hash = ?", (user_hash,))
+                conn.execute("DELETE FROM telegram_user_preferences WHERE user_hash = ?", (user_hash,))
         finally:
             conn.close()
 

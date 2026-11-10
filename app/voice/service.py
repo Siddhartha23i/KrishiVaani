@@ -225,9 +225,6 @@ class VoicePipelineService:
 
         transcript = (stt_result.get("transcript") or "").strip()
         detected_lang = stt_result.get("detected_language_code") or target_lang
-        if getattr(request, "channel", None) == "telegram":
-            detected_lang = "te-IN"
-
         # -------------------------------------------------------------
         # Stage 2.1: Empty Transcript Handling (Silence / Unintelligible)
         # -------------------------------------------------------------
@@ -453,6 +450,8 @@ class VoicePipelineService:
         # Timbre v2.5 Kaveri voice
         voice = "Kaveri"
         target_lang, _ = normalize_language(language)
+        if target_lang != "te-IN":
+            raise TTSServiceError(f"TTS is not configured for language {target_lang}.")
         spoken_text = (
             prepare_telugu_text_for_voice(text)
             if (target_lang == "te-IN" and channel == "telegram")
@@ -472,4 +471,3 @@ class VoicePipelineService:
             ),
         )
         return audio_bytes
-

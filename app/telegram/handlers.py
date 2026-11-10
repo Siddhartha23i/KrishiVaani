@@ -27,11 +27,12 @@ from datetime import datetime, timezone
 from typing import Optional, Set, List
 from collections import deque
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
 from app.conversation.service import ConversationOrchestrator
+from app.core.config import settings
 from app.telegram.memory import ConversationMemoryStore
 from app.conversation.intent import is_pure_greeting
 from app.conversation.schemas import ConversationRequest, LocationInput, GuestWeatherConsentEvent
@@ -49,7 +50,6 @@ from app.telegram.session import (
     extract_location_from_text,
 )
 
-
 def _generate_fallback_wav_bytes() -> bytes:
     """Generate minimal valid PCM WAV bytes for audio encoding fallback in test environments."""
     import wave
@@ -66,13 +66,13 @@ logger = logging.getLogger(__name__)
 
 # Standard localized natural conversational messages (Phase 8.4 / Part 1)
 START_MESSAGE = (
-    "నమస్తే అండి! నేను మీ కృషీవాణిని.\n\n"
+    "నమస్తే అండి! నేను మీ కృషివాణిని.\n\n"
     "పంటలు, వానలు, ప్రభుత్వ పథకాల గురించి ఏ సందేహం ఉన్నా వాయిస్ మెసేజ్ లేదా టెక్స్ట్ ద్వారా అడగండి.\n\n"
     "చిన్న గమనిక: ఇది ప్రాథమిక సమాచారం మాత్రమే అండి. పంటకు తుది నిర్ణయం తీసుకునే ముందు మీ స్థానిక AO గారిని అడగండి."
     "\n\nమీ ముందు అడిగిన ప్రశ్నలను మెరుగైన సహాయం కోసం గుర్తుంచుకుంటాను. /forget పంపితే అవి తొలగిపోతాయి."
 )
 
-GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+GREETING_MESSAGE = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
 
 DURATION_LIMIT_MESSAGE = (
     "క్షమించండి అండి, మీ వాయిస్ మెసేజ్ 30 సెకన్ల కంటే ఎక్కువ ఉంది. "
@@ -88,6 +88,25 @@ TELEGRAM_ABSTENTION_FALLBACK = (
     "దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు అండి. "
     "మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి."
 )
+
+LANGUAGE_NAMES = {
+    "te-IN": "తెలుగు",
+    "hi-IN": "हिन्दी",
+    "en-IN": "English",
+    "kn-IN": "ಕನ್ನಡ",
+    "ta-IN": "தமிழ்",
+    "mr-IN": "मराठी",
+}
+LOCALIZED_FALLBACKS = {
+    "hi-IN": {
+        "error": "क्षमा करें, संदेश संसाधित करने में तकनीकी समस्या आई। कुछ सेकंड बाद फिर पूछें।",
+        "duration": "आपका वॉइस संदेश 30 सेकंड से लंबा है। कृपया छोटा संदेश भेजें।",
+    },
+    "en-IN": {
+        "error": "Sorry, a technical problem occurred. Please wait a few seconds and try again.",
+        "duration": "Your voice message is longer than 30 seconds. Please send a shorter message.",
+    },
+}
 
 GREETING_PATTERNS = {
     "hi", "hello", "hey", "namaste", "namaskar", "namaskaram",
@@ -162,6 +181,27 @@ class TelegramHandler:
                 self.voice_service.orchestrator.memory_store = self.memory_store
         self.deduplicator = UpdateDeduplicator()
 
+    @staticmethod
+    def _language_hint(text: str) -> str:
+        if any("\u0900" <= char <= "\u097f" for char in text):
+            return "hi-IN"
+        if any("\u0c80" <= char <= "\u0cff" for char in text):
+            return "kn-IN"
+        if any("\u0b80" <= char <= "\u0bff" for char in text):
+            return "ta-IN"
+        if any("\u0c00" <= char <= "\u0c7f" for char in text):
+            return "te-IN"
+        return "te-IN"
+
+    def _stored_language(self, user_id: str) -> Optional[str]:
+        if not getattr(settings, "USER_ID_HASH_SALT", None):
+            return None
+        return self.memory_store.get_language(user_id)
+
+    @staticmethod
+    def _localized_fallback(language: str, kind: str, default: str) -> str:
+        return LOCALIZED_FALLBACKS.get(language, {}).get(kind, default)
+
     def _save_turn_background(self, user_id: str, language: str, question: str, response) -> None:
         if getattr(response, "safety_status", None) != "PASSED":
             return
@@ -195,6 +235,36 @@ class TelegramHandler:
         except Exception as forget_error:
             logger.error("Conversation memory deletion failed: %s", forget_error, exc_info=True)
             await message.reply_text("క్షమించండి అండి, జ్ఞాపకాన్ని తొలగించలేకపోయాను. కాసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.")
+
+    async def handle_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not update.effective_message:
+            return
+        keyboard = [
+            [InlineKeyboardButton(label, callback_data=f"language:{code}")]
+            for code, label in LANGUAGE_NAMES.items()
+        ]
+        await update.effective_message.reply_text(
+            "మీకు కావాల్సిన భాషను ఎంచుకోండి / अपनी भाषा चुनें / Choose your language:",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
+
+    async def handle_language_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        query = update.callback_query
+        if not query or not query.data or not query.from_user:
+            return
+        await query.answer()
+        code = query.data.removeprefix("language:")
+        if code not in LANGUAGE_NAMES:
+            return
+        await asyncio.to_thread(self.memory_store.set_language, str(query.from_user.id), code)
+        await query.edit_message_text({
+            "te-IN": "భాష తెలుగుగా మార్చాను అండి.",
+            "hi-IN": "भाषा हिन्दी कर दी गई है।",
+            "en-IN": "Language set to English.",
+            "kn-IN": "ಭಾಷೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಬದಲಿಸಲಾಗಿದೆ.",
+            "ta-IN": "மொழி தமிழாக மாற்றப்பட்டது.",
+            "mr-IN": "भाषा मराठी केली आहे.",
+        }[code])
 
     async def handle_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command."""
@@ -234,6 +304,8 @@ class TelegramHandler:
         user = update.effective_user
         user_id = str(user.id if user else "guest")
         text = message.text.strip()
+        preferred_language = await asyncio.to_thread(self._stored_language, user_id)
+        preferred_language = preferred_language or self._language_hint(text)
         logger.info("Handling Telegram text from user %s (update_id: %s)", user_id, update.update_id)
 
         try:
@@ -308,7 +380,7 @@ class TelegramHandler:
 
                     conv_req = ConversationRequest(
                         question=query_to_run,
-                        language="te-IN",
+                        language=preferred_language,
                         farmer_id=f"tg_{user_id}",
                         location=loc_input,
                         guest_consent=guest_consent,
@@ -317,7 +389,7 @@ class TelegramHandler:
                     conv_res = await asyncio.to_thread(self.orchestrator.process_message, conv_req)
                     reply_text = getattr(conv_res, "response_text", None) or GREETING_MESSAGE
                     await message.reply_text(reply_text)
-                    self._save_turn_background(user_id, "Telugu", text, conv_res)
+                    self._save_turn_background(user_id, preferred_language, text, conv_res)
                     if getattr(conv_res, "safety_reason", None) == "LOCATION_PARAMETERS_REQUIRED":
                         self.session_repo.set_pending_query(user_id, query_to_run, awaiting_consent=False)
                     else:
@@ -393,7 +465,7 @@ class TelegramHandler:
 
             conv_req = ConversationRequest(
                 question=text,
-                language="te-IN",
+                language=preferred_language,
                 farmer_id=f"tg_{user_id}",
                 location=loc_input,
                 guest_consent=guest_consent,
@@ -434,7 +506,7 @@ class TelegramHandler:
         except Exception as e:
             logger.error("Error handling Telegram text message for user %s: %s", user_id, e, exc_info=True)
             try:
-                await message.reply_text(FALLBACK_ERROR_MESSAGE)
+                await message.reply_text(self._localized_fallback(preferred_language, "error", FALLBACK_ERROR_MESSAGE))
             except Exception:
                 pass
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
@@ -569,10 +641,15 @@ class TelegramHandler:
         logger.info("Handling Telegram voice event (update_id: %s)", update.update_id)
 
         try:
+            preferred_language = await asyncio.to_thread(self._stored_language, user_id) or "te-IN"
             # 1. Quick duration check from Telegram metadata
             if voice_obj.duration and voice_obj.duration > 30:
                 logger.info("Telegram voice note duration %ss exceeds 30s limit (update_id: %s).", voice_obj.duration, update.update_id)
-                await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE, timings_out=timings)
+                await self._reply_voice_telugu(
+                    message,
+                    self._localized_fallback(preferred_language, "duration", DURATION_LIMIT_MESSAGE),
+                    timings_out=timings,
+                )
                 elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
                 timings["total_ms"] = elapsed_ms
                 self._log_voice_telemetry(update.update_id, "voice_duration_exceeded", timings)
@@ -626,7 +703,7 @@ class TelegramHandler:
                 farmer_id=f"tg_{user_id}",
                 location=loc_input,
                 guest_consent=guest_consent,
-                language="te-IN",
+                language=preferred_language,
                 channel="telegram",
             )
             voice_res = await asyncio.to_thread(
@@ -726,7 +803,7 @@ class TelegramHandler:
 
                     conv_req = ConversationRequest(
                         question=query_to_run,
-                        language="te-IN",
+                        language=preferred_language,
                         farmer_id=f"tg_{user_id}",
                         location=loc_input,
                         guest_consent=guest_consent,
@@ -821,7 +898,7 @@ class TelegramHandler:
                     )
                     conv_req = ConversationRequest(
                         question=pending_q,
-                        language="te-IN",
+                        language=preferred_language,
                         farmer_id=f"tg_{user_id}",
                         location=loc_input,
                         guest_consent=guest_consent,
@@ -917,7 +994,11 @@ class TelegramHandler:
 
         except AudioDurationExceededError:
             logger.info("Voice duration limit exceeded during pipeline processing (update_id: %s).", update.update_id)
-            await self._reply_voice_telugu(message, DURATION_LIMIT_MESSAGE, timings_out=timings)
+            await self._reply_voice_telugu(
+                message,
+                self._localized_fallback(preferred_language, "duration", DURATION_LIMIT_MESSAGE),
+                timings_out=timings,
+            )
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
             timings["total_ms"] = elapsed_ms
             self._log_voice_telemetry(update.update_id, "voice_duration_exceeded", timings)
@@ -930,7 +1011,11 @@ class TelegramHandler:
         except Exception as e:
             logger.error("Error processing Telegram voice note (update_id: %s): %s", update.update_id, e, exc_info=True)
             try:
-                await self._reply_voice_telugu(message, FALLBACK_ERROR_MESSAGE, timings_out=timings)
+                await self._reply_voice_telugu(
+                    message,
+                    self._localized_fallback(preferred_language, "error", FALLBACK_ERROR_MESSAGE),
+                    timings_out=timings,
+                )
             except Exception:
                 pass
             elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)

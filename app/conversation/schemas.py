@@ -20,6 +20,7 @@ class LocationInput(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     district: Optional[str] = None
+    state: Optional[str] = None
     mandal: Optional[str] = None
     village: Optional[str] = None
     pin_code: Optional[str] = None
@@ -94,4 +95,3 @@ class ConversationResponse(BaseModel):
     safety_validation_status: str = Field(default="NOT_RUN", description="Safety validation execution status: PASSED, REJECTED, ABSTAINED, or NOT_RUN")
     safety_reason: Optional[str] = Field(default=None, description="Reason for abstention or safety rejection")
     latency_breakdown_ms: Dict[str, Any] = Field(default_factory=dict, description="Processing latency by component in milliseconds")
-

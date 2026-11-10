@@ -81,7 +81,6 @@ def normalize_language(lang_input: Optional[str]) -> Tuple[str, str]:
     """
     if not lang_input:
         return "te-IN", "Telugu"
-
     clean = lang_input.strip().lower()
     if clean.startswith("te") or "telugu" in clean:
         return "te-IN", "Telugu"
@@ -89,9 +88,31 @@ def normalize_language(lang_input: Optional[str]) -> Tuple[str, str]:
         return "hi-IN", "Hindi"
     elif clean.startswith("en") or "english" in clean:
         return "en-IN", "English"
+    elif clean.startswith("kn") or "kannada" in clean:
+        return "kn-IN", "Kannada"
+    elif clean.startswith("ta") or "tamil" in clean:
+        return "ta-IN", "Tamil"
+    elif clean.startswith("mr") or "marathi" in clean:
+        return "mr-IN", "Marathi"
 
     # Default to Telugu for Telangana farmers
     return "te-IN", "Telugu"
+
+
+def _state_from_question(question: str) -> Optional[str]:
+    state_names = {
+        "haryana": "Haryana", "हरियाणा": "Haryana",
+        "karnataka": "Karnataka", "ಕರ್ನಾಟಕ": "Karnataka",
+        "tamil nadu": "Tamil Nadu", "தமிழ்நாடு": "Tamil Nadu",
+        "maharashtra": "Maharashtra", "महाराष्ट्र": "Maharashtra",
+        "andhra pradesh": "Andhra Pradesh", "ఆంధ్రప్రదేశ్": "Andhra Pradesh",
+        "telangana": "Telangana", "తెలంగాణ": "Telangana",
+    }
+    lowered = question.casefold()
+    for marker, state in state_names.items():
+        if marker.casefold() in lowered:
+            return state
+    return None
 
 
 class ConversationOrchestrator:
@@ -131,7 +152,7 @@ class ConversationOrchestrator:
         channel = "telegram" if is_telegram else (getattr(request, "channel", None) or "default")
 
         if is_pure_greeting(request.question):
-            greeting = "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+            greeting = "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
             latencies["total_ms"] = round((time.perf_counter() - start_total) * 1000, 2)
             return ConversationResponse(
                 intent=INTENT_GENERAL_CONVERSATION,
@@ -149,6 +170,12 @@ class ConversationOrchestrator:
         # 2. Farmer Context & Location Resolution
         t0 = time.perf_counter()
         farmer_model, resolved_context, has_weather_consent = self._resolve_farmer_context(request)
+        if request.location and request.location.state:
+            resolved_context.state = request.location.state
+        else:
+            detected_state = _state_from_question(request.question)
+            if detected_state:
+                resolved_context.state = detected_state
         if self.memory_store and is_telegram and request.farmer_id:
             try:
                 memory_context = self.memory_store.load_context(
@@ -267,6 +294,17 @@ class ConversationOrchestrator:
             latencies["weatherapi_ms"] = 0.0
             latencies["imd_ms"] = 0.0
 
+        is_out_of_state = bool(
+            resolved_context
+            and resolved_context.state
+            and resolved_context.state.strip().lower() != "telangana"
+        )
+
+        if is_out_of_state and not needs_weather:
+            return self._create_out_of_state_response(
+                lang_code, prompt_lang, detected_intent, request.question
+            )
+
         # 5. Approved Knowledge Retrieval (Phase 7.3)
         t0 = time.perf_counter()
         retrieval_filter = KnowledgeRetrievalFilter(
@@ -277,7 +315,7 @@ class ConversationOrchestrator:
             as_of_date=request.as_of_date,
         )
         evidence_result: EvidenceRetrievalResult = self.knowledge_adapter.retrieve_approved_evidence(retrieval_filter)
-        approved_items = evidence_result.items
+        approved_items = [] if is_out_of_state else evidence_result.items
         latencies["knowledge_retrieval_ms"] = round((time.perf_counter() - t0) * 1000, 2)
 
         # 6. Groq LLM Reasoning Service Execution (Phase 7.2)
@@ -356,6 +394,52 @@ class ConversationOrchestrator:
             safety_validation_status=safety_status,
             safety_reason=safety_reason,
             latency_breakdown_ms=latencies,
+        )
+
+    def _create_out_of_state_response(
+        self, lang_code: str, prompt_lang: str, intent: str, question: str
+    ) -> ConversationResponse:
+        specific = intent in {
+            INTENT_CROP_RECOMMENDATION,
+            INTENT_PEST_DISEASE_INQUIRY,
+            INTENT_FERTILIZER_GUIDANCE,
+            INTENT_GOVERNMENT_SCHEME,
+        }
+        messages = {
+            "hi-IN": (
+                "मेरे पास आपके राज्य के लिए इस फसल, कीट या योजना की सत्यापित सलाह अभी उपलब्ध नहीं है। "
+                "कृपया किसान कॉल सेंटर 1800-180-1551, अपने राज्य के कृषि विभाग या नजदीकी KVK से संपर्क करें। "
+                "IMD का जिला एग्रोमेट सलाहकार Mausam या Meghdoot ऐप में भी देखें।"
+                if specific
+                else "सामान्य जानकारी के तौर पर, स्थानीय कृषि विभाग की सलाह और मौसम की ताजा जानकारी देखकर ही निर्णय लें।"
+            ),
+            "en-IN": (
+                "Verified advice for this crop, pest, or scheme in your state is not in my data yet. "
+                "Please contact Kisan Call Centre at 1800-180-1551, your state agriculture department, or the nearest KVK. "
+                "You can also check the IMD district agromet advisory in the Mausam or Meghdoot app."
+                if specific
+                else "As general information, follow your state agriculture department's guidance and check current weather before making farm decisions."
+            ),
+        }
+        text = messages.get(lang_code)
+        if text is None:
+            text = (
+                "మీ రాష్ట్రానికి సంబంధించిన ఈ పంట, పురుగు లేదా పథకం గురించి ధృవీకరించిన సలహా నా దగ్గర ఇంకా లేదు. "
+                "కిసాన్ కాల్ సెంటర్ 1800-180-1551, మీ రాష్ట్ర వ్యవసాయ శాఖ లేదా దగ్గర్లోని కేవీకేను సంప్రదించండి. "
+                "IMD జిల్లా అగ్రోమెట్ సలహాను Mausam లేదా Meghdoot యాప్‌లో కూడా చూడండి."
+                if specific
+                else "సాధారణ సమాచారంగా, మీ రాష్ట్ర వ్యవసాయ శాఖ సూచనలు పాటించి ప్రస్తుత వాతావరణం చూసి నిర్ణయం తీసుకోండి."
+            )
+        return ConversationResponse(
+            intent=intent,
+            language=lang_code,
+            response_text=text,
+            is_abstention=specific,
+            evidence_citations=[],
+            safety_status="ABSTAINED" if specific else "PASSED",
+            safety_validation_status="NOT_RUN",
+            safety_reason="OUT_OF_STATE_VERIFIED_ADVICE_UNAVAILABLE" if specific else "OUT_OF_STATE_GENERAL_GUIDANCE",
+            latency_breakdown_ms={"safety_validation_ms": 0.0},
         )
 
     @staticmethod
@@ -653,8 +737,19 @@ class ConversationOrchestrator:
                 loc_input = request.location
                 lat = loc_input.latitude if loc_input else None
                 lon = loc_input.longitude if loc_input else None
-
-                parts = [p for p in [village, mandal, district, "Telangana, India"] if p]
+                district = (loc_input.district if loc_input else None) or (
+                    resolved_context.district if resolved_context else None
+                )
+                mandal = (loc_input.mandal if loc_input else None) or (
+                    resolved_context.mandal if resolved_context else None
+                )
+                village = (loc_input.village if loc_input else None) or (
+                    resolved_context.village if resolved_context else None
+                )
+                state = getattr(loc_input, "state", None) or (
+                    resolved_context.state if resolved_context else None
+                )
+                parts = [p for p in [village, mandal, district, state or "Telangana", "India"] if p]
                 query_str = f"{lat:.6f},{lon:.6f}" if (lat and lon) else ", ".join(parts)
 
                 t_wapi = time.perf_counter()
@@ -667,8 +762,8 @@ class ConversationOrchestrator:
                     )
                 except LocationNotFoundError:
                     # If detailed village/mandal query fails on WeatherAPI, fallback to district
-                    if district and query_str != f"{district}, Telangana, India":
-                        fallback_query = f"{district}, Telangana, India"
+                    if district and query_str != f"{district}, {state or 'Telangana'}, India":
+                        fallback_query = f"{district}, {state or 'Telangana'}, India"
                         logger.info("WeatherAPI detailed location not found; falling back to district level.")
                         curr_weather = self.weather_service.weatherapi_provider.get_current_weather(
                             query=fallback_query, language=lang_code
@@ -718,7 +813,7 @@ class ConversationOrchestrator:
                 )
 
                 # Optional official IMD warning context (Phase 7.8) - fresh warnings only
-                if district:
+                if district and (not state or state.strip().lower() == "telangana"):
                     t_imd = time.perf_counter()
                     try:
                         imd_rec = self.weather_service.get_imd_district_warning(district, day="Day_1")

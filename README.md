@@ -7,7 +7,7 @@
 [![LLM Reasoning](https://img.shields.io/badge/Groq-openai%2Fgpt--oss--120b-green.svg)](https://groq.com/)
 [![Deployment](https://img.shields.io/badge/Deployment-Railway%20(Docker)-9b51e0.svg)](https://railway.com/)
 
-**KrishiVaani** is a Telugu-first conversational voice assistant engineered to bridge the critical information gap for smallholder farmers in rural Telangana. By accepting natural spoken voice queries over Telegram and responding with synthesized Telugu voice messages, KrishiVaani allows farmers to ask questions about crop health, weather forecasts, rainfall warnings, and government schemes in their native language—without needing to type, navigate complex web portals, or decipher technical bulletins.
+**KrishiVaani** is a Telugu-first conversational voice assistant engineered to bridge the critical information gap for smallholder farmers in rural Telangana. The assistant identifies itself as **కృషివాణి** and is not a farmer. By accepting natural spoken voice queries over Telegram and responding with synthesized Telugu voice messages, KrishiVaani allows farmers to ask questions about crop health, weather forecasts, rainfall warnings, and government schemes in their native language—without needing to type, navigate complex web portals, or decipher technical bulletins.
 
 The project was developed as part of the **Gnani AI Great Indian AI Internship Challenge**, combining enterprise-grade Indian language speech recognition, deterministic safety guardrails, low-latency LLM reasoning, and verified agronomic research.
 
@@ -402,6 +402,23 @@ provider consent.
 
 **Railway variable to add:** `USER_ID_HASH_SALT` (generate a unique random secret
 for this deployment and keep it out of source control).
+
+---
+
+## Languages and out-of-state requests
+
+Use `/language` to choose Telugu, Hindi, or English; the choice is stored per
+user and applies to subsequent text and voice requests. Devanagari text is also
+used as a Hindi hint when no preference exists. Timbre is currently configured
+for Telugu voice output, so unsupported voice languages are returned as text.
+
+For a consented, known location outside Telangana, the bot can provide live
+WeatherAPI weather for that location. It never uses Telangana crop, pest, or
+scheme evidence for another state. Crop-specific questions outside the verified
+knowledge base receive a localized referral to Kisan Call Centre
+`1800-180-1551`, the state agriculture department or nearest KVK, and IMD
+district agromet advisories (Mausam/Meghdoot). Any general tips are explicitly
+labelled general and are non-prescriptive.
 
 ---
 

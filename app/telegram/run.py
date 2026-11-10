@@ -10,7 +10,7 @@ Requires TELEGRAM_BOT_TOKEN configured in environment / settings.
 
 import sys
 import logging
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 from app.core.config import settings
 from app.telegram.handlers import TelegramHandler
@@ -32,6 +32,8 @@ def build_telegram_application(token: str, handler: TelegramHandler | None = Non
     # Register handlers
     application.add_handler(CommandHandler("start", bot_handler.handle_start))
     application.add_handler(CommandHandler("forget", bot_handler.handle_forget))
+    application.add_handler(CommandHandler("language", bot_handler.handle_language))
+    application.add_handler(CallbackQueryHandler(bot_handler.handle_language_callback, pattern=r"^language:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_handler.handle_text))
     application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, bot_handler.handle_voice))
     application.add_error_handler(bot_handler.handle_error)

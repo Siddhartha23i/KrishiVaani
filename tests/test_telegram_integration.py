@@ -146,7 +146,7 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
                 update = self._create_mock_update(update_id=idx, text=greeting_text)
                 await self.handler.handle_text(update, self.mock_context)
                 update.effective_message.reply_text.assert_called_once_with(
-                    "నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
+                    "నమస్తే అండి! నేను మీ కృషివాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను."
                 )
                 self.mock_orchestrator.process_message.assert_not_called()
                 self.mock_orchestrator.reset_mock()
@@ -967,9 +967,9 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
     """Focused tests for Phase 8.4 Natural Conversational Telugu implementation."""
 
     def test_welcome_message_natural_telangana_style(self):
-        # Must start with respectful, friendly 'నమస్తే అండి' and identity 'నేను మీ కృషీవాణిని'
+        # Must start with respectful, friendly 'నమస్తే అండి' and the exact assistant identity.
         self.assertIn("నమస్తే అండి", START_MESSAGE)
-        self.assertIn("నేను మీ కృషీవాణిని", START_MESSAGE)
+        self.assertIn("నేను మీ కృషివాణిని", START_MESSAGE)
         # Uses natural conversational words 'వానలు', 'స్కీమ్ల' instead of literary 'వర్షపాతం' or 'పథకములు'
         self.assertIn("వానలు", START_MESSAGE)
         # Avoids bureaucratic 'వ్యవసాయ అధికారిని సంప్రదించండి', uses 'AO గారిని'
@@ -978,7 +978,7 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
 
     def test_greeting_message_natural_style(self):
         self.assertIn("నమస్తే అండి", GREETING_MESSAGE)
-        self.assertIn("నేను మీ కృషీవాణిని", GREETING_MESSAGE)
+        self.assertIn("నేను మీ కృషివాణిని", GREETING_MESSAGE)
         self.assertNotIn("కృషివాణికి స్వాగతం", GREETING_MESSAGE)
 
     def test_duration_and_fallback_natural_style(self):
@@ -1509,4 +1509,3 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
