@@ -4,7 +4,7 @@ Combines sub-routers across distinct domain modules.
 """
 
 from fastapi import APIRouter
-from app.api.routes import health, farmers, knowledge, weather, voice, whatsapp, twilio
+from app.api.routes import health, farmers, knowledge, weather, voice
 
 api_router = APIRouter()
 
@@ -22,11 +22,4 @@ api_router.include_router(weather.router, prefix="/api/v1/weather", tags=["Weath
 
 # Register voice pipeline routes
 api_router.include_router(voice.router, prefix="/api/v1/voice", tags=["Voice Pipeline"])
-
-# Register WhatsApp Cloud API routes (accessible at /api/v1/whatsapp/webhook and /webhook)
-api_router.include_router(whatsapp.router, prefix="/api/v1/whatsapp", tags=["WhatsApp Cloud API"])
-api_router.include_router(whatsapp.router, tags=["WhatsApp Cloud API Root"])
-
-# Register Twilio WhatsApp Sandbox routes (Phase 8.2 Integration)
-api_router.include_router(twilio.router, prefix="/api/v1/twilio", tags=["Twilio WhatsApp"])
 

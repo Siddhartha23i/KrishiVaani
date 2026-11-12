@@ -37,7 +37,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-మీ యాసంగిలో మట్టీ రకం, నీటి లభ్యత ఎంత ఉందో చెప్పండి, దానికి అనుగుణంగా పంట సిఫార్సు చేస్తాను అండి.
+మీ యాసంగిలో మట్టీ రకం, నీటి లభ్యత ఎంత ఉందో చెప్పండి, దానికి అనుగుణంగా పంట సిఫార్సు చేస్తాను .
 ```
 
 ### crop-2
@@ -73,7 +73,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-నేను కృషివాణి, మీకు వ్యవసాయ సలహాలు ఇవ్వడానికి ఇక్కడ ఉన్నాను అండి. మీ పంట లేదా ఇతర ప్రశ్నలు ఉంటే చెప్పండి.
+నేను కృషివాణి, మీకు వ్యవసాయ సలహాలు ఇవ్వడానికి ఇక్కడ ఉన్నాను . మీ పంట లేదా ఇతర ప్రశ్నలు ఉంటే చెప్పండి.
 ```
 
 ### pesticide-1
@@ -89,7 +89,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 ```
 
 ### greeting-1
-- Question: నమస్తే అండి
+- Question: నమస్తే
 - Latency: 0.000 seconds
 - Answer length: 90 characters
 - Safety status: PASSED
@@ -97,7 +97,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను.
+నమస్తే ! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను.
 ```
 
 **Median latency:** 0.867 seconds
@@ -113,7 +113,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-రేపు మీ ప్రాంతంలో వాతావరణ రిపోర్ట్ ప్రకారం 3.0 మిల్లీమీటర్ల వాన పడే అవకాశం ఉంది, అవకాశం 40 శాతం ఉంది అండి. ఇది కేవలం అంచనా మాత్రమే, మారే అవకాశం ఉంది. దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి.
+రేపు మీ ప్రాంతంలో వాతావరణ రిపోర్ట్ ప్రకారం 3.0 మిల్లీమీటర్ల వాన పడే అవకాశం ఉంది, అవకాశం 40 శాతం ఉంది . ఇది కేవలం అంచనా మాత్రమే, మారే అవకాశం ఉంది. దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి.
 ```
 
 ### weather-2
@@ -137,7 +137,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-యాసంగిలో తక్కువ నీటితో ఏ పంట వేయాలో కచ్చితంగా చెప్పాలంటే మీ లొకేషన్, మట్టి రకం, నీటి వసతి వివరాలు కావాలి అండి. మీరు ఏ ఊరిలో ఉన్నారు, మట్టి ఎలా ఉంది, బోరు నీళ్లా లేక కాలువ నీళ్లా అనేది చెబితే సరైన సూచన ఇవ్వగలను. దీని గురించి ఇంకేమైనా సందేహాలుంటే అడగండి.
+యాసంగిలో తక్కువ నీటితో ఏ పంట వేయాలో కచ్చితంగా చెప్పాలంటే మీ లొకేషన్, మట్టి రకం, నీటి వసతి వివరాలు కావాలి . మీరు ఏ ఊరిలో ఉన్నారు, మట్టి ఎలా ఉంది, బోరు నీళ్లా లేక కాలువ నీళ్లా అనేది చెబితే సరైన సూచన ఇవ్వగలను. దీని గురించి ఇంకేమైనా సందేహాలుంటే అడగండి.
 ```
 
 ### crop-2
@@ -161,7 +161,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-అండి, మీరు అడిగిన రైతు బంధు పథకం వివరాలు మా దగ్గర ఉన్న ఆధారాల్లో లేవు. దీని గురించి కచ్చితమైన సమాచారం కోసం మీ ఏఓ గారిని లేదా దగ్గర్లోని కేవీకే ని సంప్రదించండి. దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి.
+, మీరు అడిగిన రైతు బంధు పథకం వివరాలు మా దగ్గర ఉన్న ఆధారాల్లో లేవు. దీని గురించి కచ్చితమైన సమాచారం కోసం మీ ఏఓ గారిని లేదా దగ్గర్లోని కేవీకే ని సంప్రదించండి. దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి.
 ```
 
 ### off-topic-1
@@ -173,7 +173,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-నేను కృషివాణి అండి. మీకు వ్యవసాయ విషయాల్లో సహాయం చేయడానికి ఉన్నాను. ఇంకా ఏమైనా సందేహాలుంటే అడగండి.
+నేను కృషివాణి . మీకు వ్యవసాయ విషయాల్లో సహాయం చేయడానికి ఉన్నాను. ఇంకా ఏమైనా సందేహాలుంటే అడగండి.
 ```
 
 ### pesticide-1
@@ -185,11 +185,11 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-పత్తిలో ఏ పురుగు సోకిందో కచ్చితంగా తెలియకుండా మందు మోతాదు చెప్పలేము అండి. దయచేసి మీ ఊరు లేదా మండలం పేరు చెప్పండి. పురుగును సరిగ్గా గుర్తించాక ఏఓ గారు లేదా కేవీకే ద్వారా సరైన సలహా తీసుకోండి.
+పత్తిలో ఏ పురుగు సోకిందో కచ్చితంగా తెలియకుండా మందు మోతాదు చెప్పలేము . దయచేసి మీ ఊరు లేదా మండలం పేరు చెప్పండి. పురుగును సరిగ్గా గుర్తించాక ఏఓ గారు లేదా కేవీకే ద్వారా సరైన సలహా తీసుకోండి.
 ```
 
 ### greeting-1
-- Question: నమస్తే అండి
+- Question: నమస్తే
 - Latency: 0.000 seconds
 - Answer length: 90 characters
 - Safety status: PASSED
@@ -197,7 +197,7 @@ Text-only ConversationOrchestrator comparison; no STT/TTS calls. Weather uses an
 - Error class/reason: None
 - Answer:
 ```text
-నమస్తే అండి! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను.
+నమస్తే ! నేను మీ కృషీవాణిని. పంటలు లేదా వాతావరణం గురించి ఏమైనా అడగండి, సహాయం చేస్తాను.
 ```
 
 **Median latency:** 0.733 seconds

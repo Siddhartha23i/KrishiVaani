@@ -100,21 +100,6 @@
           </svg>
           Try on Telegram: Live
         </a>
-
-        <button
-          class="btn btn-disabled"
-          disabled
-          aria-disabled="true"
-          aria-label="WhatsApp: Soon"
-          title="WhatsApp support is coming soon"
-        >
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.07.527 4.02 1.455 5.717L.057 23.59l5.983-1.572A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.206-1.49l-.373-.222-3.372.886.9-3.274-.243-.389A9.818 9.818 0 0112 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.421-4.398 9.818-9.818 9.818z"/>
-          </svg>
-          WhatsApp: Soon
-          <span class="coming-soon-badge" aria-label="Coming soon">Soon</span>
-        </button>
       </div>
 
     </div>
@@ -315,8 +300,7 @@
             <p class="node-step-tag">Step 04</p>
             <h3 class="node-title">AI writes the answer</h3>
             <p class="node-desc">
-              <!-- TODO: Confirm whether default provider in production deployment is Sarvam AI LM or Groq -->
-              Language model writes a short answer in the farmer's native language (with Groq and Sarvam AI provider support). General questions use model knowledge, weather questions use live WeatherAPI data (plus IMD district warnings), and farm advice uses approved university sources only.
+              A Sarvam AI language model writes a short, grounded answer in the farmer's language, with Groq as an automatic fallback. Both providers share the same agricultural safety validation. General questions use model knowledge, weather questions use live WeatherAPI data (plus IMD district warnings), and farm advice uses approved university sources only.
             </p>
           </div>
         </article>
@@ -630,9 +614,6 @@
       </div>
       <div class="status-tag">
         <span><strong>Indian languages:</strong> supported.</span>
-      </div>
-      <div class="status-tag">
-        <span><strong>WhatsApp:</strong> coming soon.</span>
       </div>
       <div class="status-tag">
         <span style="color:var(--accent-warning);">&bull;</span>

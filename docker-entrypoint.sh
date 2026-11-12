@@ -5,8 +5,7 @@ echo "[KrishiVaani] Starting container entrypoint..."
 
 # Ensure persistent volume data directory structure exists
 mkdir -p /app/data/pjtau/raw_pdfs \
-         /app/data/tgdps/raw_pdfs \
-         /app/data/twilio_media
+         /app/data/tgdps/raw_pdfs
 
 # 1. Initialize SQLite database from approved seed if not present on volume
 if [ ! -f /app/data/krishivaani.db ] || [ ! -s /app/data/krishivaani.db ]; then

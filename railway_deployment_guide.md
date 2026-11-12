@@ -31,7 +31,6 @@ This deployment configuration is prepared specifically for **Railway** to run Kr
 | **SQLite Database** | `data/krishivaani.db` | `/app/data/krishivaani.db` |
 | **Approved PJTAU PDFs** | `data/pjtau/raw_pdfs/*.pdf` | `/app/data/pjtau/raw_pdfs/*.pdf` |
 | **Approved TGDPS PDFs** | `data/tgdps/raw_pdfs/*.pdf` | `/app/data/tgdps/raw_pdfs/*.pdf` |
-| **Twilio Media Storage** | `data/twilio_media/` | `/app/data/twilio_media/` |
 | **Seed Knowledge Backup** | `data_seed/` | `/app/data_seed/` |
 
 ### Volume Mount Configuration:
@@ -195,5 +194,5 @@ Ensures Unix LF line endings, creates `/app/data` directories, copies seed files
    INFO - Initializing GroqProvider for model 'openai/gpt-oss-120b'
    ```
 4. Open Telegram, find your bot, and send a Telugu voice message:
-   `"నమస్తే అండి, రేపు నిజామాబాద్ లో వర్షం పడుతుందా?"`
+   `"నమస్తే , రేపు నిజామాబాద్ లో వర్షం పడుతుందా?"`
 5. The bot will reply with a natural conversational Telugu voice note.

@@ -50,6 +50,7 @@ from app.llm.exceptions import (
     LLMSafetyViolationError,
 )
 from app.llm.providers.groq_provider import GroqProvider
+from app.llm.providers.sarvam_provider import SarvamProvider
 from app.llm.safety import LLMSafetyValidator
 from app.llm.service import LLMReasoningService
 
@@ -499,6 +500,227 @@ class TestLLMServiceAndProvider(unittest.TestCase):
         self.assertEqual(mask_api_key(None), "<NOT_SET>")
         self.assertEqual(mask_api_key("short"), "***")
         self.assertEqual(mask_api_key("gsk_1234567890abcdef"), "gsk_...cdef")
+
+
+class TestSarvamPrimaryGroqFallback(unittest.TestCase):
+    """
+    Verification tests for Stage 2 LLM architecture:
+    Sarvam AI as primary reasoning provider with Groq as automatic fallback.
+    """
+
+    def setUp(self):
+        self.validator = LLMSafetyValidator()
+
+    def test_sarvam_success_does_not_call_groq(self):
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.model_id = "sarvam-105b-conversations"
+        mock_sarvam.generate_completion.return_value = LLMResponseSchema(
+            intent="crop_guidance",
+            language="English",
+            response="Groundnut requires light well-drained red soils.",
+            evidence_citations=["KNOW-101"],
+            unsupported_questions=[],
+            abstain=False,
+            confidence=0.9,
+            model_id="sarvam-105b-conversations",
+        )
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider") as mock_groq_cls:
+            req = LLMReasoningRequest(
+                farmer_question="What soil is best for groundnut?",
+                language="English",
+                approved_evidence=[
+                    ApprovedEvidenceItem(
+                        evidence_id="KNOW-101",
+                        source_id="SRC-PJTAU-001",
+                        source_type="PJTAU_AGROMET_ADVISORY",
+                        citation_id="CITE-101",
+                        title="Groundnut Soil",
+                        content="Groundnut requires light well-drained red soils.",
+                        category="Crop Guide",
+                        crop_name="Groundnut",
+                        state="Telangana",
+                    )
+                ],
+            )
+            resp = service.process_query(req)
+
+            mock_sarvam.generate_completion.assert_called_once()
+            mock_groq_cls.assert_not_called()
+            self.assertEqual(resp.model_id, "sarvam-105b-conversations")
+            self.assertEqual(resp.safety_status, "PASSED")
+
+    def test_sarvam_timeout_calls_groq_fallback_once(self):
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.model_id = "sarvam-105b-conversations"
+        mock_sarvam.generate_completion.side_effect = LLMTimeoutError("Sarvam timed out after 12s", provider="sarvam")
+
+        mock_groq_instance = MagicMock()
+        mock_groq_instance.model_id = "openai/gpt-oss-120b"
+        mock_groq_instance.generate_completion.return_value = LLMResponseSchema(
+            intent="crop_guidance",
+            language="English",
+            response="Red soils are suitable for groundnut with irrigation.",
+            evidence_citations=["KNOW-101"],
+            unsupported_questions=[],
+            abstain=False,
+            confidence=0.85,
+            model_id="openai/gpt-oss-120b",
+        )
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider", return_value=mock_groq_instance) as mock_groq_cls:
+            req = LLMReasoningRequest(
+                farmer_question="What soil is best for groundnut?",
+                language="English",
+                approved_evidence=[
+                    ApprovedEvidenceItem(
+                        evidence_id="KNOW-101",
+                        source_id="SRC-PJTAU-001",
+                        source_type="PJTAU_AGROMET_ADVISORY",
+                        citation_id="CITE-101",
+                        title="Groundnut Soil",
+                        content="Red soils are suitable for groundnut with irrigation.",
+                        category="Crop Guide",
+                        crop_name="Groundnut",
+                        state="Telangana",
+                    )
+                ],
+            )
+            resp = service.process_query(req)
+
+            mock_sarvam.generate_completion.assert_called_once()
+            mock_groq_cls.assert_called_once()
+            mock_groq_instance.generate_completion.assert_called_once()
+            self.assertEqual(resp.model_id, "openai/gpt-oss-120b")
+            self.assertEqual(resp.safety_status, "PASSED")
+
+    def test_sarvam_rate_limit_calls_groq_fallback_once(self):
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.model_id = "sarvam-105b-conversations"
+        mock_sarvam.generate_completion.side_effect = LLMRateLimitError("Sarvam 429 rate limit", provider="sarvam")
+
+        mock_groq_instance = MagicMock()
+        mock_groq_instance.model_id = "openai/gpt-oss-120b"
+        mock_groq_instance.generate_completion.return_value = LLMResponseSchema(
+            intent="crop_guidance",
+            language="English",
+            response="Groundnut requires red sandy loam soils.",
+            evidence_citations=["CITE-101"],
+            unsupported_questions=[],
+            abstain=False,
+            confidence=0.85,
+            model_id="openai/gpt-oss-120b",
+        )
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider", return_value=mock_groq_instance):
+            req = LLMReasoningRequest(
+                farmer_question="What soil for groundnut?",
+                language="English",
+                approved_evidence=[
+                    ApprovedEvidenceItem(
+                        evidence_id="KNOW-101",
+                        source_id="SRC-PJTAU-001",
+                        source_type="PJTAU_AGROMET_ADVISORY",
+                        citation_id="CITE-101",
+                        title="Groundnut Soil",
+                        content="Groundnut requires red sandy loam soils.",
+                        category="Crop Guide",
+                        crop_name="Groundnut",
+                        state="Telangana",
+                    )
+                ],
+            )
+            resp = service.process_query(req)
+            self.assertEqual(resp.model_id, "openai/gpt-oss-120b")
+
+    def test_groq_response_passes_through_safety_validator(self):
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.generate_completion.side_effect = LLMProviderUnavailableError("Sarvam 503 unavailable", provider="sarvam")
+
+        # Groq returns an unsafe response with ungrounded pesticide dosage
+        mock_groq_instance = MagicMock()
+        mock_groq_instance.model_id = "openai/gpt-oss-120b"
+        mock_groq_instance.generate_completion.return_value = LLMResponseSchema(
+            intent="crop_guidance",
+            language="English",
+            response="Spray 50 ml monocrotophos per acre immediately.",
+            evidence_citations=[],
+            unsupported_questions=[],
+            abstain=False,
+            confidence=0.9,
+            model_id="openai/gpt-oss-120b",
+        )
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider", return_value=mock_groq_instance):
+            req = LLMReasoningRequest(
+                farmer_question="How to kill pests?",
+                language="English",
+                approved_evidence=[],
+            )
+            resp = service.process_query(req)
+
+            # Response must be REJECTED by deterministic safety validator
+            self.assertEqual(resp.safety_status, "REJECTED")
+            self.assertIn("consult your local Agricultural Officer", resp.response)
+
+    def test_both_providers_fail_returns_localized_safe_fallback(self):
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.generate_completion.side_effect = LLMTimeoutError("Sarvam timed out", provider="sarvam")
+
+        mock_groq_instance = MagicMock()
+        mock_groq_instance.generate_completion.side_effect = LLMProviderUnavailableError("Groq 503 unavailable", provider="groq")
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider", return_value=mock_groq_instance):
+            req = LLMReasoningRequest(
+                farmer_question="What is the forecast?",
+                language="Telugu",
+                channel="telegram",
+                approved_evidence=[],
+            )
+            resp = service.process_query(req)
+
+            self.assertTrue(resp.abstain)
+            self.assertEqual(resp.safety_status, "ABSTAINED")
+            self.assertIn("సాంకేతిక సమస్య", resp.response)
+
+    def test_safety_rejection_from_sarvam_does_not_trigger_groq_fallback(self):
+        # Sarvam succeeds, but produces an ungrounded chemical dosage
+        mock_sarvam = MagicMock(spec=SarvamProvider)
+        mock_sarvam.model_id = "sarvam-105b-conversations"
+        mock_sarvam.generate_completion.return_value = LLMResponseSchema(
+            intent="crop_guidance",
+            language="English",
+            response="Apply 25 kg DAP per acre right away.",
+            evidence_citations=[],
+            unsupported_questions=[],
+            abstain=False,
+            confidence=0.8,
+            model_id="sarvam-105b-conversations",
+        )
+
+        service = LLMReasoningService(provider=mock_sarvam, validator=self.validator)
+
+        with patch("app.llm.service.GroqProvider") as mock_groq_cls:
+            req = LLMReasoningRequest(
+                farmer_question="How much fertilizer?",
+                language="English",
+                approved_evidence=[],
+            )
+            resp = service.process_query(req)
+
+            # Groq fallback must NOT be called when Sarvam produced a safety violation!
+            mock_groq_cls.assert_not_called()
+            self.assertEqual(resp.safety_status, "REJECTED")
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "KrishiVaani"
     VERSION: str = "0.1.0"
     API_PREFIX: str = ""
-    DESCRIPTION: str = "Backend API for KrishiVaani: A WhatsApp voice-to-voice agricultural assistant for Indian farmers."
+    DESCRIPTION: str = "Backend API for KrishiVaani: A voice-first Telegram agricultural assistant for Indian farmers."
     DEBUG: bool = False
 
     # Base directory and project paths
@@ -33,76 +33,6 @@ class Settings(BaseSettings):
 
     # Gnani AI Speech Credentials (Prisma STT & Timbre TTS)
     GNANI_API_KEY: Optional[str] = None
-
-    # Meta WhatsApp Cloud API (Phase 8.1 Integration)
-    WHATSAPP_ACCESS_TOKEN: Optional[str] = None
-    WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
-    WHATSAPP_BUSINESS_ACCOUNT_ID: Optional[str] = None
-    WHATSAPP_APP_SECRET: Optional[str] = None
-    WHATSAPP_WEBHOOK_VERIFY_TOKEN: Optional[str] = None
-    WHATSAPP_GRAPH_API_VERSION: str = "v27.0"
-    WHATSAPP_API_BASE_URL: str = "https://graph.facebook.com"
-    WHATSAPP_REQUEST_TIMEOUT_SECONDS: float = 20.0
-
-    # Backward-compatible Meta-prefixed aliases
-    META_WHATSAPP_ACCESS_TOKEN: Optional[str] = None
-    META_PHONE_NUMBER_ID: Optional[str] = None
-    META_APP_SECRET: Optional[str] = None
-    META_WEBHOOK_VERIFY_TOKEN: Optional[str] = None
-    META_GRAPH_API_VERSION: Optional[str] = None
-
-    @property
-    def whatsapp_access_token(self) -> Optional[str]:
-        return self.WHATSAPP_ACCESS_TOKEN or self.META_WHATSAPP_ACCESS_TOKEN
-
-    @property
-    def whatsapp_phone_number_id(self) -> Optional[str]:
-        return self.WHATSAPP_PHONE_NUMBER_ID or self.META_PHONE_NUMBER_ID
-
-    @property
-    def whatsapp_app_secret(self) -> Optional[str]:
-        return self.WHATSAPP_APP_SECRET or self.META_APP_SECRET
-
-    @property
-    def whatsapp_webhook_verify_token(self) -> Optional[str]:
-        return self.WHATSAPP_WEBHOOK_VERIFY_TOKEN or self.META_WEBHOOK_VERIFY_TOKEN
-
-    @property
-    def whatsapp_graph_api_version(self) -> str:
-        return self.WHATSAPP_GRAPH_API_VERSION or self.META_GRAPH_API_VERSION or "v27.0"
-
-    # Twilio WhatsApp Sandbox Integration (Phase 8.2)
-    TWILIO_ACCOUNT_SID: Optional[str] = None
-    TWILIO_AUTH_TOKEN: Optional[str] = None
-    TWILIO_WHATSAPP_FROM: Optional[str] = None
-    TWILIO_WEBHOOK_PUBLIC_BASE_URL: Optional[str] = None
-    TWILIO_ENABLED: bool = False
-    TWILIO_REQUEST_TIMEOUT_SECONDS: float = 20.0
-    TWILIO_MEDIA_DIR: Path = BASE_DIR / "data" / "twilio_media"
-
-    @property
-    def twilio_account_sid(self) -> Optional[str]:
-        return self.TWILIO_ACCOUNT_SID
-
-    @property
-    def twilio_auth_token(self) -> Optional[str]:
-        return self.TWILIO_AUTH_TOKEN
-
-    @property
-    def twilio_whatsapp_from(self) -> str:
-        return self.TWILIO_WHATSAPP_FROM or "whatsapp:+14155238886"
-
-    @property
-    def twilio_webhook_public_base_url(self) -> Optional[str]:
-        return self.TWILIO_WEBHOOK_PUBLIC_BASE_URL
-
-    @property
-    def twilio_enabled(self) -> bool:
-        return self.TWILIO_ENABLED
-
-    @property
-    def twilio_media_dir(self) -> Path:
-        return self.TWILIO_MEDIA_DIR
 
     @property
     def base_dir(self) -> Path:

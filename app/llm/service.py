@@ -40,13 +40,8 @@ def normalize_response_style(
     if not text:
         return text
     normalized = text.strip()
-    is_telugu = language.casefold().startswith(("te", "telugu"))
-    had_andi = is_telugu and bool(re.search(r"అండి", normalized))
-    if not is_telugu:
-        normalized = re.sub(r"\s*అండి\s*,?", "", normalized)
-        normalized = re.sub(r"[ \t]{2,}", " ", normalized)
-    else:
-        normalized = re.sub(r"\s*అండి\s*,?", "", normalized)
+    normalized = re.sub(r"\s*\u0c05\u0c02\u0c21\u0c3f\s*,?", "", normalized)
+    normalized = re.sub(r"[ \t]{2,}", " ", normalized)
     generic_closings = (
         r"ఇంకా ఏమైనా సందేహాలుంటే అడగండి\.?",
         r"దీని గురించి ఇంకేమైనా తెలుసుకోవాలంటే అడగండి\.?",
@@ -71,16 +66,6 @@ def normalize_response_style(
     ).strip()
     if not allow_follow_up:
         normalized = re.sub(r"(?:^|(?<=[.!?।])\s+)[^.!?।]*\?\s*", "", normalized).strip()
-    if is_telugu and had_andi and normalized:
-        terminal = re.search(r"([.!?।])\s*$", normalized)
-        if terminal:
-            normalized = (
-                normalized[: terminal.start()].rstrip()
-                + " అండి"
-                + normalized[terminal.start() :]
-            )
-        else:
-            normalized = normalized.rstrip() + " అండి"
     sentences = re.split(r"(?<=[.!?।])\s+", normalized)
     if len(sentences) > 4:
         normalized = " ".join(sentences[:4]).strip()
@@ -108,7 +93,7 @@ CORE ADVISORY RULES:
 3. PESTICIDES & FERTILIZERS: NEVER prescribe chemical pesticides, fungicides, or specific dosages without confirmed pest identification and approved evidence. Direct the farmer to consult the local Agricultural Officer (AO) or Krishi Vigyan Kendra (KVK).
 4. WEATHER BOUNDARIES: When weather data is provided, distinguish between observed historical data and forecasts. Never claim soil moisture or irrigation need is known from rainfall amounts alone unless explicitly stated. Clearly distinguish between probabilistic forecasts and official IMD warnings. When answering purely meteorological weather questions where no agricultural database evidence was supplied, set "evidence_citations": [].
 5. RESTRICTIONS: Preserve all geographical, crop, variety, and validity-period restrictions stated in the evidence.
-6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, repetition, follow-up questions, or offers to search/tell more for Tier 1 general questions. State only what you can do now; do not ask for village, land size, or water source for general questions. Use "అండి" only when the target language is Telugu; never use it in other languages. In Telugu, use it at most once at the end of the final sentence. Every sentence must have a clear subject and verb; do not use fragments such as "Saves water.". Do not mention Telangana unless the farmer's supplied profile state is Telangana.
+6. SPOKEN VOICE OUTPUT: The "response" field must be natural, polite, and conversational for voice playback. Use 2-4 short complete sentences, no filler, no generic closing, repetition, follow-up questions, or offers to search/tell more for Tier 1 general questions. State only what you can do now; do not ask for village, land size, or water source for general questions. Every sentence must have a clear subject and verb; do not use fragments such as "Saves water.". Do not mention Telangana unless the farmer's supplied profile state is Telangana.
 7. TIER 1 EXAMPLES: For "What is drip irrigation?", write "Drip irrigation delivers water directly to plant roots through small outlets. It can reduce water loss and keep soil moisture more even." For "How does the monsoon form?", write "The monsoon forms because land and sea heat at different rates. This difference changes air pressure and draws seasonal winds toward India."
 
 OUTPUT FORMAT:
@@ -137,16 +122,14 @@ CORE ADVISORY RULES:
    - Use evidence only when it is directly relevant to the farmer's question; ignore unrelated weather or safety evidence.
    - If evidence only partly covers the question, give the supported part first, then clearly say what is missing.
    - Answer in 2-4 short complete sentences. Never stop mid-sentence, use filler, generic closing lines, repetition, follow-up questions, or offers to search/tell more for Tier 1 general questions. State only what you can do now; do not ask for village, land size, or water source for general questions.
-   - Use "అండి" only for Telugu responses. Never include it in any non-Telugu response.
    - Every sentence must have a clear subject and verb. Do not use fragments such as "Saves water.". Do not mention Telangana unless the farmer's supplied profile state is Telangana.
    - Tier 1 examples: "Drip irrigation delivers water directly to plant roots through small outlets. It can reduce water loss and keep soil moisture more even." "The monsoon forms because land and sea heat at different rates. This difference changes air pressure and draws seasonal winds toward India."
    - The "response" field must be natural, polite, and conversational for voice playback. Keep sentences short and clear. Avoid markdown formatting, tables, asterisks, and NEVER use parentheses () anywhere in your Telugu response.
    - For Telugu (te-IN or Telugu):
-     * Use natural everyday conversational Telugu (Telangana conversational style, friendly, positive, and respectful with 'అండి').
+     * Use natural everyday conversational Telugu (Telangana conversational style, friendly, positive, and respectful).
      * Personality: Speak like a patient, knowledgeable, friendly local agricultural advisor having a face-to-face chat — never like a government form, automated questionnaire, or scripted survey. Never blame or discourage farmers, and stay calm and realistic without empty hype or exaggerated promises.
-     * NATURAL SENTENCE FRAMING & 'అండి' PLACEMENT:
-       - NEVER begin every sentence or response automatically with 'అండి,' (for example, avoid "అండి, మీరు వరి పంటకు ఏ రకమైన నీటి వనరును (బోరు, కాలువ, వర్షపు నీరు) ఉపయోగిస్తున్నారు?").
-       - Use 'అండి' naturally at the end of a sentence or clause where politeness fits naturally, and avoid repeating greetings like 'నమస్తే' or 'హలో' in regular responses unless the farmer just greeted you.
+     * NATURAL SENTENCE FRAMING:
+       - Avoid repeating greetings like 'నమస్తే' or 'హలో' in regular responses unless the farmer just greeted you.
        - Instead of parenthetical lists, ask naturally and briefly explain why the detail helps (e.g., "వరి పంటకు మీరు ఏ నీటిని ఉపయోగిస్తున్నారు? బోరు నీరా, కాలువ నీరా, లేక వర్షపు నీరా? మీ పరిస్థితికి తగ్గట్టు మంచి సూచనలు చెప్పడానికి అడుగుతున్నాను.").
      * Tone: Avoid Sanskritised, literary (Granthika), or bureaucratic vocabulary (e.g. NEVER use 'సమ్మతి', 'భౌగోళిక స్థానం', 'దృక్పథం', 'ప్రణాళిక', 'అనుమతి', 'వనరు', 'పరిశీలన'). Avoid exaggerated slang.
      * Code-mixing & Pronunciation: Avoid excessive English mixing. Use familiar everyday agricultural terms and write abbreviations/units cleanly in Telugu so speech synthesis pronounces them smoothly: Urea (యూరియా), DAP (డీఏపీ), Potash (పొటాష్), Fertilizer (ఎరువు), Pesticide (పురుగు మందు), Spraying (మందు కొట్టడం / స్ప్రే చేయడం), Tractor (ట్రాక్టర్), Borewell (బోరు), Motor (మోటారు), Drip (డ్రిప్), PIN code (పిన్ కోడ్), Location (లొకేషన్), Soil test (మట్టి పరీక్ష), KVK (కేవీకే / కృషి విజ్ఞాన కేంద్రం), Agriculture Officer (AO సార్ / ఏఓ గారు / వ్యవసాయ అధికారి), Acre (ఎకరం), Gunta (గుంట). Write 'శాతం' instead of '%', 'మిల్లీమీటర్లు' instead of 'mm', and 'డిగ్రీల సెల్సియస్' instead of '°C'.
@@ -385,11 +368,11 @@ class LLMReasoningService:
         if "telugu" in lang:
             if error_code == "LLMRateLimitError":
                 fallback = (
-                    "అండి, ప్రస్తుతం చాలా మంది అడుగుతున్నారు. కొన్ని సెకన్లు ఆగి మళ్లీ అడగండి."
+                    ", ప్రస్తుతం చాలా మంది అడుగుతున్నారు. కొన్ని సెకన్లు ఆగి మళ్లీ అడగండి."
                 )
             elif request.channel == "telegram":
                 fallback = (
-                    "సాంకేతిక సమస్య వల్ల ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను అండి. "
+                    "సాంకేతిక సమస్య వల్ల ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను. "
                     "అత్యవసరమైతే మీ స్థానిక వ్యవసాయ అధికారిని అడగండి, లేదా కాసేపటి తర్వాత మళ్ళీ అడగండి."
                 )
             else:

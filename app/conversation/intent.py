@@ -192,7 +192,7 @@ def is_pure_greeting(question: str) -> bool:
         return False
     cleaned = question.strip().lower()
     cleaned = cleaned.strip(" !?,.:;~`'\"|•\t\n\r\u0964\u0965")
-    if cleaned.endswith(" అండి"):
+    if cleaned.endswith(" "):
         cleaned = cleaned[:-5].rstrip()
     return cleaned in {
         "నమస్కారం", "నమస్తే", "హలో", "హాయ్", "నమస్కారము",

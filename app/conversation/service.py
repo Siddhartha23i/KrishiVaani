@@ -1083,7 +1083,7 @@ class ConversationOrchestrator:
             if channel == "telegram":
                 msg = (
                     "మీ ఊరి వాన, వాతావరణ వివరాలు చూడాలంటే, మీ ప్రాంతం పేరును బయటి వాతావరణ సేవతో పంచుకోవాల్సి ఉంటుంది. "
-                    "అందుకు మీకు ఓకే నా అండి? అవును అంటే సరే అని చెప్పండి."
+                    "అందుకు మీకు ఓకేనా? అవును అంటే సరే అని చెప్పండి."
                 )
             else:
                 msg = (
@@ -1121,11 +1121,11 @@ class ConversationOrchestrator:
         if lang_code.startswith("te"):
             if channel == "telegram":
                 msg = (
-                    "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. "
+                    "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు. "
                     "సరైన వాతావరణ వివరాలు చూడటానికి, మీకు ఏ ఊరు లేదా మండలం వాతావరణం కావాలో ఒకటి స్పష్టంగా చెప్తారా?"
                 )
             else:
-                msg = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
+                msg = "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
         elif lang_code.startswith("hi"):
             msg = "आपने अलग-अलग स्थानों के नाम बताए हैं। कृपया स्पष्ट करें कि आपको किस गांव या मंडल के मौसम की जानकारी चाहिए।"
         else:
@@ -1153,7 +1153,7 @@ class ConversationOrchestrator:
         """Create safe abstention when location is missing or ambiguous."""
         if lang_code.startswith("te"):
             if channel == "telegram":
-                msg = "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా అండి?"
+                msg = "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా?"
             else:
                 msg = "వాతావరణ సమాచారం తెలుసుకోవడానికి దయచేసి మీ జిల్లా లేదా మండల పేరును తెలపండి."
         elif lang_code.startswith("hi"):
@@ -1183,7 +1183,7 @@ class ConversationOrchestrator:
         """Create safe fallback when weather provider fails."""
         if lang_code.startswith("te"):
             if channel == "telegram":
-                msg = "సాంకేతిక సమస్య వల్ల ప్రస్తుతం వాతావరణ రిపోర్ట్ అందడం లేదు అండి. దయచేసి కాసేపటి తర్వాత అడగండి."
+                msg = "సాంకేతిక సమస్య వల్ల ప్రస్తుతం వాతావరణ రిపోర్ట్ అందడం లేదు. దయచేసి కాసేపటి తర్వాత అడగండి."
             else:
                 msg = "సాంకేతిక సమస్య కారణంగా ప్రస్తుతం వాతావరణ సమాచారం అందుబాటులో లేదు. దయచేసి కాసేపటి తర్వాత ప్రయత్నించండి."
         elif lang_code.startswith("hi"):
@@ -1213,7 +1213,7 @@ class ConversationOrchestrator:
         """Create safe guidance asking the farmer to confirm their Telangana district for IMD warnings."""
         if lang_code.startswith("te"):
             if channel == "telegram":
-                msg = "వాతావరణ హెచ్చరికలు తెలుసుకోవడానికి, మీది తెలంగాణలో ఏ జిల్లానో చెప్తారా అండి?"
+                msg = "వాతావరణ హెచ్చరికలు తెలుసుకోవడానికి, మీది తెలంగాణలో ఏ జిల్లానో చెప్తారా?"
             else:
                 msg = "అధికారిక IMD వాతావరణ హెచ్చరికలను తనిఖీ చేయడానికి దయచేసి తెలంగాణలోని మీ జిల్లాను తెలియజేయండి."
         elif lang_code.startswith("hi"):
