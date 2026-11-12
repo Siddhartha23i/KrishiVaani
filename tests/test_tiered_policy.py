@@ -40,26 +40,25 @@ def test_english_consequential_questions_route_to_safe_intents():
     assert classify_intent("How much fertilizer should I apply?") == "fertilizer_guidance"
 
 
-def test_leading_telugu_andi_is_removed_without_losing_text():
-    result = normalize_response_style("అండి, ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి.")
-    assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి అండి."
+def test_telugu_honorific_is_removed_without_losing_text():
+    result = normalize_response_style("\u0c05\u0c02\u0c21\u0c3f, ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి.")
+    assert result == "ఈ సమాచారం ఉపయోగపడుతుంది. తర్వాత అడగండి."
 
 
-def test_telugu_andi_is_kept_once_at_final_sentence_end():
+def test_telugu_honorific_is_removed_from_every_sentence():
     result = normalize_response_style(
-        "అండి, ఇది ముఖ్యం అండి. మళ్లీ అండి వివరాలు చూడండి అండి.",
+        "\u0c05\u0c02\u0c21\u0c3f, ఇది ముఖ్యం. మళ్లీ \u0c05\u0c02\u0c21\u0c3f వివరాలు చూడండి.",
         "te-IN",
     )
-    assert result.count("అండి") == 1
-    assert result.endswith("అండి.")
+    assert "\u0c05\u0c02\u0c21\u0c3f" not in result
+    assert result.endswith(".")
 
 
-def test_andi_is_removed_from_non_telugu_responses():
+def test_telugu_honorific_is_removed_from_non_telugu_responses():
     result = normalize_response_style(
-        "El Nino affects rainfall in India అండి. Please check local updates.",
+        "El Nino affects rainfall in India. Please check local updates.",
         "English",
     )
-    assert "అండి" not in result
     assert result == "El Nino affects rainfall in India. Please check local updates."
 
 

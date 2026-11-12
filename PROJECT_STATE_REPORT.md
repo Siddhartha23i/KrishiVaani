@@ -5,6 +5,9 @@
 **Scope:** source, tests, README, seed/data filenames, and the bounded timing probe.  
 **Safety:** I did not read `.env`, environment values, credentials, API keys, tokens, phone numbers, user IDs, raw database rows, or other personal data. Secret-like values are omitted. No application code, configuration, or tests were changed. The only new files are this report and [`scripts/diagnostics/time_voice_pipeline.py`](scripts/diagnostics/time_voice_pipeline.py).
 
+> [!NOTE] Historical Document Notice (As of 2026-11-10)
+> This document is a historical diagnostic report reflecting the repository state on November 10, 2026. It preserves the findings, measurements, and architectural observations made at that time (when Groq was tested alone and before the Stage 2 Telegram-only cleanup). It does not reflect the current production architecture established on November 12, 2026 (Telegram-only channel, Sarvam AI `sarvam-105b-conversations` as primary LLM, Groq `openai/gpt-oss-120b` as automatic fallback, and retired WhatsApp/Twilio integrations).
+
 ## Executive diagnosis
 
 The reported failures are consistent with the architecture. A normal Telegram voice request is a long serial chain: Telegram download -> FFmpeg decode -> Gnani STT -> SQLite/profile work -> optional WeatherAPI/IMD calls -> SQLite evidence retrieval -> one large Groq JSON completion -> deterministic safety validation -> Gnani TTS -> FFmpeg Opus encode -> Telegram upload. Weather can add two or three network calls before Groq. TTS is performed twice on some Telegram paths: once inside the voice service, then again after a handler-side fallback or special-flow decision.
@@ -110,7 +113,7 @@ Return valid JSON only matching this schema:
 }
 ```
 
-Telegram adds exact rules for conversational Telangana Telugu, polite `అండి`, one primary follow-up question, no parentheses/markdown, and phonetic forms for units/acronyms. The full source is [`app/llm/service.py:56-94`](app/llm/service.py:56); it is a long prompt, not a hidden second pass.
+Telegram adds exact rules for conversational Telangana Telugu, polite ``, one primary follow-up question, no parentheses/markdown, and phonetic forms for units/acronyms. The full source is [`app/llm/service.py:56-94`](app/llm/service.py:56); it is a long prompt, not a hidden second pass.
 
 The user message is formatted in [`app/llm/service.py:149-190`](app/llm/service.py:149): `TARGET LANGUAGE`, optional farmer context, weather facts marked `[OBSERVATION]` or `[FORECAST]`, evidence blocks with ID/source/district/validity/title/content, and `FARMER QUESTION`.
 
@@ -143,12 +146,12 @@ The exact monitored chemical set, dosage/yield/financial regexes, and English/Te
 
 ### Exact fallback texts
 
-* Telegram abstention: **“దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు అండి. మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి.”** ([`app/telegram/handlers.py:79-82`](app/telegram/handlers.py:79))
-* LLM Telegram technical failure: **“సాంకేతిక సమస్య వల్ల ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను అండి. అత్యవసరమైతే మీ స్థానిక వ్యవసాయ అధికారిని అడగండి, లేదా కాసేపటి తర్వాత మళ్ళీ అడగండి.”** ([`app/llm/service.py:211-242`](app/llm/service.py:211))
+* Telegram abstention: **“దీని గురించి పూర్తిగా నిర్ధారించిన వివరాలు నా దగ్గర ప్రస్తుతం లేవు . మీ పొలం పరిస్థితికి తగ్గట్టు సరైన సలహా కోసం మీ మండల వ్యవసాయ అధికారిని గానీ, దగ్గర్లో ఉన్న కృషి విజ్ఞాన కేంద్రాన్ని గానీ అడగండి.”** ([`app/telegram/handlers.py:79-82`](app/telegram/handlers.py:79))
+* LLM Telegram technical failure: **“సాంకేతిక సమస్య వల్ల ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను . అత్యవసరమైతే మీ స్థానిక వ్యవసాయ అధికారిని అడగండి, లేదా కాసేపటి తర్వాత మళ్ళీ అడగండి.”** ([`app/llm/service.py:211-242`](app/llm/service.py:211))
 * Validator Telegram rejection: the same generic evidence-referral text above ([`app/llm/safety.py:302-307`](app/llm/safety.py:302)).
-* Missing Telegram location: **“మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా అండి?”** ([`app/conversation/service.py:848-865`](app/conversation/service.py:848))
-* Weather consent request: **“మీ ఊరి వాన, వాతావరణ వివరాలు చూడాలంటే, మీ ప్రాంతం పేరును బయటి వాతావరణ సేవతో పంచుకోవాల్సి ఉంటుంది. అందుకు మీకు ఓకే నా అండి? అవును అంటే సరే అని చెప్పండి.”** ([`app/conversation/service.py:775-804`](app/conversation/service.py:775))
-* Weather provider failure: **“సాంకేతిక సమస్య వల్ల ప్రస్తుతం వాతావరణ రిపోర్ట్ అందడం లేదు అండి. దయచేసి కాసేపటి తర్వాత అడగండి.”** ([`app/conversation/service.py:867-899`](app/conversation/service.py:867))
+* Missing Telegram location: **“మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా ?”** ([`app/conversation/service.py:848-865`](app/conversation/service.py:848))
+* Weather consent request: **“మీ ఊరి వాన, వాతావరణ వివరాలు చూడాలంటే, మీ ప్రాంతం పేరును బయటి వాతావరణ సేవతో పంచుకోవాల్సి ఉంటుంది. అందుకు మీకు ఓకే నా ? అవును అంటే సరే అని చెప్పండి.”** ([`app/conversation/service.py:775-804`](app/conversation/service.py:775))
+* Weather provider failure: **“సాంకేతిక సమస్య వల్ల ప్రస్తుతం వాతావరణ రిపోర్ట్ అందడం లేదు . దయచేసి కాసేపటి తర్వాత అడగండి.”** ([`app/conversation/service.py:867-899`](app/conversation/service.py:867))
 * Empty transcript: **“మీ సందేశం స్పష్టంగా వినిపించలేదు. దయచేసి మీ వ్యవసాయ సందేహాన్ని లేదా అడిగే విషయాన్ని మళ్ళీ స్పష్టంగా మాట్లాడండి.”** ([`app/voice/service.py:49-53`](app/voice/service.py:49))
 
 ### Trigger-rate honesty

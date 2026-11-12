@@ -20,6 +20,3 @@ imageio-ffmpeg==0.6.0
 # Document & Evidence Parsing
 PyMuPDF==1.27.2.2
 beautifulsoup4==4.14.3
-
-# WhatsApp & Twilio Integrations
-twilio==9.13.0

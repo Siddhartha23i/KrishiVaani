@@ -18,8 +18,8 @@ def test_users_are_isolated_and_raw_ids_are_not_stored():
     with TemporaryDirectory() as tmp:
         with patch.object(settings, "USER_ID_HASH_SALT", "test-salt"):
             store = _store(tmp)
-            store.save_turn("user-a", "Telugu", "నా జిల్లా వరంగల్", "సరే అండి.", "general", "PASSED")
-            store.save_turn("user-b", "Telugu", "నా జిల్లా నిజామాబాద్", "సరే అండి.", "general", "PASSED")
+            store.save_turn("user-a", "Telugu", "నా జిల్లా వరంగల్", "సరే .", "general", "PASSED")
+            store.save_turn("user-b", "Telugu", "నా జిల్లా నిజామాబాద్", "సరే .", "general", "PASSED")
             a = store.load_context("user-a")
             b = store.load_context("user-b")
             assert a.district == "Warangal"
@@ -45,7 +45,7 @@ def test_forget_deletes_turns_and_profile():
     with TemporaryDirectory() as tmp:
         with patch.object(settings, "USER_ID_HASH_SALT", "test-salt"):
             store = _store(tmp)
-            store.save_turn("user-a", "Telugu", "నా జిల్లా వరంగల్", "సరే అండి.", "general", "PASSED")
+            store.save_turn("user-a", "Telugu", "నా జిల్లా వరంగల్", "సరే .", "general", "PASSED")
             store.forget("user-a")
             context = store.load_context("user-a")
             assert context.district is None

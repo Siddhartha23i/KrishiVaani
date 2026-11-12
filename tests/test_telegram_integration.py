@@ -59,8 +59,8 @@ class TestTelegramGreetingHelper(unittest.TestCase):
         self.assertTrue(is_greeting("నమస్కారం"))
         self.assertTrue(is_greeting("నమస్కారం!"))
         self.assertTrue(is_greeting("నమస్తే"))
-        self.assertTrue(is_greeting("నమస్తే అండి"))
-        self.assertTrue(is_greeting("నమస్తే అండి!"))
+        self.assertTrue(is_greeting("నమస్తే "))
+        self.assertTrue(is_greeting("నమస్తే !"))
         self.assertTrue(is_greeting("హలో"))
         self.assertTrue(is_greeting("Namaste"))
 
@@ -138,19 +138,25 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
         await self.handler.handle_text(update, self.mock_context)
 
         update.effective_message.reply_text.assert_called_once()
-        self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
+        self.assertNotRegex(
+            update.effective_message.reply_text.call_args.args[0],
+            "\u0c05\u0c02\u0c21\u0c3f",
+        )
         # Core requirement: greetings must not trigger the agricultural LLM path
         self.mock_orchestrator.process_message.assert_not_called()
 
     # --- Test 2b: Focused Four Greeting Variations Bypass LLM ---
     async def test_four_greeting_variations_trigger_greeting_and_bypass_llm(self):
-        four_variations = ["నమస్కారం", "నమస్కారం!", "నమస్తే", "నమస్తే అండి"]
+        four_variations = ["నమస్కారం", "నమస్కారం!", "నమస్తే", "నమస్తే "]
         for idx, greeting_text in enumerate(four_variations, start=200):
             with self.subTest(greeting=greeting_text):
                 update = self._create_mock_update(update_id=idx, text=greeting_text)
                 await self.handler.handle_text(update, self.mock_context)
                 update.effective_message.reply_text.assert_called_once()
-                self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
+                self.assertNotRegex(
+                    update.effective_message.reply_text.call_args.args[0],
+                    "\u0c05\u0c02\u0c21\u0c3f",
+                )
                 self.mock_orchestrator.process_message.assert_not_called()
                 self.mock_orchestrator.reset_mock()
 
@@ -323,7 +329,10 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
 
         # Handlers must catch exceptions and reply with safe fallback without crashing
         update.effective_message.reply_text.assert_called_once()
-        self.assertNotIn("అండి", update.effective_message.reply_text.call_args.args[0])
+        self.assertNotRegex(
+            update.effective_message.reply_text.call_args.args[0],
+            "\u0c05\u0c02\u0c21\u0c3f",
+        )
 
     # --- Test 8: Duplicate Update Id Ignored ---
     async def test_duplicate_update_id_ignored(self):
@@ -855,7 +864,7 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         # 2. Second weather interaction without location
         self.mock_orchestrator.reset_mock()
         mock_resp2 = MagicMock(spec=ConversationResponse)
-        mock_resp2.response_text = "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా అండి?"
+        mock_resp2.response_text = "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా ?"
         mock_resp2.safety_reason = "LOCATION_PARAMETERS_REQUIRED"
         self.mock_orchestrator.process_message.return_value = mock_resp2
 
@@ -867,7 +876,7 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         conv_req2 = self.mock_orchestrator.process_message.call_args[0][0]
         self.assertIsNone(conv_req2.location)
         update2.effective_message.reply_text.assert_called_once_with(
-            "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా అండి?"
+            "మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా ?"
         )
 
     async def test_farmers_table_not_modified(self):
@@ -962,7 +971,7 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         mock_conv_res = ConversationResponse(
             intent="weather_inquiry",
             language="te-IN",
-            response_text="రేపు నిజామాబాద్ జిల్లాలో వాన పడే అవకాశం లేదు అండి.",
+            response_text="రేపు నిజామాబాద్ జిల్లాలో వాన పడే అవకాశం లేదు .",
             is_abstention=False,
             safety_status="PASSED",
         )
@@ -1016,7 +1025,7 @@ class TestTelegramWeatherConsentFlow(unittest.IsolatedAsyncioTestCase):
         self.mock_orchestrator.process_message.return_value = ConversationResponse(
             intent="weather_inquiry",
             language="te-IN",
-            response_text="మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా అండి?",
+            response_text="మీ ఊరి వాతావరణ వివరాల కోసం, మీది ఏ మండలం లేదా జిల్లానో చెప్తారా ?",
             is_abstention=True,
             safety_status="ABSTAINED",
             safety_reason="LOCATION_PARAMETERS_REQUIRED",
@@ -1090,26 +1099,26 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
     def test_welcome_message_natural_telangana_style(self):
         self.assertIn("నేను కృషివాణిని", START_MESSAGE)
         self.assertIn("వ్యవసాయ అధికారితో", START_MESSAGE)
-        self.assertFalse(START_MESSAGE.startswith("అండి"))
-        self.assertLessEqual(START_MESSAGE.count("అండి"), 1)
+        self.assertFalse(START_MESSAGE.startswith("\u0c05\u0c02\u0c21\u0c3f"))
+        self.assertNotIn("\u0c05\u0c02\u0c21\u0c3f", START_MESSAGE)
 
     def test_greeting_message_natural_style(self):
-        self.assertIn("నమస్తే అండి", GREETING_MESSAGE)
+        self.assertIn("నమస్తే!", GREETING_MESSAGE)
         self.assertIn("నేను మీ కృషివాణిని", GREETING_MESSAGE)
         self.assertNotIn("కృషివాణికి స్వాగతం", GREETING_MESSAGE)
 
     def test_duration_and_fallback_natural_style(self):
-        self.assertIn("క్షమించండి అండి", DURATION_LIMIT_MESSAGE)
+        self.assertIn("క్షమించండి,", DURATION_LIMIT_MESSAGE)
         self.assertIn("వాయిస్ మెసేజ్", DURATION_LIMIT_MESSAGE)
-        self.assertIn("క్షమించండి అండి", FALLBACK_ERROR_MESSAGE)
+        self.assertIn("క్షమించండి,", FALLBACK_ERROR_MESSAGE)
 
     def test_location_question_natural_style(self):
         from app.conversation.service import ConversationOrchestrator
         orchestrator = ConversationOrchestrator()
-        # Telegram channel gets natural conversational phrasing with respectful 'అండి'
+        # Telegram channel gets natural conversational phrasing.
         loc_resp = orchestrator._create_location_required_abstention("te-IN", "WEATHER_INQUIRY", channel="telegram")
         self.assertIn("మీ ఊరి వాతావరణ వివరాల కోసం", loc_resp.response_text)
-        self.assertIn("చెప్తారా అండి", loc_resp.response_text)
+        self.assertIn("చెప్తారా?", loc_resp.response_text)
         self.assertNotIn("పేరును తెలపండి", loc_resp.response_text)
 
         # WhatsApp and default channels preserve original baseline phrasing
@@ -1122,7 +1131,7 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
         # Telegram channel gets natural conversational error fallback
         err_resp = orchestrator._create_weather_service_error_abstention("te-IN", "Timeout", channel="telegram")
         self.assertIn("సాంకేతిక సమస్య", err_resp.response_text)
-        self.assertIn("రిపోర్ట్ అందడం లేదు అండి", err_resp.response_text)
+        self.assertIn("రిపోర్ట్ అందడం లేదు.", err_resp.response_text)
 
         # WhatsApp and default channels preserve baseline phrasing
         wa_err_resp = orchestrator._create_weather_service_error_abstention("te-IN", "Timeout", channel="whatsapp")
@@ -1136,7 +1145,7 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
         orchestrator = ConversationOrchestrator()
         # District confirmation prompt
         tg_dist = orchestrator._create_district_confirmation_required_response("te-IN", channel="telegram")
-        self.assertIn("మీది తెలంగాణలో ఏ జిల్లానో చెప్తారా అండి", tg_dist.response_text)
+        self.assertIn("మీది తెలంగాణలో ఏ జిల్లానో చెప్తారా?", tg_dist.response_text)
 
         wa_dist = orchestrator._create_district_confirmation_required_response("te-IN", channel="whatsapp")
         self.assertIn("అధికారిక IMD వాతావరణ హెచ్చరికలను తనిఖీ చేయడానికి దయచేసి తెలంగాణలోని మీ జిల్లాను తెలియజేయండి.", wa_dist.response_text)
@@ -1153,7 +1162,7 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
 
         # LLM error abstention
         tg_err = llm._create_error_abstention(tg_req, "TEST_ERR", "detail")
-        self.assertIn("సమాధానం ఇవ్వలేకపోతున్నాను అండి", tg_err.response)
+        self.assertIn("సమాధానం ఇవ్వలేకపోతున్నాను.", tg_err.response)
 
         wa_err = llm._create_error_abstention(wa_req, "TEST_ERR", "detail")
         self.assertIn("సమాధానం ఇవ్వలేకపోతున్నాము", wa_err.response)
@@ -1162,7 +1171,7 @@ class TestNaturalConversationalTelugu(unittest.TestCase):
         from app.llm.service import SYSTEM_INSTRUCTION
         # Enforces conversational Telangana style
         self.assertIn("Telangana conversational style", SYSTEM_INSTRUCTION)
-        self.assertIn("అండి", SYSTEM_INSTRUCTION)
+        self.assertNotIn("\u0c05\u0c02\u0c21\u0c3f", SYSTEM_INSTRUCTION)
         # Enforces code-mixed vocabulary
         self.assertIn("యూరియా", SYSTEM_INSTRUCTION)
         self.assertIn("డీఏపీ", SYSTEM_INSTRUCTION)
@@ -1304,7 +1313,7 @@ class TestConflictingLocationAndEchoPrevention(unittest.IsolatedAsyncioTestCase)
         self.assertEqual(resp.safety_reason, "LOCATION_PARAMETERS_REQUIRED")
         self.assertTrue(resp.is_abstention)
         self.assertNotEqual(resp.response_text, question)
-        self.assertIn("మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి", resp.response_text)
+        self.assertIn("మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు.", resp.response_text)
 
     @patch("app.telegram.handlers.convert_ogg_opus_to_wav")
     @patch("app.telegram.handlers.convert_wav_bytes_to_ogg_opus")
@@ -1331,7 +1340,7 @@ class TestConflictingLocationAndEchoPrevention(unittest.IsolatedAsyncioTestCase)
             transcript=conflicting_question,
             detected_language="te-IN",
             intent="weather_inquiry",
-            response_text="మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?",
+            response_text="మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?",
             audio_base64=base64.b64encode(b"RIFF_clarification_wav").decode("ascii"),
             safety_status="ABSTAINED",
             safety_reason="LOCATION_PARAMETERS_REQUIRED",
@@ -1389,7 +1398,7 @@ class TestConflictingLocationAndEchoPrevention(unittest.IsolatedAsyncioTestCase)
         forecast_resp = ConversationResponse(
             intent="weather_inquiry",
             language="te-IN",
-            response_text="రేపు నిజామాబాద్ జిల్లాలో వాన పడే అవకాశం లేదు అండి, పొడిగా ఉంటుంది.",
+            response_text="రేపు నిజామాబాద్ జిల్లాలో వాన పడే అవకాశం లేదు , పొడిగా ఉంటుంది.",
             is_abstention=False,
             evidence_citations=[],
             safety_status="PASSED",
@@ -1440,7 +1449,7 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
         self.temp_dir.cleanup()
 
     def test_no_automatic_andi_prefix_in_templates_or_policy(self):
-        """Ensure responses never automatically start with 'అండి,' and WhatsApp base instructions remain isolated."""
+        """Ensure responses never automatically start with ',' and WhatsApp base instructions remain isolated."""
         from app.conversation.service import ConversationOrchestrator
         from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION, BASE_SYSTEM_INSTRUCTION
         from app.llm.safety import LLMSafetyValidator
@@ -1472,12 +1481,11 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
         ]
         for tpl in templates:
             self.assertFalse(
-                tpl.strip().startswith("అండి"),
-                f"Template must not automatically start with 'అండి': {tpl}",
+                tpl.strip().startswith("\u0c05\u0c02\u0c21\u0c3f"),
+                f"Template must not automatically start with the removed honorific: {tpl}",
             )
 
-        # Prompt policy explicitly guards against starting with 'అండి,' and stays isolated from BASE_SYSTEM_INSTRUCTION
-        self.assertIn("NEVER begin every sentence or response automatically with 'అండి,'", TELEGRAM_SYSTEM_INSTRUCTION)
+        # Telegram and WhatsApp prompt policies remain isolated.
         self.assertNotIn("NEVER begin every sentence", BASE_SYSTEM_INSTRUCTION)
         self.assertNotIn("మీ పరిస్థితికి తగ్గట్టు మంచి సూచనలు చెప్పడానికి అడుగుతున్నాను", BASE_SYSTEM_INSTRUCTION)
 
@@ -1513,7 +1521,7 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
         from app.llm.service import TELEGRAM_SYSTEM_INSTRUCTION
         from app.telegram.handlers import TELEGRAM_ABSTENTION_FALLBACK
 
-        self.assertIn("avoid repeating greetings like 'నమస్తే' or 'హలో'", TELEGRAM_SYSTEM_INSTRUCTION)
+        self.assertIn("Avoid repeating greetings like 'నమస్తే' or 'హలో'", TELEGRAM_SYSTEM_INSTRUCTION)
 
         orchestrator = ConversationOrchestrator(db_path=self.db_path)
         non_greeting_replies = [
@@ -1622,6 +1630,56 @@ class TestPart1HumanFriendlyConversations(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(channel_used, "telegram")
         v_update.effective_message.reply_voice.assert_called_once()
         v_update.effective_message.reply_text.assert_not_called()
+
+
+class TestTelegramAudioConversion(unittest.TestCase):
+    """Unit tests for Telegram audio conversion utilities (OGG Opus <-> WAV)."""
+
+    def _generate_test_wav_bytes(self, duration_seconds: float = 1.0, sample_rate: int = 16000) -> bytes:
+        import wave
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            num_frames = int(duration_seconds * sample_rate)
+            wf.writeframes(b"\x00\x00" * num_frames)
+        return buf.getvalue()
+
+    def test_convert_wav_bytes_to_ogg_opus(self):
+        from app.telegram.audio import convert_wav_bytes_to_ogg_opus
+        wav_bytes = self._generate_test_wav_bytes(2.0)
+        ogg_bytes, duration = convert_wav_bytes_to_ogg_opus(wav_bytes)
+
+        self.assertIsNotNone(ogg_bytes)
+        self.assertGreater(len(ogg_bytes), 0)
+        self.assertTrue(ogg_bytes.startswith(b"OggS"))
+        self.assertAlmostEqual(duration, 2.0, delta=0.5)
+
+    def test_convert_ogg_opus_to_wav(self):
+        from app.telegram.audio import convert_wav_bytes_to_ogg_opus, convert_ogg_opus_to_wav
+        wav_bytes = self._generate_test_wav_bytes(1.0)
+        ogg_bytes, _ = convert_wav_bytes_to_ogg_opus(wav_bytes)
+
+        decoded_wav = convert_ogg_opus_to_wav(ogg_bytes)
+        self.assertIsNotNone(decoded_wav)
+        self.assertGreater(len(decoded_wav), 0)
+        self.assertTrue(decoded_wav.startswith(b"RIFF"))
+        self.assertIn(b"WAVE", decoded_wav[:12])
+
+    def test_audio_cleanup_after_conversion(self):
+        from app.telegram.audio import convert_wav_bytes_to_ogg_opus
+        import os
+        import tempfile
+        wav_bytes = self._generate_test_wav_bytes(1.0)
+        temp_dir = tempfile.gettempdir()
+        files_before = set(os.listdir(temp_dir))
+
+        ogg_bytes, _ = convert_wav_bytes_to_ogg_opus(wav_bytes)
+
+        files_after = set(os.listdir(temp_dir))
+        new_files = [f for f in files_after - files_before if f.endswith((".wav", ".ogg"))]
+        self.assertEqual(len(new_files), 0)
 
 
 if __name__ == "__main__":

@@ -41,8 +41,7 @@ from app.conversation.schemas import ConversationRequest, LocationInput, GuestWe
 from app.voice.service import VoicePipelineService
 from app.voice.schemas import VoiceProcessingRequest
 from app.voice.exceptions import AudioDurationExceededError, AudioValidationError
-from app.whatsapp.audio_converter import convert_wav_bytes_to_ogg_opus
-from app.telegram.audio import convert_ogg_opus_to_wav
+from app.telegram.audio import convert_ogg_opus_to_wav, convert_wav_bytes_to_ogg_opus
 from app.telegram.session import (
     TelegramSessionRepository,
     TelegramUserSession,

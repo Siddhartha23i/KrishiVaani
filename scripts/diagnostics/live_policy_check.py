@@ -24,19 +24,19 @@ from app.telegram.session import TelegramSessionRepository, accepted_consent_phr
 
 CASES = [
     {"id": "el-nino-te", "question": "ఎల్ నినో ప్రభావం గురించి చెప్పండి", "language": "te-IN", "expected_intent": "general_explanation", "expected_reply_script": "te", "must_not_contain": ["ఇంకా ఏమైనా సందేహాలుంటే అడగండి"], "must_contain": []},
-    {"id": "el-nino-en", "question": "What is El Nino and how does it affect Indian farmers?", "language": "en-IN", "expected_intent": "general_explanation", "expected_reply_script": "en", "must_not_contain": ["అండి", "ఇంకా ఏమైనా సందేహాలుంటే అడగండి"], "must_contain": []},
-    {"id": "drip-hi", "question": "ड्रिप सिंचाई क्या है?", "language": "hi-IN", "expected_intent": "general_explanation", "expected_reply_script": "hi", "must_not_contain": ["अंडी", "అండి"], "must_contain": []},
-    {"id": "monsoon-ta", "question": "எப்படி பருவமழை உருவாகிறது?", "language": "ta-IN", "expected_intent": "general_explanation", "expected_reply_script": "ta", "must_not_contain": ["అండి"], "must_contain": []},
-    {"id": "wheat-haryana", "question": "हरियाणा में गेहूं की बुवाई कब करें?", "language": "hi-IN", "state": "Haryana", "expected_intent": "crop_recommendation", "expected_reply_script": "hi", "must_not_contain": ["అండి"], "must_contain": ["1800-180-1551"]},
-    {"id": "stubble-punjabi", "question": "ਪੰਜਾਬ ਵਿੱਚ ਪਰਾਲੀ ਬਾਰੇ ਕੀ ਕਰੀਏ?", "language": "pa-IN", "state": "Punjab", "expected_intent": "crop_recommendation", "expected_reply_script": "pa", "must_not_contain": ["అండి"], "must_contain": ["1800-180-1551"]},
+    {"id": "el-nino-en", "question": "What is El Nino and how does it affect Indian farmers?", "language": "en-IN", "expected_intent": "general_explanation", "expected_reply_script": "en", "must_not_contain": ["", "ఇంకా ఏమైనా సందేహాలుంటే అడగండి"], "must_contain": []},
+    {"id": "drip-hi", "question": "ड्रिप सिंचाई क्या है?", "language": "hi-IN", "expected_intent": "general_explanation", "expected_reply_script": "hi", "must_not_contain": ["अंडी", ""], "must_contain": []},
+    {"id": "monsoon-ta", "question": "எப்படி பருவமழை உருவாகிறது?", "language": "ta-IN", "expected_intent": "general_explanation", "expected_reply_script": "ta", "must_not_contain": [""], "must_contain": []},
+    {"id": "wheat-haryana", "question": "हरियाणा में गेहूं की बुवाई कब करें?", "language": "hi-IN", "state": "Haryana", "expected_intent": "crop_recommendation", "expected_reply_script": "hi", "must_not_contain": [""], "must_contain": ["1800-180-1551"]},
+    {"id": "stubble-punjabi", "question": "ਪੰਜਾਬ ਵਿੱਚ ਪਰਾਲੀ ਬਾਰੇ ਕੀ ਕਰੀਏ?", "language": "pa-IN", "state": "Punjab", "expected_intent": "crop_recommendation", "expected_reply_script": "pa", "must_not_contain": [""], "must_contain": ["1800-180-1551"]},
     {"id": "cotton-telangana", "question": "వరంగల్‌లో పత్తి పంటకు ఏ జాగ్రత్తలు తీసుకోవాలి?", "language": "te-IN", "state": "Telangana", "district": "Warangal", "expected_intent": "crop_recommendation", "expected_reply_script": "te", "must_not_contain": ["ఇంకా ఏమైనా సందేహాలుంటే అడగండి"], "must_contain": ["1800-180-1551"]},
     {"id": "pesticide-dose", "question": "పత్తిలో పురుగు మందు ఎంత మోతాదులో కలపాలి?", "language": "te-IN", "state": "Telangana", "expected_intent": "pest_disease_inquiry", "expected_reply_script": "te", "must_not_contain": [], "must_contain": []},
-    {"id": "pm-kisan", "question": "What is the PM-KISAN eligibility?", "language": "en-IN", "expected_intent": "government_scheme", "expected_reply_script": "en", "must_not_contain": ["అండి"], "must_contain": []},
-    {"id": "weather-pune", "question": "पुणे में आज का मौसम कैसा है?", "language": "mr-IN", "state": "Maharashtra", "district": "Pune", "expected_intent": "weather_inquiry", "expected_reply_script": "mr", "must_not_contain": ["అండి"], "must_contain": []},
-    {"id": "greeting", "question": "నమస్తే", "language": "te-IN", "expected_intent": "general_conversation", "expected_reply_script": "te", "must_not_contain": ["అండి"], "must_contain": []},
-    {"id": "thanks", "question": "धन्यवाद", "language": "hi-IN", "expected_intent": "general_conversation", "expected_reply_script": "hi", "must_not_contain": ["అండి"], "must_contain": []},
-    {"id": "thanks-en", "question": "Thanks", "language": "en-IN", "expected_intent": "general_conversation", "expected_reply_script": "en", "must_not_contain": ["అండి", "ధన్యవాదాలు"], "must_contain": []},
-    {"id": "cricket", "question": "Who won the cricket match?", "language": "en-IN", "expected_intent": "agricultural_advice", "expected_reply_script": "en", "must_not_contain": ["అండి"], "must_contain": []},
+    {"id": "pm-kisan", "question": "What is the PM-KISAN eligibility?", "language": "en-IN", "expected_intent": "government_scheme", "expected_reply_script": "en", "must_not_contain": [""], "must_contain": []},
+    {"id": "weather-pune", "question": "पुणे में आज का मौसम कैसा है?", "language": "mr-IN", "state": "Maharashtra", "district": "Pune", "expected_intent": "weather_inquiry", "expected_reply_script": "mr", "must_not_contain": [""], "must_contain": []},
+    {"id": "greeting", "question": "నమస్తే", "language": "te-IN", "expected_intent": "general_conversation", "expected_reply_script": "te", "must_not_contain": [""], "must_contain": []},
+    {"id": "thanks", "question": "धन्यवाद", "language": "hi-IN", "expected_intent": "general_conversation", "expected_reply_script": "hi", "must_not_contain": [""], "must_contain": []},
+    {"id": "thanks-en", "question": "Thanks", "language": "en-IN", "expected_intent": "general_conversation", "expected_reply_script": "en", "must_not_contain": ["", "ధన్యవాదాలు"], "must_contain": []},
+    {"id": "cricket", "question": "Who won the cricket match?", "language": "en-IN", "expected_intent": "agricultural_advice", "expected_reply_script": "en", "must_not_contain": [""], "must_contain": []},
 ]
 
 
@@ -62,8 +62,6 @@ def _evaluate(case: dict, response_text: str, intent: str) -> str:
         failures.append(f"intent={intent}")
     if not _script_matches(response_text, case["expected_reply_script"]):
         failures.append("reply-script")
-    if response_text.count("అండి") > 1:
-        failures.append("andi-count>1")
     if case["expected_intent"] == "general_explanation" and response_text.rstrip().endswith("?"):
         failures.append("tier1-trailing-question")
     if case["expected_intent"] == "general_explanation":

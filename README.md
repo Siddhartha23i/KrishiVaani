@@ -345,7 +345,7 @@ Weather forecasts are inherently probabilistic. KrishiVaani includes localized d
    - Open Telegram and search for your bot's username.
    - Send `/start` to receive the localized Telugu onboarding message.
    - Send a voice note asking a question in Telugu:
-     *"నమస్తే అండి, రేపు నిజామాబాద్ లో వర్షం పడుతుందా?"*
+     *"నమస్తే , రేపు నిజామాబాద్ లో వర్షం పడుతుందా?"*
    - Listen to the bot's spoken Telugu reply.
 
 ---
@@ -512,8 +512,6 @@ KrishiVaani is fully configured for continuous deployment on **Railway** via Doc
 | **Telegram Channel** | **Active / Production Ready** | Fully functional voice-in, voice-out long-polling interface on Telegram. |
 | **Audio Duration Limit** | **Enforced (<= 30s)** | Voice notes exceeding 30 seconds are rejected with polite Telugu guidance to prevent processing timeouts. |
 | **Geographic Coverage** | **Telangana Focus** | Knowledge items and district mappings are tailored to the 33 districts of Telangana. |
-| **WhatsApp Cloud API** | **Standby / Code Complete** | Meta Cloud API handlers are implemented (`app/whatsapp/`) but deferred in deployment to avoid webhook complexity. |
-| **Twilio WhatsApp** | **Standby / Code Complete** | Twilio TwiML webhook handlers are implemented (`app/twilio/`) for sandbox testing; not actively exposed in production. |
 | **Historical Weather** | **Not Supported** | Focuses on current weather and 1-3 day short-range forecasts; does not compute historical crop models. |
 | **Chemical Prescriptions** | **Strictly Prohibited** | Never dispenses unverified chemical pesticide or fungicide spray dosages; always refers to local AOs/KVKs. |
 
@@ -523,7 +521,6 @@ KrishiVaani is fully configured for continuous deployment on **Railway** via Doc
 
 The following enhancements are planned for subsequent phases:
 
-- [ ] **Meta WhatsApp Cloud API Production Deployment:** Provision verified Meta Business phone numbers to enable direct WhatsApp voice interactions alongside Telegram.
 - [ ] **Automated Bulletin Crawler:** Scheduled background crawlers to ingest and draft weekly PJTSAU district agromet bulletins as soon as they are published.
 - [ ] **Hybrid Dense-Sparse RAG:** Integrate FAISS vector indexing alongside SQLite relational filtering for semantic search across comprehensive PJTSAU agricultural crop production handbooks.
 - [ ] **Interactive Voice Response (IVR) Support:** Extend Gnani speech pipelines to standard telephony (PSTN) for farmers without smartphones.

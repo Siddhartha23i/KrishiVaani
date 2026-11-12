@@ -64,8 +64,7 @@ site/
 │       ├── verified.svg  — Trust card icon
 │       ├── weather.svg   — Trust card icon
 │       ├── global.svg    — Trust card icon
-│       ├── telegram.svg  — Telegram brand icon
-│       └── whatsapp.svg  — WhatsApp brand icon
+│       └── telegram.svg  — Telegram brand icon
 ├── DESIGN_TOKENS.md      — color palette, typography, animation spec
 └── README.md             — this file
 ```
@@ -74,7 +73,7 @@ site/
 
 - No tracking scripts.
 - No emojis (SVG icons only).
-- WhatsApp button is intentionally disabled (coming soon).
+- Telegram is the primary active user channel.
 - Total page weight target: under 1 MB.
 - Respects `prefers-reduced-motion`.
 - Does **not** modify `app/`, `tests/`, `Dockerfile`, or other backend files.

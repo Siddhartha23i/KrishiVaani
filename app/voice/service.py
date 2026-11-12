@@ -316,7 +316,7 @@ class VoicePipelineService:
         if r_clean and r_clean == q_clean:
             logger.warning("Voice pipeline detected response echoing transcript. Overriding with safe clarification.")
             clarification_msg = (
-                "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు అండి. మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
+                "మీరు వేర్వేరు ప్రాంతాల పేర్లు చెప్పారు . మీకు ఏ ఊరు లేదా మండలం వాతావరణ వివరాలు కావాలో స్పష్టంగా చెప్తారా?"
                 if conv_resp.language.startswith("te") else
                 "Please clarify which village or mandal in Telangana you need weather details for."
             )

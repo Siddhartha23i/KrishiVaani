@@ -1056,7 +1056,7 @@ class TestLightningSafetyRouting(unittest.TestCase):
             supported_facts=["Farmers should stay away from trees during lightning."],
             unsupported_questions=[],
             abstain=False,
-            response="పిడుగులు పడినప్పుడు చెట్ల కింద నిలబడవద్దు అండి.",
+            response="పిడుగులు పడినప్పుడు చెట్ల కింద నిలబడవద్దు .",
             evidence_citations=[],
             model_id="openai/gpt-oss-120b",
             safety_status="UNVERIFIED",
