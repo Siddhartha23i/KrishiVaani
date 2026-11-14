@@ -7,7 +7,7 @@ Integrates:
 - Gnani Timbre v2.5 TTS (Kaveri voice, 48kHz WAV)
 
 Usage:
-    python .\\voice_pipeline.py ".\\test-audio\\telugu-test.m4a"
+    python .\\scripts\\voice_pipeline_cli.py ".\\test-audio\\telugu-test.m4a"
 """
 
 import sys
@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Ensure app package is importable
-current_dir = Path(__file__).resolve().parent
+current_dir = Path(__file__).resolve().parent.parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
@@ -32,7 +32,7 @@ def main():
         raise SystemExit("Missing GNANI_API_KEY in .env")
 
     if len(sys.argv) < 2:
-        raise SystemExit('Usage: python .\\voice_pipeline.py ".\\test-audio\\telugu-test.m4a"')
+        raise SystemExit('Usage: python .\\scripts\\voice_pipeline_cli.py ".\\test-audio\\telugu-test.m4a"')
 
     input_audio = Path(sys.argv[1])
     if not input_audio.is_file():

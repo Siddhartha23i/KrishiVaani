@@ -246,19 +246,17 @@ def main() -> None:
             f"{row['safety']} | {row['latency']:.2f}s | {row['answer'] or '[empty]'}"
         )
 
-    report = ROOT / "PROJECT_AUDIT_REPORT.md"
-    existing = report.read_text(encoding="utf-8")
-    marker = "\n\n## Updated live policy check"
-    if marker in existing:
-        existing = existing.split(marker, 1)[0].rstrip()
+    report_dir = ROOT / "docs" / "reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report = report_dir / "live_policy_check_latest.md"
     with report.open("w", encoding="utf-8") as handle:
-        handle.write(existing + "\n\n## Updated live policy check\n\n")
-        handle.write("### Approved Telangana coverage (counts only)\n\n")
+        handle.write("# KrishiVaani — Live Policy & Coverage Check\n\n")
+        handle.write("## Approved Telangana coverage (counts only)\n\n")
         handle.write("| District | Crop | Category | Count |\n|---|---|---|---:|\n")
         for district_name, crop_name, category_name, count in coverage_rows:
             handle.write(f"| {district_name} | {crop_name} | {category_name} | {count} |\n")
         handle.write("\n")
-        handle.write("### Handler-level placeholders and untranslated strings\n\n")
+        handle.write("## Handler-level placeholders and untranslated strings\n\n")
         handle.write(
             "The default `START_MESSAGE`, `GREETING_MESSAGE`, `DURATION_LIMIT_MESSAGE`, "
             "`FALLBACK_ERROR_MESSAGE`, voice location-deletion text, and voice consent-rejection "
