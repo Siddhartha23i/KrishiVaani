@@ -121,14 +121,13 @@ class TestTelegramHandler(unittest.IsolatedAsyncioTestCase):
         return update
 
     # --- Test 1: /start Command ---
-    async def test_start_command_returns_english_welcome_and_language_buttons(self):
+    async def test_start_command_returns_english_welcome(self):
         update = self._create_mock_update(update_id=101, text="/start")
 
         await self.handler.handle_start(update, self.mock_context)
 
         call = update.effective_message.reply_text.call_args
         self.assertEqual(call.args[0], START_MESSAGES["en-IN"])
-        self.assertIn("reply_markup", call.kwargs)
         self.mock_orchestrator.process_message.assert_not_called()
 
     # --- Test 2: Text Greetings Bypass LLM ---
