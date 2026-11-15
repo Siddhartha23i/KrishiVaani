@@ -35,7 +35,7 @@ This deployment configuration is prepared specifically for **Railway** to run Kr
 
 ### Volume Mount Configuration:
 - **Mount Path:** `/app/data`
-- **Volume Initialization Guarantee:** When an empty persistent volume is attached at `/app/data`, `docker-entrypoint.sh` and [`ensure_database_initialized()`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/app/db/database.py) check if `/app/data/krishivaani.db` exists:
+- **Volume Initialization Guarantee:** When an empty persistent volume is attached at `/app/data`, `docker-entrypoint.sh` and [`ensure_database_initialized()`](../../app/db/database.py) check if `/app/data/krishivaani.db` exists:
   - **First Boot:** Copies the 51 approved knowledge items and raw PDFs from `/app/data_seed/` into `/app/data/`.
   - **Subsequent Restarts & Redeployments:** Detects the existing database and preserves all live farmer consent records, sessions, and database updates. It **never** resets or overwrites active data.
 
@@ -49,17 +49,22 @@ Set these in the **Railway Dashboard → Service → Variables** tab. Never comm
 | Variable Name | Description | Example / Format |
 | :--- | :--- | :--- |
 | `TELEGRAM_BOT_TOKEN` | Bot API token from Telegram [@BotFather](https://t.me/BotFather) | `123456789:ABCdefGHIjklMNOpqrsTUVwxyz` |
-| `GROQ_API_KEY` | API Key for Groq Cloud LLM inference | `gsk_...` |
+| `SARVAM_API_KEY` | API Key for Sarvam AI primary LLM inference (`sarvam-105b-conversations`) | `...` |
+| `USER_ID_HASH_SALT` | Cryptographic salt for privacy-preserving HMAC-SHA256 user ID hashing | `random-secure-salt` |
 | `GNANI_API_KEY` | API Key for Gnani Speech platform (Prisma STT & Timbre TTS) | `...` |
-| `WEATHERAPI_API_KEY` | API Key for WeatherAPI meteorological forecast data | `...` |
 
 ### Optional / Recommended Variables:
 | Variable Name | Default Value | Description |
 | :--- | :--- | :--- |
-| `GROQ_MODEL_ID` | `openai/gpt-oss-120b` | Groq reasoning model ID |
-| `GROQ_REQUEST_TIMEOUT_SECONDS` | `15.0` | Timeout for LLM completions |
-| `GROQ_MAX_TOKENS` | `1500` | Max tokens generated per query |
+| `GROQ_API_KEY` | `None` | API Key for Groq Cloud LLM inference (automatic fallback) |
+| `LLM_PROVIDER` | `sarvam` | Active LLM provider (`sarvam` or `groq`) |
+| `SARVAM_MODEL` | `sarvam-105b-conversations` | Sarvam conversational model ID |
+| `SARVAM_MAX_TOKENS` | `900` | Max tokens generated for Sarvam response |
+| `GROQ_MODEL_ID` | `openai/gpt-oss-120b` | Groq fallback reasoning model ID |
+| `GROQ_REQUEST_TIMEOUT_SECONDS` | `15.0` | Timeout for Groq completions |
+| `GROQ_MAX_TOKENS` | `1200` | Max tokens generated per Groq fallback query |
 | `GROQ_TEMPERATURE` | `0.1` | Temperature for factual evidence compliance |
+| `WEATHERAPI_API_KEY` | `None` | API Key for WeatherAPI meteorological forecast data |
 | `DATABASE_PATH` | `/app/data/krishivaani.db` | Absolute path to persistent SQLite database |
 | `IMD_API_KEY` | `""` | IMD District Warning API Key |
 | `IMD_JWT_TOKEN` | `""` | IMD District Warning JWT Token |
@@ -69,7 +74,7 @@ Set these in the **Railway Dashboard → Service → Variables** tab. Never comm
 
 ## 5. Railway Configuration Files
 
-### A. [`Dockerfile`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/Dockerfile)
+### A. [`Dockerfile`](../../Dockerfile)
 ```dockerfile
 FROM python:3.11-slim
 
@@ -100,7 +105,7 @@ ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["python", "-m", "app.telegram.run"]
 ```
 
-### B. [`railway.json`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/railway.json)
+### B. [`railway.json`](../../railway.json)
 ```json
 {
   "$schema": "https://railway.com/railway.schema.json",
@@ -116,7 +121,7 @@ CMD ["python", "-m", "app.telegram.run"]
 }
 ```
 
-### C. [`docker-entrypoint.sh`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/docker-entrypoint.sh)
+### C. [`docker-entrypoint.sh`](../../docker-entrypoint.sh)
 Ensures Unix LF line endings, creates `/app/data` directories, copies seed files on fresh volume creation, and uses `exec "$@"` so Python runs as PID 1 to receive shutdown and restart signals directly.
 
 ---
@@ -124,13 +129,13 @@ Ensures Unix LF line endings, creates `/app/data` directories, copies seed files
 ## 6. Process Crash Recovery & High Availability
 
 1. **Telegram Polling Resilience:**
-   - In [`app/telegram/handlers.py`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/app/telegram/handlers.py), all message handlers catch unexpected exceptions, delivering safe polite Telugu fallback voice notices without crashing the polling loop.
+   - In [`app/telegram/handlers.py`](../../app/telegram/handlers.py), all message handlers catch unexpected exceptions, delivering safe polite Telugu fallback voice notices without crashing the polling loop.
    - Idempotent `UpdateDeduplicator` ensures retried Telegram updates are never executed twice.
 2. **Container Restart Policy:**
    - `railway.json` sets `restartPolicyType: "ON_FAILURE"` with `restartPolicyMaxRetries: 10`.
    - If an unhandled process termination or out-of-memory event occurs, Railway immediately re-spawns the container.
 3. **Clean Polling Resumption:**
-   - [`app/telegram/run.py`](file:///d:/Sid_Folder/Sid_projects/Gnani_Project/app/telegram/run.py) starts polling with `drop_pending_updates=True`. If the bot was offline, it safely flushes queued backlog items to avoid cascading rate-limit loops.
+   - [`app/telegram/run.py`](../../app/telegram/run.py) starts polling with `drop_pending_updates=True`. If the bot was offline, it safely flushes queued backlog items to avoid cascading rate-limit loops.
 
 ---
 
