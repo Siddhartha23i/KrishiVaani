@@ -45,3 +45,6 @@ data/
 !data_seed/
 !data_seed/**
 !data_seed/krishivaani.db
+
+# Archived and local audit reports
+docs/archive/

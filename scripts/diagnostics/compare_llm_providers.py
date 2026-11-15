@@ -25,7 +25,7 @@ from app.llm.providers.sarvam_provider import SarvamProvider
 from app.llm.service import LLMReasoningService
 
 
-REPORT_PATH = ROOT / "LLM_AB_RESULTS.md"
+REPORT_PATH = ROOT / "docs" / "archive" / "LLM_AB_RESULTS.md"
 
 QUESTIONS = [
     ("weather-1", "నిజామాబాద్ జిల్లాలో రేపు వాన పడే అవకాశం ఎంత?"),

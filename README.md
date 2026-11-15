@@ -188,10 +188,14 @@ Gnani_Project/
 ├── Dockerfile                      # Production Docker container definition
 ├── docker-entrypoint.sh            # Persistent volume auto-seeder & entrypoint
 ├── railway.json                    # Railway deployment & restart configuration
-├── railway_deployment_guide.md     # Detailed deployment runbook
 ├── requirements.txt                # Production Python dependencies
 ├── .env.example                    # Environment variable documentation template
 ├── .gitignore                      # Strict exclusion for secrets, runtime data, & audio
+├── docs/                           # Documentation & operational deployment runbooks
+│   └── deployment/                 # Railway deployment runbook (railway_deployment_guide.md)
+├── scripts/                        # Maintenance tools & CLI diagnostics
+│   ├── diagnostics/                # LLM comparison & live policy check diagnostics
+│   └── voice_pipeline_cli.py       # End-to-end voice pipeline CLI utility
 │
 ├── app/                            # Core application source code
 │   ├── api/                        # FastAPI endpoints (health, knowledge, diagnostics)
