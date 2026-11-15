@@ -1,7 +1,17 @@
 # KrishiVaani — Marketing Site (`/site`)
 
+🌐 **Live Website**: [https://krishivaani1.netlify.app/](https://krishivaani1.netlify.app/)
+
+[![Netlify](https://img.shields.io/badge/Netlify-krishivaani1.netlify.app-00C7B7.svg?logo=netlify&logoColor=white)](https://krishivaani1.netlify.app/)
+
 One-page marketing website for the KrishiVaani project.
 Static HTML + CSS + vanilla JS. No build tools required.
+
+## Live Deployment
+
+The site is hosted and deployed on Netlify:
+- **URL**: <https://krishivaani1.netlify.app/>
+- **Source**: `/site` directory of this repository
 
 ## Run locally
 

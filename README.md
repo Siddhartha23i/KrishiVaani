@@ -1,6 +1,9 @@
 # KrishiVaani (కృషీవాణి)
 ### *AI-Powered Agricultural Voice Assistant for Indian Farmers*
 
+🌐 **Live Website**: [https://krishivaani1.netlify.app/](https://krishivaani1.netlify.app/)
+
+[![Website](https://img.shields.io/badge/Website-krishivaani1.netlify.app-00C7B7.svg?logo=netlify&logoColor=white)](https://krishivaani1.netlify.app/)
 [![Python Version](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot%20API%20(Long%20Polling)-2CA5E0.svg?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
 [![Speech AI](https://img.shields.io/badge/Gnani%20AI-Prisma%20v3.0%20%7C%20Timbre%20v2.5-orange.svg)](https://gnani.ai/)
@@ -178,6 +181,7 @@ flowchart TD
 | **Data Validation** | Pydantic & Pydantic-Settings | `2.9.2` / `2.12.0` | Strict schema parsing and environment configuration |
 | **Containerization** | Docker | `python:3.11-slim` | Production multi-stage Linux container |
 | **Production Host** | Railway | Cloud Platform | Container hosting with persistent storage volumes |
+| **Marketing Website** | Netlify | Static Site Hosting | Project portal & showcase ([krishivaani1.netlify.app](https://krishivaani1.netlify.app/)) |
 
 ---
 
@@ -196,6 +200,10 @@ Gnani_Project/
 ├── scripts/                        # Maintenance tools & CLI diagnostics
 │   ├── diagnostics/                # LLM comparison & live policy check diagnostics
 │   └── voice_pipeline_cli.py       # End-to-end voice pipeline CLI utility
+├── site/                           # Marketing website (deployed at https://krishivaani1.netlify.app/)
+│   ├── index.html                  # Single-page HTML showcase
+│   ├── css/                        # Responsive styles & design tokens
+│   └── js/                         # Client-side interactions
 │
 ├── app/                            # Core application source code
 │   ├── api/                        # FastAPI endpoints (health, knowledge, diagnostics)
