@@ -7,9 +7,9 @@
 [![Primary LLM](https://img.shields.io/badge/Sarvam%20AI-sarvam--105b--conversations-8A2BE2.svg)](https://sarvam.ai/)
 [![Deployment](https://img.shields.io/badge/Deployment-Railway-9b51e0.svg)](https://railway.com/)
 
-- **What it does**: Listens to spoken Telugu agricultural queries, retrieves verified university research, and replies with natural synthesized Telugu speech.
-- **Who it is for**: Smallholder farmers in Telangana who encounter literacy or linguistic barriers with text-heavy advisory portals.
-- **How farmers use it**: Send a voice note or text on Telegram, ask about crop health, pests, or weather forecasts, and receive a spoken voice reply.
+- **What it does**: Voice-first AI assistant for farmers across India in multiple languages, with verified, expert-reviewed depth for Telangana first.
+- **Who it is for**: Smallholder farmers who prefer conversational speech over complex text portals, featuring a Telugu voice-first identity.
+- **How farmers use it**: Send a voice note or text on Telegram in any supported language, ask about crops, pests, or weather, and receive a spoken voice reply (Telugu) or text response.
 
 ---
 
@@ -18,6 +18,39 @@
 - 🎬 **Demo post (LinkedIn)**: https://lnkd.in/p/dfKzXneH
 - 🤖 **Telegram Bot**: [@KrishiVaaniBot](https://t.me/KrishiVaaniBot)
 - 🌐 **Project Showcase**: [krishivaani1.netlify.app](https://krishivaani1.netlify.app/)
+
+---
+
+## Coverage & Languages
+
+The bot recognizes 10 languages: Telugu (`te-IN`), Hindi (`hi-IN`), English (`en-IN`), Kannada (`kn-IN`), Tamil (`ta-IN`), Marathi (`mr-IN`), Malayalam (`ml-IN`), Punjabi (`pa-IN`), Bengali (`bn-IN`), and Gujarati (`gu-IN`).
+- **Speech Input (STT)**: Accepts voice notes in all 10 languages via Gnani Prisma v3.0 (with agriculture topic hint).
+- **Spoken Voice Output (TTS)**: **Telugu-only** (Kaveri voice via Gnani Timbre v2.5). Non-Telugu queries receive localized text replies.
+
+| Region | Supported Languages | Available Capabilities |
+| :--- | :--- | :--- |
+| **Telangana** | Any of 10 languages | LLM guidance, general explanations, live weather & IMD warnings, and answers grounded in the Telangana knowledge base. |
+| **Other States** | Any of 10 languages | LLM general guidance, general explanations, live weather (with consent), and referrals to Kisan Call Centre (1800-180-1551), state agriculture departments, KVKs, and IMD advisories. No unverified chemical, dosage, or crop prescriptions. |
+
+*In progress: grounded, guardrailed data for other states.*
+
+---
+
+## How Answers Are Grounded
+
+KrishiVaani evaluates queries across three strict tiers ([details](docs/safety-and-knowledge.md)):
+1. **Tier 1 (General Knowledge)**: Educational/conceptual questions (e.g. *"What is drip irrigation?"*, *"What is El Niño?"*) answered from general LLM knowledge in concise conversational sentences without requiring local bulletins.
+2. **Tier 2 (Live Meteorological Data)**: Current conditions, 3-day forecasts, and IMD rainfall warnings retrieved from WeatherAPI and official IMD bulletins with explicit user consent.
+3. **Tier 3 (Consequential Farm Actions)**: Chemical spray recommendations, fertilizer dosages, seed varieties, and government schemes strictly require valid, expert-approved evidence; otherwise, the system abstains fail-closed.
+
+---
+
+## Telangana Data & Ingestion
+
+Sourced from **PJTSAU agromet bulletins**, **TGDPS weather reports**, and **IMD district warnings**.
+- **Ingestion Tools**: Bulletins are discovered, downloaded, and extracted via manual CLI tools (`python -m app.knowledge.pjtau.cli` and `tgdps.cli`) using PyMuPDF and pdfplumber. Ingestion does not run on an automated schedule.
+- **Review Lifecycle**: New items enter as `pending_verification`, move to `verified` after technical extraction checks, and require `approved` status from a qualified agricultural expert to become retrievable.
+- **Seed Status**: In `data_seed/krishivaani.db`, 50 items are `verified` (developer-reviewed for syntax/schema) and 1 item is `approved` (temporally expired); 0 currently valid approved items exist today. Unapproved or expired crop advisories safely trigger expert referrals.
 
 ---
 
@@ -31,9 +64,9 @@ flowchart LR
     Orch <--> LLM["Sarvam 105B Primary<br/>Groq 120B Fallback"]
     Orch <--> Data[("Approved Evidence &<br/>IMD Weather Alerts")]
     LLM --> Safety{"Deterministic<br/>9-Rule Safety Gate"}
-    Safety -- Passed --> TTS["Gnani Timbre TTS<br/>Kaveri Voice"]
+    Safety -- Passed --> TTS["Gnani Timbre TTS<br/>Kaveri Voice (Telugu)"]
     Safety -- Rejected / Abstain --> Ref["Safe Expert Referral"]
-    TTS & Ref --> Reply(["Spoken Voice Note<br/>on Telegram"])
+    TTS & Ref --> Reply(["Voice Note / Text<br/>on Telegram"])
 ```
 
 ---
@@ -88,32 +121,23 @@ python -m app.telegram.run
 
 | Component | Current Scope / Limitation |
 | :--- | :--- |
+| **Geographic Evidence** | Verified knowledge is Telangana-only today; other states use general guidance plus live weather. *In progress: grounded, guardrailed data for other states.* |
 | **Crop & Pest Advice** | Consequential guidance requires expert-approved evidence. Today's seed DB has 50 `verified` and 1 expired `approved` item; crop chemical questions safely refer to the local Agricultural Officer (AO) or KVK. |
 | **Voice Replies** | Voice synthesis is currently Telugu-only (Kaveri voice); other languages receive text replies. |
-| **Geographic Scope** | Knowledge base and administrative divisions cover Telangana only. |
 | **Seed Updates** | Container entrypoint preserves existing Railway volumes and does not auto-sync newly updated seed items. |
 
 ---
 
 ## Roadmap
 
+- *In progress: grounded, guardrailed data for other states.*
 - Complete expert agronomic review to activate the remaining 50 PJTSAU advisories in seed storage.
 - Expand voice synthesis to Hindi and Kannada.
 - Implement an automated non-destructive database synchronizer for Railway persistent volumes.
 
 ---
 
-## Acknowledgements
+## Acknowledgements & Author
 
-- **Gnani AI** for Prisma v3.0 STT and Timbre v2.5 TTS voice technology.
-- **Sarvam AI** for `sarvam-105b-conversations` Indian-language LLM inference.
-- **Groq Cloud** for ultra-low latency fallback inference with `openai/gpt-oss-120b`.
-- **PJTSAU** and **TGDPS** for public agricultural research bulletins and agromet data.
-- **India Meteorological Department (IMD)** for public weather warning bulletins.
-
----
-
-## Author
-
-**Ambaigari Siddhartha Reddy** — [LinkedIn Profile](https://lnkd.in/p/dRGitDph)  
-Built for the **Gnani AI Great Indian AI Internship Challenge**.
+- **Acknowledgements**: Built with **Gnani AI** (Prisma STT, Timbre TTS), **Sarvam AI** (`sarvam-105b-conversations`), **Groq Cloud** (`openai/gpt-oss-120b`), **PJTSAU**, **TGDPS**, and **IMD**.
+- **Author**: **Ambaigari Siddhartha Reddy** — [LinkedIn Profile](https://lnkd.in/p/dRGitDph) (Built for the **Gnani AI Great Indian AI Internship Challenge**).
